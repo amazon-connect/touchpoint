@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+@theme {
+  --font-*: initial;
+  --font-sans: inherit;
+
+  --backdrop-blur-overlay: 48px;
+
+  --container-content: 640px;
+
+  --radius-inner: inherit;
+  --radius-outer: inherit;
+
+  --z-index-touchpoint: 1000;
+  --z-index-launch-button: 100;
+
+  --color-primary: inherit;
+  --color-primary-90: inherit;
+  --color-primary-80: inherit;
+  --color-primary-60: inherit;
+  --color-primary-40: inherit;
+  --color-primary-20: inherit;
+  --color-primary-10: inherit;
+  --color-primary-5: inherit;
+  --color-primary-1: inherit;
+  --color-secondary: inherit;
+  --color-secondary-90: inherit;
+  --color-secondary-80: inherit;
+  --color-secondary-60: inherit;
+  --color-secondary-40: inherit;
+  --color-secondary-20: inherit;
+  --color-secondary-10: inherit;
+  --color-secondary-5: inherit;
+  --color-secondary-1: inherit;
+  --color-accent: inherit;
+  --color-accent-20: inherit;
+  --color-background: inherit;
+  --color-overlay: inherit;
+  --color-warning-primary: inherit;
+  --color-warning-secondary: inherit;
+  --color-error-primary: inherit;
+  --color-error-secondary: inherit;
+
+  --animate-shimmer: shimmer 1.5s linear infinite;
+  @keyframes shimmer {
+    0% {
+      background-position: -80px 0;
+    }
+    100% {
+      background-position: calc(100% + 80px) 0;
+    }
+  }
+
+  --animate-upload-pulse: upload-pulse 1s ease-in-out infinite;
+  @keyframes upload-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.5);
+    }
+  }
+}
+
+.shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-primary-1) 0%,
+    var(--color-primary-40) 50%,
+    var(--color-primary-1) 100%
+  );
+  background-size: 80px 100%;
+  background-clip: text;
+  background-repeat: no-repeat;
+  animation: var(--animate-shimmer);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility no-scrollbar {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+@layer base {
+  * {
+    font-family: var(--font-family) !important;
+  }
+}
+
+/** Fullscreen error animation styling */
+
+@property --glow-opacity {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.fullscreen-error svg {
+  animation: error-glow 3s ease infinite;
+  --glow-opacity: 0%;
+  filter: drop-shadow(
+    0 0 6px color-mix(in srgb, transparent, var(--accent) var(--glow-opacity))
+  );
+}
+
+@keyframes error-glow {
+  from {
+    color: var(--primary);
+    fill-opacity: 8%;
+    --glow-opacity: 0%;
+  }
+  22% {
+    color: var(--primary);
+    fill-opacity: 8%;
+    --glow-opacity: 0%;
+  }
+  35% {
+    color: var(--accent);
+    fill-opacity: 80%;
+    --glow-opacity: 60%;
+  }
+  45% {
+    color: var(--accent);
+    fill-opacity: 70%;
+    --glow-opacity: 30%;
+  }
+  55% {
+    color: var(--accent);
+    fill-opacity: 60%;
+    --glow-opacity: 60%;
+  }
+  60% {
+    color: var(--primary);
+    fill-opacity: 8%;
+    --glow-opacity: 0%;
+  }
+  to {
+    color: var(--primary);
+    fill-opacity: 8%;
+    --glow-opacity: 0%;
+  }
+}
+
+.markdown ul {
+  @apply list-disc list-inside;
+}
+
+.markdown ol {
+  @apply list-decimal list-inside;
+}
+
+.markdown hr {
+  @apply border-primary-20 border-solid;
+}
+
+.markdown a {
+  @apply underline;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+  @apply font-bold;
+}

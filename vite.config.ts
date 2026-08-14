@@ -1,0 +1,87 @@
+import { resolve } from "path";
+import tailwindcss from "@tailwindcss/vite";
+import { type PluginOption } from "vite";
+import react from "@vitejs/plugin-react";
+import replace from "@rollup/plugin-replace";
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
+
+/**
+ * Adjust the JS entry point if the app is run in prototype or review modes
+ */
+const designSystemEntryPoint = (): PluginOption => {
+  return {
+    name: "html-transform",
+    transformIndexHtml: {
+      order: "pre",
+      handler: () => {
+        return {
+          html: `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NLX SDK</title>
+  <style>
+    html, body, main, nlx-touchpoint { margin: 0; padding: 0px; height: 100%; }
+  </style>
+</head>
+<body>
+  <main></main>
+  <script type="module">
+    import { renderWebsite } from "./src/website/index.tsx";
+
+    renderWebsite(document.querySelector("main"));
+  </script>
+</body>
+</html>
+`,
+          tags: [],
+        };
+      },
+    },
+  };
+};
+
+const sharedPlugins = (command: "serve" | "build"): PluginOption[] => [
+  react(),
+  tailwindcss(),
+  replace(
+    command === "serve"
+      ? {}
+      : {
+          "process.env.NODE_ENV": JSON.stringify("production"),
+        },
+  ),
+  dts(),
+];
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode, command }) =>
+  mode === "website"
+    ? {
+        plugins: [designSystemEntryPoint(), ...sharedPlugins(command)],
+        base: "./",
+        // amazon-chime-sdk-js references Node's `global`, undefined in browsers.
+        define: { global: "globalThis" },
+        build: {
+          outDir: "build",
+        },
+      }
+    : {
+        plugins: sharedPlugins(command),
+        resolve: {},
+        // amazon-chime-sdk-js references Node's `global`, undefined in browsers.
+        define: { global: "globalThis" },
+        build: {
+          outDir: "lib",
+          lib: {
+            entry: resolve(__dirname, "./src/index.tsx"),
+            type: ["umd", "es"],
+            name: "nlxai.touchpointUi",
+            fileName: (format) =>
+              format === "umd" ? "index.umd.js" : "index.js",
+          },
+        },
+      },
+);
