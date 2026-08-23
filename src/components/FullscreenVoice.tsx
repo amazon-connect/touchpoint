@@ -1,0 +1,266 @@
+/* eslint-disable jsdoc/require-jsdoc */
+import {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  type FC,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import { clsx } from "clsx";
+import { type Context, type Response } from "@nlxai/core";
+
+import { type ConnectConversationHandler } from "../connect";
+
+import type { ColorMode, CustomModalityComponent } from "../interface";
+import { FullscreenError } from "./FullscreenError";
+import { Ripple } from "./Ripple";
+import { Loader } from "./ui/Loader";
+import { IconButton } from "./ui/IconButton";
+import { TextButton } from "./ui/TextButton";
+import { Touchpoint, Mic, MicOff, Restart } from "./ui/Icons";
+import { type VoiceHandler, type VoiceState, initiateVoice } from "../voice";
+import { VoiceModalities } from "./VoiceModalities";
+
+interface Props {
+  colorMode: ColorMode;
+  handler: ConnectConversationHandler;
+  responses: Response[];
+  speakersEnabled: boolean;
+  showTranscript: boolean;
+  brandIcon?: string;
+  className?: string;
+  context?: Context;
+  modalityComponents: Record<string, CustomModalityComponent<unknown>>;
+}
+
+export type WidgetVoiceState =
+  | null
+  | "loading"
+  | { type: "error"; error: string }
+  | { type: "success"; handler: VoiceHandler; state?: VoiceState };
+
+export const useWidgetVoiceState = (): [
+  WidgetVoiceState,
+  Dispatch<SetStateAction<WidgetVoiceState>>,
+] => {
+  const [voice, setVoice] = useState<WidgetVoiceState>(null);
+
+  // Remember the last handler
+  const currentVoiceHandler = useRef<null | VoiceHandler>(null);
+  useEffect(() => {
+    if (voice != null && voice !== "loading" && voice.type !== "error") {
+      currentVoiceHandler.current = voice.handler;
+    }
+  }, [voice]);
+
+  // Perform final cleanup when component is unmounted
+  useEffect(() => {
+    return () => {
+      if (currentVoiceHandler.current != null) {
+        void currentVoiceHandler.current.disconnect();
+      }
+    };
+  }, []);
+
+  return [voice, setVoice];
+};
+
+export const VoiceIcon: FC<{
+  brandIcon?: string;
+  colorMode: ColorMode;
+  addRipple: boolean;
+  className?: string;
+}> = ({ brandIcon, colorMode, addRipple, className }) => {
+  return (
+    <div className={clsx("rounded-full w-fit", className)}>
+      <div
+        className={clsx(
+          "w-[128px] h-[128px] p-4 relative rounded-full overflow-hidden bg-cover bg-center",
+          // This color imitates primary5 overlayed on the regular background, but it has to be solid
+          brandIcon != null
+            ? ""
+            : colorMode === "dark"
+              ? "bg-[rgb(40,41,47)]"
+              : "bg-[rgb(175,175,175)]",
+        )}
+        style={
+          brandIcon != null ? { backgroundImage: `url(${brandIcon})` } : {}
+        }
+      >
+        {brandIcon == null ? (
+          <Touchpoint className="w-full h-full text-primary-40" />
+        ) : null}
+      </div>
+      {addRipple ? <Ripple className="rounded-full z-[-1]" /> : null}
+    </div>
+  );
+};
+
+export const FullscreenVoice: FC<Props> = ({
+  handler,
+  speakersEnabled,
+  responses,
+  showTranscript,
+  colorMode,
+  brandIcon,
+  className,
+  context,
+  modalityComponents,
+}) => {
+  const [micEnabled, setMicEnabled] = useState<boolean>(true);
+
+  const [voice, setVoice] = useWidgetVoiceState();
+
+  const setSpeakers = useMemo(() => {
+    if (voice == null || voice === "loading" || voice.type === "error") {
+      return null;
+    }
+    return voice.handler.setSpeakers;
+  }, [voice]);
+
+  useEffect(() => {
+    if (setSpeakers != null) {
+      void setSpeakers(speakersEnabled);
+    }
+  }, [setSpeakers, speakersEnabled]);
+
+  useEffect(() => {
+    const fn = async (): Promise<void> => {
+      try {
+        const voiceHandler = await initiateVoice(
+          handler,
+          context ?? {},
+          (newVoiceState) => {
+            setVoice((prev) =>
+              prev === null || prev === "loading" || prev.type === "error"
+                ? prev
+                : { ...prev, state: newVoiceState },
+            );
+          },
+        );
+        setVoice({ type: "success", handler: voiceHandler });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("[touchpoint] voice connection failed:", err);
+        setVoice({ type: "error", error: String(err) });
+      }
+    };
+    void fn();
+  }, [handler, setVoice, context]);
+
+  const retry = async (): Promise<void> => {
+    try {
+      if (voice != null && voice !== "loading" && voice.type !== "error") {
+        await voice.handler.disconnect();
+      }
+      setVoice(null);
+      const voiceHandler = await initiateVoice(
+        handler,
+        context ?? {},
+        (newVoiceState) => {
+          setVoice((prev) =>
+            prev === null || prev === "loading" || prev.type === "error"
+              ? prev
+              : { ...prev, state: newVoiceState },
+          );
+        },
+      );
+      setVoice({ type: "success", handler: voiceHandler });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[touchpoint] voice connection failed:", err);
+      setVoice({ type: "error", error: String(err) });
+    }
+  };
+
+  if (voice == null || voice === "loading") {
+    return (
+      <div
+        className={clsx("flex flex-col items-center justify-center", className)}
+      >
+        <Loader />
+      </div>
+    );
+  }
+
+  if (voice.type === "error") {
+    return (
+      <div className={clsx("flex flex-col", className)}>
+        <FullscreenError />
+        <div className="w-full px-3 h-20 flex items-center max-w-content mx-auto">
+          <TextButton
+            type="ghost"
+            label="Retry"
+            Icon={Restart}
+            onClick={() => {
+              void retry();
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (voice.state?.isTerminated) {
+    return (
+      <div
+        className={clsx(
+          "flex flex-col items-center justify-center gap-6 text-primary-80",
+          className,
+        )}
+      >
+        <Touchpoint className="w-20 h-20 text-primary-20" />
+        <div className="text-center">
+          <h3 className="text-xl mb-2">The conversation has ended</h3>
+          <p>You can close this panel now or restart.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    // `overflow-hidden` clips the continuously-scaling ripple animations so they can't push
+    // a scrollbar in/out each cycle (which visibly shakes the widget).
+    <div className={clsx("flex flex-col overflow-hidden", className)}>
+      <div className="relative grow overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <VoiceIcon
+            colorMode={colorMode}
+            addRipple={voice.state?.isApplicationSpeaking ?? false}
+            brandIcon={brandIcon}
+            className="relative"
+          />
+        </div>
+        <VoiceModalities
+          className={clsx(
+            "w-full",
+            "absolute inset-0 overflow-auto p-2 md:p-3 space-y-4 z-10",
+            "border-b border-solid border-primary-10",
+          )}
+          showTranscript={showTranscript}
+          responses={responses}
+          renderedAsOverlay
+          modalityComponents={modalityComponents}
+          handler={handler}
+        />
+      </div>
+      <div className="flex items-center justify-center py-4 flex-none">
+        <div className="w-fit relative">
+          {voice.state?.isUserSpeaking ? (
+            <Ripple className="rounded-inner" />
+          ) : null}
+          <IconButton
+            Icon={micEnabled ? Mic : MicOff}
+            label="Voice"
+            type={micEnabled ? "activated" : "ghost"}
+            onClick={() => {
+              setMicEnabled((prev) => !prev);
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};

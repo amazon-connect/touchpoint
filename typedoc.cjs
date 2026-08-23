@@ -1,0 +1,27 @@
+/** @type { import('typedoc').TypeDocOptions & { hideInPageTOC?: boolean, hideBreadcrumbs?: boolean} } */
+module.exports = {
+  entryPoints: ["./src/index.tsx"],
+  hidePageHeader: true,
+  hidePageTitle: true,
+  hideBreadcrumbs: true,
+  formatWithPrettier: true,
+  readme: "none",
+  out: "docs",
+  useCodeBlocks: true,
+  plugin: ["typedoc-plugin-markdown"],
+  router: "module",
+  excludeInternal: true,
+  disableSources: true,
+  groupOrder: ["Functions", "Variables", "Interfaces", "*"],
+  sort: ["source-order", "kind", "instance-first", "alphabetical"],
+  categoryOrder: [
+    "Basics",
+    "Theming",
+    "Modality components",
+    "Bidirectional Voice+",
+    "*",
+  ],
+  treatValidationWarningsAsErrors: false,
+  treatWarningsAsErrors: false,
+  validation: { notExported: true, invalidLink: true, notDocumented: true },
+};
