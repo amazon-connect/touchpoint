@@ -253,6 +253,51 @@ Common entry points:
 - `LiveSyncConnection` / `LiveSyncContextInput` — Live Sync connection and the
   actions / scopes / destinations you advertise to the AI agent.
 
+
+## Embedded mode
+
+Touchpoint also registers a custom element called `<connect-touchpoint>`, which you can include in your UI. This element has a writeable property `touchpointConfiguration` that accepts the same input as [`create`](#create).
+
+This starts Touchpoint in embedded mode, in which there is no open button and Touchpoint will fit into any container you make available for it, making it easier to integrate into various page layouts.
+
+A simple code snippet for embedded mode:
+
+```html
+<div class="my-grid-layout">
+  <main>
+    <!-- Main page content -->    
+  </main>
+  <aside>
+    <connect-touchpoint/>
+  </aside>
+</div>
+<script>
+  const touchpointElement = document.querySelector("connect-touchpoint");
+  touchpointElement.touchpointConfiguration = {
+    config: {
+      // Your StartChatContact endpoint (e.g. an API Gateway route) that mints a
+      // participant token.
+      chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+      instanceId: "REPLACE_WITH_INSTANCE_ID",
+      contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
+      region: "us-east-1",
+    },
+    input: "text",
+  };
+</script>
+```
+
+Since it is a custom element, it by default isn't a block element, so you may want to give it:
+
+```css
+connect-touchpoint {
+  display: block;
+  height: 100%;
+}
+```
+
+or similar styling.
+
 ## License
 
 [MIT](./LICENSE)

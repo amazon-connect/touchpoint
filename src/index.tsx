@@ -155,8 +155,7 @@ const normalizeConfiguration = (
     // participant connects, so there is nothing to send client-side. (NLX's
     // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
     // Chat Interface integration.)
-    initializeConversation:
-      configuration.initializeConversation ?? (() => {}),
+    initializeConversation: configuration.initializeConversation ?? (() => {}),
   };
 };
 
@@ -167,11 +166,11 @@ const normalizeConfiguration = (
  */
 let injectDefaultStyles: () => void = () => {
   const style = document.createElement("style");
-  style.textContent = `:where(nlx-touchpoint.nlx-text, nlx-touchpoint.nlx-voice) {
+  style.textContent = `:where(connect-touchpoint.connect-text, connect-touchpoint.connect-voice) {
     display: block;
     height: 350px;
   }
-  :where(nlx-touchpoint.nlx-voiceMini) {
+  :where(connect-touchpoint.connect-voiceMini) {
    display: inline-block;
 
   }`;
@@ -287,7 +286,7 @@ class NlxTouchpointElement extends HTMLElement {
     if (this.embedded) {
       injectDefaultStyles();
       this.classList.add(
-        `nlx-${this.#touchpointConfiguration?.input ?? "text"}`,
+        `connect-${this.#touchpointConfiguration?.input ?? "text"}`,
       );
     }
   }
@@ -315,7 +314,7 @@ const customElementsDefine: typeof customElements.define = (
   }
 };
 
-customElementsDefine("nlx-touchpoint", NlxTouchpointElement);
+customElementsDefine("connect-touchpoint", NlxTouchpointElement);
 
 /**
  * Creates a new Touchpoint UI instance and appends it to the document body
@@ -327,7 +326,7 @@ export const create = (
   props: TouchpointConfiguration,
 ): Promise<TouchpointInstance> => {
   return new Promise((resolve) => {
-    const element: any = document.createElement("nlx-touchpoint");
+    const element: any = document.createElement("connect-touchpoint");
     element.embedded = false;
     element.onRef = (ref: AppRef) => {
       resolve({
