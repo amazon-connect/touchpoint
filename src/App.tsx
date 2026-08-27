@@ -595,7 +595,9 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             }}
             renderCollapse={props.onClose != null}
             modalityComponents={modalityComponents}
-            dragHandleProps={props.embedded ? undefined : voiceMiniDrag.handleProps}
+            dragHandleProps={
+              props.embedded ? undefined : voiceMiniDrag.handleProps
+            }
           />
         </ProviderStack>
       </div>

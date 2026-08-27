@@ -116,7 +116,8 @@ const es: Copy = {
 const de: Copy = {
   escalationAttemptNotice:
     "Ich versuche, Ihre Unterhaltung an einen Mitarbeiter weiterzuleiten.",
-  escalationNotice: "Ihre Unterhaltung wurde an einen Mitarbeiter weitergeleitet",
+  escalationNotice:
+    "Ihre Unterhaltung wurde an einen Mitarbeiter weitergeleitet",
   restartConversationButtonLabel: "Unterhaltung neu starten",
   startNewConversationButtonLabel: "Neue Unterhaltung starten",
   downloadTranscriptButtonLabel: "Transkript herunterladen",
@@ -243,8 +244,7 @@ const id: Copy = {
     heading: "Silakan lakukan autentikasi",
     authenticate: "Autentikasi",
     continueWithoutSigningIn: "Lanjutkan tanpa masuk",
-    lockedInputHint:
-      "Selesaikan atau lewati autentikasi sebelum melanjutkan.",
+    lockedInputHint: "Selesaikan atau lewati autentikasi sebelum melanjutkan.",
     status: {
       prompt: "Silakan lakukan autentikasi",
       in_progress: "Autentikasi sedang berlangsung",

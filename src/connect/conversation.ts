@@ -367,10 +367,7 @@ export interface ResolvedView {
  * `sendFlow`), and `sendWelcomeIntent` (a deprecated alias of `sendWelcomeFlow`).
  */
 type UnsupportedConnectHandlerMethods =
-  | "submitFeedback"
-  | "getVoiceCredentials"
-  | "sendIntent"
-  | "sendWelcomeIntent";
+  "submitFeedback" | "getVoiceCredentials" | "sendIntent" | "sendWelcomeIntent";
 
 /**
  * The subset of `@nlxai/core`'s {@link ConversationHandler} implemented by the
@@ -391,12 +388,7 @@ export type ConnectConversationHandler = Omit<
  * - `cancelled` — the user cancelled (CancelParticipantAuthentication).
  */
 export type AuthenticationStatus =
-  | "prompt"
-  | "in_progress"
-  | "success"
-  | "failed"
-  | "expired"
-  | "cancelled";
+  "prompt" | "in_progress" | "success" | "failed" | "expired" | "cancelled";
 
 // Content types Amazon Connect uses for authentication (Authenticate Customer
 // flow block), mapped to the card's status. Completion is driven entirely by
@@ -411,7 +403,8 @@ const AUTH_EVENT_STATUS: Record<string, AuthenticationStatus> = {
   "application/vnd.amazonaws.connect.event.authentication.failed": "failed",
   "application/vnd.amazonaws.connect.event.authentication.timeout": "expired",
   "application/vnd.amazonaws.connect.event.authentication.expired": "expired",
-  "application/vnd.amazonaws.connect.event.authentication.cancelled": "cancelled",
+  "application/vnd.amazonaws.connect.event.authentication.cancelled":
+    "cancelled",
 };
 const authInitiatedContentType =
   "application/vnd.amazonaws.connect.event.authentication.initiated";
@@ -590,7 +583,8 @@ export const createConnectChatConversation = (
   // The ConnectParticipant service endpoint (same host ChatJS uses), e.g.
   // https://participant.connect.<region>.api.aws
   const participantEndpoint = (): string => {
-    const configured = (config.globalConfig as { endpoint?: unknown })?.endpoint;
+    const configured = (config.globalConfig as { endpoint?: unknown })
+      ?.endpoint;
     const base =
       typeof configured === "string" && configured !== ""
         ? configured
@@ -645,7 +639,8 @@ export const createConnectChatConversation = (
     }
     const updated = {
       type: ResponseType.Notice,
-      receivedAt: (authResponse as { receivedAt?: number })?.receivedAt ?? Date.now(),
+      receivedAt:
+        (authResponse as { receivedAt?: number })?.receivedAt ?? Date.now(),
       payload: { text: "" },
       authentication: { status },
     } as unknown as Response;
@@ -1579,7 +1574,10 @@ export const createConnectChatConversation = (
       // by the new session below). A fixed `contactId` stays connected, so re-post the
       // last context to it right away.
       rearmCollocatedLiveSync();
-      if (config.liveSync?.contactId != null && pendingLiveSyncContext != null) {
+      if (
+        config.liveSync?.contactId != null &&
+        pendingLiveSyncContext != null
+      ) {
         void postLiveSync("context", pendingLiveSyncContext);
       }
       connectionReady = openChatSession();

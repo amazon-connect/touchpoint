@@ -35,7 +35,7 @@ export const LaunchButton: FC<LaunchButtonProps> = (props) => {
           <img src={props.iconUrl} className="w-8 h-8" />
         )}
       </span>
-      {props.showLabel ?? false ? <span>{props.label}</span> : null}
+      {(props.showLabel ?? false) ? <span>{props.label}</span> : null}
     </button>
   );
 };

@@ -155,8 +155,7 @@ const normalizeConfiguration = (
     // participant connects, so there is nothing to send client-side. (NLX's
     // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
     // Chat Interface integration.)
-    initializeConversation:
-      configuration.initializeConversation ?? (() => {}),
+    initializeConversation: configuration.initializeConversation ?? (() => {}),
   };
 };
 

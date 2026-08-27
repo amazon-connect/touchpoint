@@ -193,7 +193,15 @@ export const GuideModal: FC<{
   onSubmit: (action: string, data: unknown, viewName?: string) => void;
   onComplete: () => void;
   onClose: () => void;
-}> = ({ title, view, viewName, instanceUrl, onSubmit, onComplete, onClose }) => {
+}> = ({
+  title,
+  view,
+  viewName,
+  instanceUrl,
+  onSubmit,
+  onComplete,
+  onClose,
+}) => {
   const copy = useCopy();
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -246,7 +254,11 @@ export const GuideModal: FC<{
         Data?: unknown;
       };
       const { onSubmit, onComplete, onClose } = callbacksRef.current;
-      onSubmit(detail.Action ?? "", detail.Output ?? detail.Data ?? {}, viewName);
+      onSubmit(
+        detail.Action ?? "",
+        detail.Output ?? detail.Data ?? {},
+        viewName,
+      );
       onComplete();
       onClose();
     };

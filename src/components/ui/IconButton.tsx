@@ -16,12 +16,7 @@ import { useAppRoot } from "../../utils/useAppRoot";
  * @category Modality components
  */
 export type IconButtonType =
-  | "main"
-  | "ghost"
-  | "activated"
-  | "coverup"
-  | "error"
-  | "overlay";
+  "main" | "ghost" | "activated" | "coverup" | "error" | "overlay";
 
 /**
  * Props for the IconButton component
@@ -73,8 +68,7 @@ const overlayClass =
 // color modes. It intentionally does not follow `errorPrimary`, which doubles as
 // error-message text and is a lighter tint in dark mode for contrast on the
 // error surface — as a filled button that would read as pink with a dark icon.
-const errorClass =
-  "bg-[#9d0303] text-white enabled:hover:before:bg-primary-10";
+const errorClass = "bg-[#9d0303] text-white enabled:hover:before:bg-primary-10";
 
 // Used in <summary> tags
 export const UnsemanticIconButton: FC<{

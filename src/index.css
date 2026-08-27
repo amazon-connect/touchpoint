@@ -200,16 +200,16 @@
     ),
     /* Cool wash — periwinkle #929BF9 fading toward cyan #92D7F9 (dark) */
     radial-gradient(
-      120% 100% at 88% 106%,
-      light-dark(rgba(146, 155, 249, 0.3), rgba(146, 155, 249, 0.16)),
-      light-dark(rgba(146, 155, 249, 0), rgba(146, 215, 249, 0)) 62%
-    ),
+        120% 100% at 88% 106%,
+        light-dark(rgba(146, 155, 249, 0.3), rgba(146, 155, 249, 0.16)),
+        light-dark(rgba(146, 155, 249, 0), rgba(146, 215, 249, 0)) 62%
+      ),
     /* Vignette to settle the edges — #000408 in dark */
     radial-gradient(
-      130% 120% at 50% 40%,
-      transparent 52%,
-      light-dark(rgba(0, 0, 0, 0.06), rgba(0, 4, 8, 0.55))
-    );
+        130% 120% at 50% 40%,
+        transparent 52%,
+        light-dark(rgba(0, 0, 0, 0.06), rgba(0, 4, 8, 0.55))
+      );
 }
 
 .markdown ul {

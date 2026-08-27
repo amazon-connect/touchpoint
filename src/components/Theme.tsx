@@ -4,7 +4,6 @@ import { type CSSProperties } from "react";
 import { type Theme } from "../interface";
 
 export const toCustomProperties = (theme: Theme): CSSProperties => {
-   
   return {
     "--font-family": theme.fontFamily,
     "--radius-inner": theme.innerBorderRadius,

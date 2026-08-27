@@ -5,7 +5,14 @@ import { clsx } from "clsx";
 import { useCopy } from "../utils/useCopy";
 import { IconButton, type IconButtonType } from "./ui/IconButton";
 import { type ColorMode } from "../interface";
-import { Close, Settings, Undo, Volume, VolumeOff, ArrowLeft } from "./ui/Icons";
+import {
+  Close,
+  Settings,
+  Undo,
+  Volume,
+  VolumeOff,
+  ArrowLeft,
+} from "./ui/Icons";
 import { HeaderContainer } from "./Layout";
 
 interface HeaderProps {
@@ -96,7 +103,7 @@ export const Header: FC<HeaderProps> = ({
       {renderCollapse ? (
         <IconButton
           label="Collapse"
-          type={errorThemedCloseButton ?? false ? "error" : iconButtonType}
+          type={(errorThemedCloseButton ?? false) ? "error" : iconButtonType}
           className={clsx(toggleSettings == null ? "ml-auto" : "")}
           onClick={
             enabled
