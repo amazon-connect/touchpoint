@@ -222,7 +222,7 @@ export const Input: FC<InputProps> = ({
     <div className={clsx("relative", className)}>
       <div
         className={clsx(
-          "bg-primary-5 transition-colors duration-200 p-2 rounded-full text-base font-normal",
+          "bg-primary-5 transition-colors duration-200 p-2 rounded-4xl text-base font-normal border border-solid border-primary-10",
           isTextAreaInFocus ? "" : "hover:bg-secondary-20",
         )}
       >
@@ -300,7 +300,7 @@ export const Input: FC<InputProps> = ({
           <TextareaAutosize
             disabled={isWaiting || !enabled}
             className={clsx(
-              "h-10 w-full resize-none mr-2 px-2 py-2 outline-hidden",
+              "h-10 w-full resize-none mr-2 px-2 py-2 outline-hidden scrollbar-none",
               "bg-transparent text-primary-80 placeholder:text-primary-40 caret-accent",
               "disabled:text-primary-40",
             )}
