@@ -15,7 +15,7 @@ import { type ConnectConversationHandler } from "../connect";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton } from "./ui/IconButton";
-import { Submit, Attachment, Delete, Check, Error } from "./ui/Icons";
+import { Send, Attachment, Delete, Check, Error } from "./ui/Icons";
 import { useTailwindMediaQuery } from "../utils/useTailwindMediaQuery";
 
 interface InputProps {
@@ -330,9 +330,7 @@ export const Input: FC<InputProps> = ({
             ref={textInputRef}
           />
           <IconButton
-            // The submit glyph reads heavier than a plain arrow, so scale it
-            // down (~35%) to sit comfortably within the round button.
-            className="flex-none [&_svg]:scale-[0.65]"
+            className="flex-none"
             label={copy.sendMessageButtonLabel}
             onClick={
               inputMessageSendDisabled
@@ -342,7 +340,7 @@ export const Input: FC<InputProps> = ({
                   }
             }
             type="activated"
-            Icon={Submit}
+            Icon={Send}
           />
         </div>
       </div>

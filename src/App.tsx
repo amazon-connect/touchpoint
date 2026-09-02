@@ -49,7 +49,7 @@ import {
   type ResolvedView,
 } from "./connect";
 import { TextButton } from "./components/ui/TextButton";
-import { Refresh } from "./components/ui/Icons";
+import { Restart } from "./components/ui/Icons";
 import { useCopy } from "./utils/useCopy";
 import { useDraggable } from "./utils/useDraggable";
 
@@ -96,7 +96,7 @@ const StartNewConversationButton: FC<{ onClick: () => void }> = ({
     <TextButton
       type="ghost"
       label={copy.startNewConversationButtonLabel}
-      Icon={Refresh}
+      Icon={Restart}
       onClick={onClick}
     />
   );
@@ -768,7 +768,9 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     if (welcomeResponses != null) {
       const welcomeMessages = welcomeResponses
         .flatMap((response) => response.payload.messages)
-        .filter((message) => message.text != null && message.text.trim() !== "");
+        .filter(
+          (message) => message.text != null && message.text.trim() !== "",
+        );
       // The input stays hidden until the first assistant message arrives; while
       // connecting/thinking we show only the centered status (no avatar).
       const hasFirstMessage = welcomeMessages.length > 0;

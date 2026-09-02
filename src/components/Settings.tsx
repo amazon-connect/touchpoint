@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC, useState } from "react";
 
-import { Undo, Download, Exit, Close, Warning } from "./ui/Icons";
+import { Undo, Download, LogOut, Close, Warning } from "./ui/Icons";
 import { useCopy } from "../utils/useCopy";
 import { TextButton } from "./ui/TextButton";
 import { clsx } from "clsx";
@@ -67,7 +67,7 @@ export const Settings: FC<SettingsProps> = ({
         ) : null}
         <TextButton
           label={copy.endConversationButtonLabel}
-          Icon={Exit}
+          Icon={LogOut}
           type="ghost"
           onClick={
             ended
@@ -102,21 +102,21 @@ export const Settings: FC<SettingsProps> = ({
               {copy.endConversationConfirm.body}
             </p>
             <TextButton
-              label={copy.endConversationConfirm.confirm}
-              Icon={Exit}
-              type="error"
-              onClick={() => {
-                setConfirmEnd(false);
-                onEndConversation();
-                onClose();
-              }}
-            />
-            <TextButton
               label={copy.endConversationConfirm.cancel}
               Icon={Close}
               type="ghost"
               onClick={() => {
                 setConfirmEnd(false);
+              }}
+            />
+            <TextButton
+              label={copy.endConversationConfirm.confirm}
+              Icon={LogOut}
+              type="error"
+              onClick={() => {
+                setConfirmEnd(false);
+                onEndConversation();
+                onClose();
               }}
             />
           </div>

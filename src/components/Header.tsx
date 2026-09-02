@@ -9,6 +9,7 @@ import {
   Close,
   Settings,
   Undo,
+  Restart,
   Volume,
   VolumeOff,
   ArrowLeft,
@@ -65,7 +66,7 @@ export const Header: FC<HeaderProps> = ({
                 }
               : undefined
           }
-          Icon={Undo}
+          Icon={Restart}
         />
       )}
       {toggleSettings != null ? (

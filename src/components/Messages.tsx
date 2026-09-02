@@ -28,11 +28,12 @@ import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
 import { TextButton } from "./ui/TextButton";
 import {
-  Submit,
+  Send,
   ArrowRight,
   ArrowDown,
   OpenLink,
   Check,
+  CheckDouble,
   Error as ErrorIcon,
   Time,
   User,
@@ -103,7 +104,7 @@ export const MessageChoices: FC<{
           <li key={key} className="w-full">
             <TextButton
               type="ghost"
-              Icon={Submit}
+              Icon={Send}
               onClick={
                 message.selectedChoiceId == null
                   ? () => {
@@ -163,11 +164,7 @@ const MessageStatusRow: FC<{
     ) : status === "sent" ? (
       <Check className={iconClass} />
     ) : (
-      // delivered / read: double check
-      <span className="relative inline-flex">
-        <Check className={iconClass} />
-        <Check className={clsx(iconClass, "-ml-2")} />
-      </span>
+      <CheckDouble className={iconClass} />
     );
   return (
     <div
