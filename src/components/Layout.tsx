@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { type FC, type ReactNode } from "react";
 import { type WindowSize } from "../interface";
 import { IconButton } from "./ui/IconButton";
-import { Close, DragHandle } from "./ui/Icons";
+import { Close, Reorder } from "./ui/Icons";
 import { BackgroundDecoration } from "./BackgroundDecoration";
 import { type DragHandleProps } from "../utils/useDraggable";
 
@@ -73,11 +73,9 @@ export const VoiceMiniControls: FC<{
     {dragHandleProps != null ? (
       <span
         {...dragHandleProps}
-        className="flex-none w-10 h-10 flex items-center justify-center text-primary-40 cursor-grab active:cursor-grabbing"
+        className="flex-none size-10 p-2.5 flex items-center justify-center text-primary-60 cursor-grab active:cursor-grabbing"
       >
-        <span className="w-5 h-5 block">
-          <DragHandle />
-        </span>
+        <Reorder />
       </span>
     ) : null}
     {children}

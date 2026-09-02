@@ -28,11 +28,12 @@ import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
 import { TextButton } from "./ui/TextButton";
 import {
-  Submit,
+  Send,
   ArrowRight,
   ArrowDown,
   OpenLink,
   Check,
+  CheckDouble,
   Error as ErrorIcon,
   Time,
   User,
@@ -103,7 +104,7 @@ export const MessageChoices: FC<{
           <li key={key} className="w-full">
             <TextButton
               type="ghost"
-              Icon={Submit}
+              Icon={Send}
               onClick={
                 message.selectedChoiceId == null
                   ? () => {
@@ -163,11 +164,7 @@ const MessageStatusRow: FC<{
     ) : status === "sent" ? (
       <Check className={iconClass} />
     ) : (
-      // delivered / read: double check
-      <span className="relative inline-flex">
-        <Check className={iconClass} />
-        <Check className={clsx(iconClass, "-ml-2")} />
-      </span>
+      <CheckDouble className={iconClass} />
     );
   return (
     <div
@@ -175,9 +172,9 @@ const MessageStatusRow: FC<{
         "flex items-center gap-1 text-xs",
         align === "right" ? "justify-end pr-1" : "justify-start pl-1",
         status === "failed"
-          ? "text-red-500"
+          ? "text-error-primary"
           : status === "read"
-            ? "text-blue-500"
+            ? "text-accent"
             : "text-primary-40",
       )}
     >
@@ -203,10 +200,7 @@ const ParticipantAvatar: FC<{
         role="img"
         aria-label={name}
         title={name}
-        className={clsx(
-          "flex-none w-6 h-6 object-cover object-center",
-          radius,
-        )}
+        className={clsx("flex-none w-6 h-6 object-cover object-center", radius)}
       />
     );
   }
@@ -589,7 +583,7 @@ export const Messages: FC<MessagesProps> = ({
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   {isFirstInSequence ? (
-                    <div className="text-primary-40 text-xs">
+                    <div className="text-primary-60 text-base">
                       {participantName}
                     </div>
                   ) : null}

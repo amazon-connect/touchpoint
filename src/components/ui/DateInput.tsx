@@ -67,7 +67,7 @@ export const DateInput: FC<DateInputProps> = ({ onSubmit, className }) => {
   return (
     <div
       className={clsx(
-        "relative bg-primary-5 flex items-center justify-between pl-4 py-2 pr-2 rounded-outer transition-colors duration-500 before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
+        "relative bg-primary-5 border border-solid border-primary-10 flex items-center justify-between pl-4 py-2 pr-2 rounded-outer transition-colors duration-500 before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
         isDisabled ? "" : "hover:bg-secondary-20",
         className,
       )}

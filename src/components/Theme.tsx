@@ -45,8 +45,8 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
 const customProperties: Theme = {
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
-  innerBorderRadius: "12px",
-  outerBorderRadius: "20px",
+  innerBorderRadius: "20px",
+  outerBorderRadius: "28px",
 
   primary: "light-dark(rgb(0, 2, 9), rgb(255, 255, 255))",
   primary90: "light-dark(rgba(0, 2, 9, 0.9), rgba(255, 255, 255, 0.95))",

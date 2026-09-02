@@ -15,7 +15,7 @@ import { type ConnectConversationHandler } from "../connect";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton } from "./ui/IconButton";
-import { Submit, Attachment, Delete, Check, Error } from "./ui/Icons";
+import { Send, Attachment, Delete, Check, Error } from "./ui/Icons";
 import { useTailwindMediaQuery } from "../utils/useTailwindMediaQuery";
 
 interface InputProps {
@@ -222,7 +222,7 @@ export const Input: FC<InputProps> = ({
     <div className={clsx("relative", className)}>
       <div
         className={clsx(
-          "bg-primary-5 transition-colors duration-200 p-2 rounded-full text-base font-normal",
+          "bg-primary-5 transition-colors duration-200 p-2 rounded-outer text-base font-normal border border-solid border-primary-10",
           isTextAreaInFocus ? "" : "hover:bg-secondary-20",
         )}
       >
@@ -300,7 +300,7 @@ export const Input: FC<InputProps> = ({
           <TextareaAutosize
             disabled={isWaiting || !enabled}
             className={clsx(
-              "h-10 w-full resize-none mr-2 px-2 py-2 outline-hidden",
+              "h-10 w-full resize-none mr-2 px-2 py-2 outline-hidden scrollbar-none",
               "bg-transparent text-primary-80 placeholder:text-primary-40 caret-accent",
               "disabled:text-primary-40",
             )}
@@ -330,9 +330,7 @@ export const Input: FC<InputProps> = ({
             ref={textInputRef}
           />
           <IconButton
-            // The submit glyph reads heavier than a plain arrow, so scale it
-            // down (~35%) to sit comfortably within the round button.
-            className="flex-none [&_svg]:scale-[0.65]"
+            className="flex-none"
             label={copy.sendMessageButtonLabel}
             onClick={
               inputMessageSendDisabled
@@ -342,7 +340,7 @@ export const Input: FC<InputProps> = ({
                   }
             }
             type="activated"
-            Icon={Submit}
+            Icon={Send}
           />
         </div>
       </div>
