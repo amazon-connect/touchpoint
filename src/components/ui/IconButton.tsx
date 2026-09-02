@@ -47,7 +47,7 @@ export interface IconButtonProps {
 }
 
 const baseClass =
-  "p-3 w-10 h-10 transition-colors rounded-full relative z-10 overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent focus:outline-0";
+  "p-3 size-10 transition-colors rounded-full relative z-10 overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent focus:outline-0";
 
 const mainClass =
   "bg-primary-80 text-secondary-80 enabled:hover:before:bg-primary-80 focus:before:bg-primary-80 enabled:active:before:bg-secondary-10 disabled:bg-primary-10 disabled:text-secondary-40";

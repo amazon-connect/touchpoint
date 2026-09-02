@@ -222,7 +222,7 @@ export const Input: FC<InputProps> = ({
     <div className={clsx("relative", className)}>
       <div
         className={clsx(
-          "bg-primary-5 transition-colors duration-200 p-2 rounded-4xl text-base font-normal border border-solid border-primary-10",
+          "bg-primary-5 transition-colors duration-200 p-2 rounded-outer text-base font-normal border border-solid border-primary-10",
           isTextAreaInFocus ? "" : "hover:bg-secondary-20",
         )}
       >

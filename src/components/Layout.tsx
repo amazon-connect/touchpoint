@@ -73,11 +73,9 @@ export const VoiceMiniControls: FC<{
     {dragHandleProps != null ? (
       <span
         {...dragHandleProps}
-        className="flex-none w-10 h-10 flex items-center justify-center text-primary-40 cursor-grab active:cursor-grabbing"
+        className="flex-none size-10 p-2.5 flex items-center justify-center text-primary-60 cursor-grab active:cursor-grabbing"
       >
-        <span className="w-5 h-5 block">
-          <Reorder />
-        </span>
+        <Reorder />
       </span>
     ) : null}
     {children}
