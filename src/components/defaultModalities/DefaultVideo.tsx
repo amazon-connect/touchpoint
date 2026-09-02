@@ -41,7 +41,7 @@ export const DefaultVideo: CustomModalityComponent<VideoData> = ({
   return (
     <div
       className={clsx(
-        "relative w-full overflow-hidden rounded-inner bg-black",
+        "relative w-full overflow-hidden rounded-inner bg-primary",
         className,
       )}
     >
