@@ -277,7 +277,9 @@ await touchpoint.sendContext({ actions: [/* … */] });
 
 In addition to regular modalities, you can define fully custom modalities directly in the code snippet as React components. If the application message contains this modality, the component is rendered with payload data as well as a conversation handler that makes interacting with the conversation easy.
 
-To make authoring these React components simple and to eliminate the need for JSX compilation, the package exports an `html` tagged template literal a'la [developit/htm](https://github.com/developit/htm), per the following example.
+To make authoring these React components simple and to eliminate the need for JSX compilation, the package exports an `html` tagged template literal a'la [developit/htm](https://github.com/developit/htm). `html` also comes pre-loaded with a range of components and icons Touchpoint already uses to render its UI, so you can easily create and compose markup that matches Touchpoint in style. The full list is visible in [the export definition](https://github.com/amazon-connect/touchpoint/blob/7d34fa3eef1b6308fa2f48b4af38f9e30bc51c38/src/index.tsx#L53-L86), and a more visual guide is going to be available soon.
+
+Here is a full example:
 
 ```js
 import { create, html } from "@amazon-connect-touchpoint/web";
@@ -297,16 +299,14 @@ const touchpoint = await create({
       return html`
         <div>
           <p>Are you sure?</p>
-          <button onClick=${() => { conversationHandler.sendText("yes"); }}>Yes</button>
-          <button onClick=${() => { conversationHandler.sendText("no"); }}>No</button>
+          <IconButton type="main" label="Yes" onClick=${() => { conversationHandler.sendText("yes"); }} icon={Check} />
+          <IconButton type="ghost" label="No" onClick=${() => { conversationHandler.sendText("no"); }} icon={Close} />
         </div>
       `;
     }
   }
 });
 ```
-
-`html` also comes pre-loaded with a range of components and icons Touchpoint already uses to render its UI, so you can easily create and compose markup that matches Touchpoint in style.
 
 ### Embedded mode (advanced)
 
