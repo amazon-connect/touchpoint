@@ -273,6 +273,41 @@ const touchpoint = await create({
 await touchpoint.sendContext({ actions: [/* … */] });
 ```
 
+### Custom modalities
+
+In addition to regular modalities, you can define fully custom modalities directly in the code snippet as React components. If the application message contains this modality, the component is rendered with payload data as well as a conversation handler that makes interacting with the conversation easy.
+
+To make authoring these React components simple and to eliminate the need for JSX compilation, the package exports an `html` tagged template literal a'la [developit/htm](https://github.com/developit/htm), per the following example.
+
+```js
+import { create, html } from "@amazon-connect-touchpoint/web";
+
+const touchpoint = await create({
+  config: {
+    // Your StartChatContact endpoint (e.g. an API Gateway route) that mints a
+    // participant token.
+    chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    instanceId: "REPLACE_WITH_INSTANCE_ID",
+    contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
+    region: "us-east-1",
+  },
+  input: "text",
+  modalityComponents: {
+    MyModality: ({ data, conversationHandler }) => {
+      return html`
+        <div>
+          <p>Are you sure?</p>
+          <button onClick=${() => { conversationHandler.sendText("yes"); }}>Yes</button>
+          <button onClick=${() => { conversationHandler.sendText("no"); }}>No</button>
+        </div>
+      `;
+    }
+  }
+});
+```
+
+`html` also comes pre-loaded with a range of components and icons Touchpoint already uses to render its UI, so you can easily create and compose markup that matches Touchpoint in style.
+
 ### Embedded mode (advanced)
 
 Touchpoint also registers a `<connect-touchpoint>` custom element. Set its
