@@ -34,7 +34,7 @@
   "dependencies": {
     "@base-ui/react": "^1.1.0",
     "@nlxai/core": "^1.2.7-alpha.3",
-    "@react-hookz/web": "^25.0.1",
+    "@react-hookz/web": "^26.1.0",
     "amazon-chime-sdk-js": "^3.32.0",
     "amazon-connect-chatjs": "^2.3.2",
     "@react-input/mask": "^2.0.4",
