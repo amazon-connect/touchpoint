@@ -129,17 +129,8 @@ export {
 const normalizeConfiguration = (
   configuration: TouchpointConfiguration,
 ): NormalizedTouchpointConfiguration => {
-  if ("customModalities" in configuration) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      "The 'customModalities' configuration option is deprecated. Use 'modalityComponents' instead.",
-    );
-  }
-
   const modalityComponents: Record<string, CustomModalityComponent<unknown>> = {
-    ...(configuration.modalityComponents ??
-      configuration.customModalities ??
-      {}),
+    ...(configuration.modalityComponents ?? {}),
     ...defaultModalities,
   };
 

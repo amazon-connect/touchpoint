@@ -592,8 +592,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
   const modalityComponents = useMemo(
-    () => props.modalityComponents ?? props.customModalities ?? {},
-    [props.modalityComponents, props.customModalities],
+    () => props.modalityComponents ?? {},
+    [props.modalityComponents],
   );
 
   const [fullscreenVoiceSpeakersEnabled, setFullscreenVoiceSpeakersEnabled] =
