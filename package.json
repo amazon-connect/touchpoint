@@ -23,6 +23,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:pages": "vite build --mode pages",
     "lint:check": "eslint src/",
     "prepublishOnly": "npm run build",
     "lint": "eslint src/ --fix",

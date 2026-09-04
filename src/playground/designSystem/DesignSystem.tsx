@@ -17,8 +17,12 @@ const MODES: SegmentedOption<SurfaceMode>[] = [
 
 const MODE_KEY = "touchpoint-colorMode";
 
+/** Hash prefix that routes to this gallery (see `main.tsx`). */
+const ROUTE = "#design-system";
+
 const specimenFromHash = (): string => {
-  const id = window.location.hash.replace(/^#/, "");
+  const { hash } = window.location;
+  const id = hash.startsWith(`${ROUTE}/`) ? hash.slice(ROUTE.length + 1) : "";
   return SPECIMENS.some((specimen) => specimen.id === id)
     ? id
     : SPECIMENS[0].id;
@@ -33,7 +37,7 @@ const readStoredMode = (): SurfaceMode => {
 };
 
 /**
- * Developer-facing gallery of the library's UI components, at `/design-system`.
+ * Developer-facing gallery of the library's UI components, at `#design-system`.
  * Unlinked on purpose: it exists for whoever types the URL, so the playground
  * itself stays a single-purpose page.
  *
@@ -83,7 +87,7 @@ export const DesignSystem: FC = () => {
           {SPECIMENS.map((specimen) => (
             <a
               key={specimen.id}
-              href={`#${specimen.id}`}
+              href={`${ROUTE}/${specimen.id}`}
               aria-current={specimen.id === activeId ? "page" : undefined}
               className={clsx(
                 "rounded-xl px-3 py-2 text-sm no-underline transition-colors",
