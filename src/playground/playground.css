@@ -1,0 +1,147 @@
+/*
+  Styles for the Touchpoint playground (the app served by `vite`, entry
+  `src/playground/main.tsx`). This is a standalone Tailwind entry point — it is
+  deliberately separate from the library's `src/index.css`, which is injected as
+  a raw string into the widget's closed shadow root and therefore never reaches
+  the page.
+*/
+@import "tailwindcss";
+@source "./";
+
+@theme {
+  --font-sans:
+    "Amazon Ember", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/*
+  Palette tokens are aliases (`@theme inline`) so the generated utilities emit
+  `var(--pg-…)` rather than a resolved color. That is what lets a single
+  `bg-card` respond to the `[data-theme]` switch below.
+*/
+@theme inline {
+  --color-canvas: var(--pg-bg);
+  --color-card: var(--pg-card);
+  --color-surface: var(--pg-surface);
+  --color-line: var(--pg-border);
+  --color-fg: var(--pg-text);
+  --color-muted: var(--pg-muted);
+  --color-heading: var(--pg-heading);
+  --color-accent: var(--pg-accent);
+  --color-accent-tint: var(--pg-accent-tint);
+  --color-cta: var(--pg-cta);
+  --color-cta-fg: var(--pg-cta-text);
+  --color-cta-hover: var(--pg-cta-hover);
+  --color-codebg: var(--pg-code-bg);
+  --color-headerbg: var(--pg-header-bg);
+  --color-sidebar-active: var(--pg-sidebar-active);
+  --color-select: var(--pg-select);
+  --color-tok-key: var(--pg-tok-key);
+  --color-tok-str: var(--pg-tok-str);
+  --color-tok-com: var(--pg-tok-com);
+  --color-success-bg: var(--pg-success-bg);
+  --color-success-fg: var(--pg-success-fg);
+  --color-danger: var(--pg-danger);
+}
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --pg-bg: #ffffff;
+  --pg-card: #ffffff;
+  --pg-surface: #f5f6f7;
+  --pg-border: #e7e9ec;
+  --pg-text: #16191f;
+  --pg-muted: #6b7684;
+  --pg-heading: #16191f;
+  --pg-accent: #01737d;
+  --pg-accent-tint: #e6f4f5;
+  --pg-cta: #111820;
+  --pg-cta-text: #ffffff;
+  --pg-cta-hover: #2a333d;
+  --pg-code-bg: #f6f7f8;
+  --pg-header-bg: rgba(255, 255, 255, 0.85);
+  --pg-sidebar-active: #ececed;
+  --pg-select: #ff6200;
+  --pg-tok-key: #b5179e;
+  --pg-tok-str: #157a5f;
+  --pg-tok-com: #9aa3af;
+  --pg-success-bg: #e4f6e4;
+  --pg-success-fg: #1e7a34;
+  --pg-danger: #e5484d;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --pg-bg: #0f1419;
+  --pg-card: #1a2029;
+  --pg-surface: #232b35;
+  --pg-border: #2c353f;
+  --pg-text: #d5dbdb;
+  --pg-muted: #909aa6;
+  --pg-heading: #ffffff;
+  --pg-accent: #2bb7c3;
+  --pg-accent-tint: rgba(43, 183, 195, 0.14);
+  --pg-cta: #ffffff;
+  --pg-cta-text: #16191f;
+  --pg-cta-hover: #e3e7e7;
+  --pg-code-bg: #11161c;
+  --pg-header-bg: rgba(15, 20, 25, 0.85);
+  --pg-sidebar-active: rgba(255, 255, 255, 0.09);
+  --pg-select: #ff7a2e;
+  --pg-tok-key: #d98cff;
+  --pg-tok-str: #4ec9b0;
+  --pg-tok-com: #6b7684;
+  --pg-success-bg: rgba(46, 160, 67, 0.16);
+  --pg-success-fg: #4ac26b;
+  --pg-danger: #ff6369;
+}
+
+@layer base {
+  /*
+    `overflow-x: clip` (not `hidden`) keeps stray overflow — a tooltip near the
+    viewport edge, a wide code line — from producing a horizontal scrollbar
+    without turning the page into a scroll container, which would break the
+    sticky top bar and sidebar.
+  */
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  body {
+    overflow-x: clip;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    background-color: var(--pg-bg);
+    color: var(--pg-text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Tailwind v4 defaults every border to `currentcolor`; the palette line color
+     is the sane default for this page. */
+  *,
+  ::after,
+  ::before {
+    border-color: var(--pg-border);
+  }
+}
+
+/* Paper planes for the "Search flights" demo. Each plane crosses the viewport
+   once and self-removes; the runway clips them so nothing overflows. */
+@keyframes pg-fly {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(100vw + 40px));
+  }
+}
+
+.pg-plane {
+  position: absolute;
+  left: -40px;
+  line-height: 1;
+  will-change: transform;
+  animation: pg-fly linear forwards;
+}

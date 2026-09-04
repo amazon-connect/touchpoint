@@ -459,12 +459,6 @@ export interface TouchpointConfiguration {
    */
   modalityComponents?: Record<string, CustomModalityComponent<unknown>>;
   /**
-   * Optional custom modality components to render in Touchpoint
-   * @deprecated use {@link TouchpointConfiguration.modalityComponents} instead.
-   * @hidden
-   */
-  customModalities?: Record<string, CustomModalityComponent<unknown>>;
-  /**
    * Custom conversation init method. Defaults to sending the welcome flow.
    * @param handler - the conversation handler.
    * @param context - the context object

@@ -31,14 +31,14 @@ import {
   Send,
   ArrowRight,
   ArrowDown,
-  OpenLink,
+  OpenInNew,
   Check,
   CheckDouble,
   Error as ErrorIcon,
   Time,
   User,
-  Robot,
-  AgentAvatar,
+  Bot,
+  Escalate,
   Attachment,
 } from "./ui/Icons";
 import { UnsemanticIconButton } from "./ui/IconButton";
@@ -204,7 +204,7 @@ const ParticipantAvatar: FC<{
       />
     );
   }
-  const Icon = role === "you" ? User : role === "agent" ? AgentAvatar : Robot;
+  const Icon = role === "you" ? User : role === "agent" ? Escalate : Bot;
   return (
     <span
       role="img"
@@ -213,9 +213,7 @@ const ParticipantAvatar: FC<{
       className={clsx(
         "flex-none flex items-center justify-center w-6 h-6",
         radius,
-        role === "you"
-          ? "border border-primary-20 text-primary-40"
-          : "bg-primary text-secondary",
+        role === "you" ? "text-primary-40" : "bg-primary text-secondary",
       )}
     >
       <Icon className="w-3.5 h-3.5" />
@@ -404,7 +402,7 @@ const Sources: FC<{ sources: KnowledgeBaseResponseSource[] }> = ({
                   className={clsx(sharedClassName, "hover:bg-primary-10")}
                 >
                   <NumberPill text={displayName} number={indicesDisplay} />
-                  <OpenLink className="w-4 h-4 text-primary-60" />
+                  <OpenInNew className="w-4 h-4 text-primary-60" />
                 </a>
               ) : (
                 <div className={sharedClassName}>
