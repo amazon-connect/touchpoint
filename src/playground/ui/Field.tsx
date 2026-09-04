@@ -103,7 +103,11 @@ export const Select: FC<SelectHTMLAttributes<HTMLSelectElement>> = ({
 }) => (
   <select
     {...props}
-    className={clsx(controlClasses, "border-line focus:border-accent", className)}
+    className={clsx(
+      controlClasses,
+      "border-line focus:border-accent",
+      className,
+    )}
   />
 );
 

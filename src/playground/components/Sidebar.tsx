@@ -10,10 +10,7 @@ export const Sidebar: FC<{
   /** Id of the section currently in view. */
   activeId: string | null;
 }> = ({ activeId }) => (
-  <nav
-    aria-label="Sections"
-    className="sticky top-[76px] hidden pr-6 md:block"
-  >
+  <nav aria-label="Sections" className="sticky top-[76px] hidden pr-6 md:block">
     {SECTIONS.map((section) => (
       <a
         key={section.id}

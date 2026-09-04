@@ -13,11 +13,7 @@ import {
 import { Button } from "../ui/Button";
 import { GroupDivider, GroupTitle } from "../ui/Callout";
 import { Field, FieldRow, Hint, MarkdownHint, TextInput } from "../ui/Field";
-import {
-  Disclosure,
-  DisclosureFigure,
-  DisclosureLead,
-} from "../ui/Disclosure";
+import { Disclosure, DisclosureFigure, DisclosureLead } from "../ui/Disclosure";
 import { ON_OFF, Segmented, type SegmentedOption } from "../ui/Segmented";
 
 const INPUT_MODES: SegmentedOption<Input>[] = [
@@ -68,7 +64,11 @@ export const ConfigScreen: FC<{
 
   const text = (
     key: TextFieldKey,
-  ): { id: string; value: string; onChange: (event: { target: { value: string } }) => void } => ({
+  ): {
+    id: string;
+    value: string;
+    onChange: (event: { target: { value: string } }) => void;
+  } => ({
     id: key,
     value: settings[key],
     onChange: (event) => {
@@ -115,10 +115,10 @@ export const ConfigScreen: FC<{
         </Field>
         {inputMode === "external" && (
           <Hint>
-            External shows no UI — use it to synchronize your digital asset using
-            Live Sync to an existing live contact (using its contact ID) and
-            drive everything from the external Connect Customer contact. A good
-            example of this is through a phone call.
+            External shows no UI — use it to synchronize your digital asset
+            using Live Sync to an existing live contact (using its contact ID)
+            and drive everything from the external Connect Customer contact. A
+            good example of this is through a phone call.
           </Hint>
         )}
 

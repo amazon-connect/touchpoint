@@ -81,6 +81,4 @@ export const GroupDivider: FC = () => (
 export const Prose: FC<{
   /** Inline-Markdown source. */
   text: string;
-}> = ({ text }) => (
-  <p className="mb-4 mt-2 text-fg">{renderInline(text)}</p>
-);
+}> = ({ text }) => <p className="mb-4 mt-2 text-fg">{renderInline(text)}</p>;
