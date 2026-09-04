@@ -213,9 +213,7 @@ const ParticipantAvatar: FC<{
       className={clsx(
         "flex-none flex items-center justify-center w-6 h-6",
         radius,
-        role === "you"
-          ? "border border-primary-20 text-primary-40"
-          : "bg-primary text-secondary",
+        role === "you" ? "text-primary-40" : "bg-primary text-secondary",
       )}
     >
       <Icon className="w-3.5 h-3.5" />
