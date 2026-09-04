@@ -45,12 +45,7 @@ export type Settings = Record<TextFieldKey, string> & {
 
 const INPUT_MODES: Input[] = ["text", "voice", "voiceMini", "external"];
 
-const WINDOW_SIZES: WindowSize[] = [
-  "half",
-  "full",
-  "floating",
-  "side-by-side",
-];
+const WINDOW_SIZES: WindowSize[] = ["half", "full", "floating", "side-by-side"];
 
 /** Defaults, matching the values the original static playground shipped with. */
 export const DEFAULT_SETTINGS: Settings = {
@@ -138,7 +133,11 @@ export const writeSettingsToUrl = (settings: Settings): void => {
       url.searchParams.delete(key);
     }
   }
-  const setOrDelete = (param: string, value: string, fallback: string): void => {
+  const setOrDelete = (
+    param: string,
+    value: string,
+    fallback: string,
+  ): void => {
     if (value !== fallback) {
       url.searchParams.set(param, value);
     } else {

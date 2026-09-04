@@ -74,11 +74,7 @@ const TextButtons: FC = () => (
         label="Main default"
         Icon={Icons.ArrowForward}
       />
-      <TextButton
-        type="main"
-        label="Main disabled"
-        Icon={Icons.ArrowForward}
-      />
+      <TextButton type="main" label="Main disabled" Icon={Icons.ArrowForward} />
     </Row>
     <Row label="ghost (default)" columns>
       <TextButton
@@ -224,8 +220,14 @@ const Cards: FC = () => {
             }}
           >
             <CustomCardRow
-              left={<BaseText>{id === "outbound" ? "Outbound" : "Return"}</BaseText>}
-              right={<BaseText faded>{selected === id ? "Selected" : "Choose"}</BaseText>}
+              left={
+                <BaseText>{id === "outbound" ? "Outbound" : "Return"}</BaseText>
+              }
+              right={
+                <BaseText faded>
+                  {selected === id ? "Selected" : "Choose"}
+                </BaseText>
+              }
             />
           </CustomCard>
         ))}

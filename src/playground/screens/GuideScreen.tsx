@@ -2,11 +2,7 @@ import { type FC, useMemo, useState } from "react";
 import type { ColorMode } from "../../interface";
 import { Section } from "../components/Section";
 import { Sidebar } from "../components/Sidebar";
-import {
-  useActiveSection,
-  useDemoState,
-  useFlightSearch,
-} from "../hooks";
+import { useActiveSection, useDemoState, useFlightSearch } from "../hooks";
 import { renderInline } from "../inline";
 import { buildLiveSyncActions } from "../liveSyncActions";
 import {
@@ -26,14 +22,22 @@ import { Field, FieldRow, Select, TextInput } from "../ui/Field";
 import { OptionRow } from "../ui/OptionRow";
 
 const FLIGHTS = [
-  { id: "BLU101", label: "Blue Airlines 101 — 8:15 AM, nonstop", price: "$312" },
+  {
+    id: "BLU101",
+    label: "Blue Airlines 101 — 8:15 AM, nonstop",
+    price: "$312",
+  },
   {
     id: "BLU208",
     label: "Blue Airlines 208 — 11:40 AM, nonstop",
     price: "$289",
   },
   { id: "BLU330", label: "Blue Airlines 330 — 2:05 PM, 1 stop", price: "$255" },
-  { id: "BLU412", label: "Blue Airlines 412 — 6:30 PM, nonstop", price: "$270" },
+  {
+    id: "BLU412",
+    label: "Blue Airlines 412 — 6:30 PM, nonstop",
+    price: "$270",
+  },
 ];
 
 const EXTRAS = [
@@ -197,7 +201,9 @@ export const GuideScreen: FC<{
                 />
               </Field>
               <div className="mt-4 flex flex-wrap items-center gap-3">
-                <Button onClick={connectToContact}>Connect via Live Sync</Button>
+                <Button onClick={connectToContact}>
+                  Connect via Live Sync
+                </Button>
                 <StatusMessage success={contactResult?.success}>
                   {contactResult?.message}
                 </StatusMessage>
