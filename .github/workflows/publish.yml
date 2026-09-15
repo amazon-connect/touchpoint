@@ -32,14 +32,18 @@ jobs:
           echo "Updated npm version: $(npm --version)"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Inject release version into package.json
+      - name: Verify release tag matches package.json version
         if: github.event_name == 'release'
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "Setting package version to: $VERSION"
-          npm version "$VERSION" --no-git-tag-version
+          PKG_VERSION="$(node -p 'require("./package.json").version')"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "package.json: $PKG_VERSION / tag: $TAG_VERSION"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Release tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION. Commit the version bump before tagging."
+            exit 1
+          fi
 
       - name: Build
         run: npm run build
