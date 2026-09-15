@@ -45,14 +45,27 @@ jobs:
             exit 1
           fi
 
+      - name: Determine npm dist-tag
+        run: |
+          VERSION="$(node -p 'require("./package.json").version')"
+          # A prerelease version (1.1.0-alpha.3) must not land on the "latest"
+          # dist-tag, or plain `npm install` would hand it to every consumer.
+          # Use the prerelease identifier as the tag: 1.1.0-alpha.3 -> alpha.
+          case "$VERSION" in
+            *-*) DIST_TAG="$(echo "${VERSION#*-}" | cut -d. -f1)" ;;
+            *)   DIST_TAG="latest" ;;
+          esac
+          echo "Publishing $VERSION under dist-tag: $DIST_TAG"
+          echo "DIST_TAG=$DIST_TAG" >> "$GITHUB_ENV"
+
       - name: Build
         run: npm run build
 
       - name: Publish dry-run
-        run: npm publish --access public --provenance --dry-run
+        run: npm publish --access public --provenance --tag "$DIST_TAG" --dry-run
 
       - name: Publish to npm (using OIDC trusted publishing)
         if: github.event_name == 'release'
         run: |
           echo "Publishing with OIDC trusted publishing..."
-          npm publish --access public --provenance
+          npm publish --access public --provenance --tag "$DIST_TAG"
