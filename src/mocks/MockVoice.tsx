@@ -64,7 +64,7 @@ export const MockVoice: FC<{
             Icon={Close}
             label="Close"
             onClick={onClose}
-            type="overlay"
+            type="ghost"
           />
 
           <IconButton
@@ -73,7 +73,7 @@ export const MockVoice: FC<{
             onClick={() => {
               setSettingsOpen(true);
             }}
-            type="overlay"
+            type="ghost"
           />
         </HeaderContainer>
         {
@@ -131,7 +131,7 @@ export const MockVoice: FC<{
                   <IconButton
                     Icon={Mic}
                     label="Voice"
-                    type={"activated"}
+                    type={"sound"}
                     onClick={() => {}}
                   />
                 </div>

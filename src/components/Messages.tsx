@@ -32,16 +32,13 @@ import {
   ArrowRight,
   ArrowDown,
   OpenInNew,
-  Check,
-  CheckDouble,
-  Error as ErrorIcon,
-  Time,
   User,
   Bot,
   Escalate,
   Attachment,
 } from "./ui/Icons";
 import { UnsemanticIconButton } from "./ui/IconButton";
+import { MessageStatusRow } from "./ui/MessageStatusRow";
 import {
   type CustomModalityComponent,
   type ColorMode,
@@ -149,41 +146,6 @@ const findFirstIndexAfterEscalation = (
   return null;
 };
 
-const MessageStatusRow: FC<{
-  status: MessageStatus;
-  align?: "left" | "right";
-}> = ({ status, align = "right" }) => {
-  const copy = useCopy();
-  const label = copy.messageStatus[status];
-  const iconClass = "w-3.5 h-3.5";
-  const icon =
-    status === "sending" ? (
-      <Time className={iconClass} />
-    ) : status === "failed" ? (
-      <ErrorIcon className={iconClass} />
-    ) : status === "sent" ? (
-      <Check className={iconClass} />
-    ) : (
-      <CheckDouble className={iconClass} />
-    );
-  return (
-    <div
-      className={clsx(
-        "flex items-center gap-1 text-xs",
-        align === "right" ? "justify-end pr-1" : "justify-start pl-1",
-        status === "failed"
-          ? "text-error-primary"
-          : status === "read"
-            ? "text-accent"
-            : "text-primary-40",
-      )}
-    >
-      {icon}
-      <span>{label}</span>
-    </div>
-  );
-};
-
 const ParticipantAvatar: FC<{
   role: "you" | "bot" | "agent";
   name: string;
@@ -282,7 +244,12 @@ export const UserMessage: FC<{
         </div>
       </div>
       {status != null ? (
-        <MessageStatusRow status={status} align={align} />
+        <MessageStatusRow
+          status={status}
+          className={
+            align === "right" ? "justify-end pr-1" : "justify-start pl-1"
+          }
+        />
       ) : null}
       {files != null ? (
         <div

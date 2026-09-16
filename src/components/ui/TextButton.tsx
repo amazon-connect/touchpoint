@@ -59,13 +59,13 @@ export const TextButton: FC<TextButtonProps> = ({
       onClick={onClick}
       disabled={onClick == null}
       className={clsx(
-        "relative z-10 w-full px-5 py-4 transition-colors rounded-outer flex justify-between items-center focus:outline-0 overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
+        "relative z-10 w-full px-5 py-4 transition-colors rounded-outer flex justify-between items-center focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
         {
-          "bg-primary-80 text-secondary-80 enabled:hover:before:bg-primary-80 focus:before:bg-primary-80 enabled:active:before:bg-secondary-10 disabled:bg-primary-10 disabled:text-secondary-40":
+          "bg-primary-90 text-secondary-90 enabled:hover:before:bg-primary-90 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "main",
-          "bg-primary-5 text-primary-80 enabled:hover:before:bg-primary-5 focus:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-primary-20":
+          "bg-primary-10 text-primary-90 enabled:hover:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-primary-20":
             type === "ghost",
-          "bg-red-300 text-red-950 enabled:hover:before:bg-red-400 focus:before:bg-red-400 disabled:bg-red-200 disabled:text-red-500":
+          "bg-error-primary text-secondary-90 enabled:hover:before:bg-primary-5 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "error",
         },
         className,

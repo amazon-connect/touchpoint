@@ -12,9 +12,11 @@ import {
   type IconButtonType,
 } from "../../components/ui/IconButton";
 import * as Icons from "../../components/ui/Icons";
+import { type MessageStatus } from "../../interface";
 import { LaunchButton } from "../../components/ui/LaunchButton";
 import { Loader } from "../../components/ui/Loader";
 import { MessageButton } from "../../components/ui/MessageButton";
+import { MessageStatusRow } from "../../components/ui/MessageStatusRow";
 import { Radio } from "../../components/ui/Radio";
 import { TextButton } from "../../components/ui/TextButton";
 import { BaseText, SmallText } from "../../components/ui/Typography";
@@ -104,9 +106,8 @@ const TextButtons: FC = () => (
 const ICON_BUTTON_TYPES: IconButtonType[] = [
   "main",
   "ghost",
-  "activated",
+  "sound",
   "coverup",
-  "overlay",
   "error",
 ];
 
@@ -151,6 +152,22 @@ const MessageButtons: FC = () => (
       />
     </Row>
   </>
+);
+
+const MESSAGE_STATUSES: MessageStatus[] = [
+  "sending",
+  "sent",
+  "delivered",
+  "read",
+  "failed",
+];
+
+const MessageStatusRows: FC = () => (
+  <Row label="all statuses">
+    {MESSAGE_STATUSES.map((status) => (
+      <MessageStatusRow key={status} status={status} />
+    ))}
+  </Row>
 );
 
 const LaunchButtons: FC = () => (
@@ -339,6 +356,113 @@ const IconGrid: FC = () => (
   </div>
 );
 
+/**
+ * One swatch: the `Theme` key you set, and the background utility it drives.
+ * The class names are spelled out rather than built from the key, because
+ * Tailwind only emits a utility it can find as a literal in the source.
+ */
+interface Swatch {
+  name: string;
+  className: string;
+}
+
+/**
+ * A group of swatches. `pairs` lays them out two-by-two, so each primary step
+ * sits beside the secondary step at the same alpha — they're mirror images, and
+ * the pairing shows that.
+ */
+interface ColorGroup {
+  label: string;
+  pairs?: boolean;
+  colors: Swatch[];
+}
+
+const COLOR_GROUPS: ColorGroup[] = [
+  {
+    label: "primary and secondary",
+    pairs: true,
+    colors: [
+      { name: "primary", className: "bg-primary" },
+      { name: "secondary", className: "bg-secondary" },
+      { name: "primary90", className: "bg-primary-90" },
+      { name: "secondary90", className: "bg-secondary-90" },
+      { name: "primary80", className: "bg-primary-80" },
+      { name: "secondary80", className: "bg-secondary-80" },
+      { name: "primary60", className: "bg-primary-60" },
+      { name: "secondary60", className: "bg-secondary-60" },
+      { name: "primary40", className: "bg-primary-40" },
+      { name: "secondary40", className: "bg-secondary-40" },
+      { name: "primary20", className: "bg-primary-20" },
+      { name: "secondary20", className: "bg-secondary-20" },
+      { name: "primary10", className: "bg-primary-10" },
+      { name: "secondary10", className: "bg-secondary-10" },
+      { name: "primary5", className: "bg-primary-5" },
+      { name: "secondary5", className: "bg-secondary-5" },
+      { name: "primary1", className: "bg-primary-1" },
+      { name: "secondary1", className: "bg-secondary-1" },
+    ],
+  },
+  {
+    label: "accent and surfaces",
+    colors: [
+      { name: "accent", className: "bg-accent" },
+      { name: "accent20", className: "bg-accent-20" },
+      { name: "onAccent", className: "bg-on-accent" },
+      { name: "background", className: "bg-background" },
+      { name: "overlay", className: "bg-overlay" },
+    ],
+  },
+  {
+    label: "status",
+    colors: [
+      { name: "warningPrimary", className: "bg-warning-primary" },
+      { name: "warningSecondary", className: "bg-warning-secondary" },
+      { name: "errorPrimary", className: "bg-error-primary" },
+      { name: "errorSecondary", className: "bg-error-secondary" },
+      { name: "successPrimary", className: "bg-success-primary" },
+      { name: "successSecondary", className: "bg-success-secondary" },
+      { name: "focus", className: "bg-focus" },
+    ],
+  },
+];
+
+const ColorSwatch: FC<Swatch> = ({ name, className }) => (
+  <div className="flex flex-col items-center gap-2 text-center">
+    {/* Bordered so the faintest steps still read as a rectangle. */}
+    <div
+      className={clsx(
+        "h-10 w-full rounded-[8px] border border-solid border-primary-20",
+        className,
+      )}
+    />
+    <span className="text-xs break-all text-primary-60">{name}</span>
+  </div>
+);
+
+const ColorGrid: FC = () => (
+  <>
+    {COLOR_GROUPS.map((group) => (
+      <div key={group.label} className="space-y-2">
+        <SmallText>{group.label}</SmallText>
+        <div
+          /* Fixed 120px tracks throughout, so every swatch is the same width —
+             a pair group is two of them per row, the rest wrap to fit. */
+          className={clsx(
+            "grid gap-x-2 gap-y-4",
+            group.pairs === true
+              ? "grid-cols-[repeat(2,120px)]"
+              : "grid-cols-[repeat(auto-fill,120px)]",
+          )}
+        >
+          {group.colors.map((color) => (
+            <ColorSwatch key={color.name} {...color} />
+          ))}
+        </div>
+      </div>
+    ))}
+  </>
+);
+
 /** One entry in the design system's navigation. */
 export interface Specimen {
   /** URL fragment identifying the entry. */
@@ -353,6 +477,13 @@ export interface Specimen {
 
 /** Every component gallery, in navigation order. */
 export const SPECIMENS: Specimen[] = [
+  {
+    id: "colors",
+    title: "Colors",
+    description:
+      "Every color in the theme, by its `Theme` key. Swatches reflect the theme currently applied to this surface.",
+    Component: ColorGrid,
+  },
   {
     id: "text-buttons",
     title: "Text buttons",
@@ -372,6 +503,13 @@ export const SPECIMENS: Specimen[] = [
     title: "Message buttons",
     description: "Compact icon buttons used within the message transcript.",
     Component: MessageButtons,
+  },
+  {
+    id: "message-status-row",
+    title: "Message status row",
+    description:
+      "Delivery status shown under the most recent user message: sending, sent, delivered, read, or failed.",
+    Component: MessageStatusRows,
   },
   {
     id: "launch-button",

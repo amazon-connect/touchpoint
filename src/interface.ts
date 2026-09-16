@@ -641,6 +641,18 @@ export interface Theme {
    * Secondary error color
    */
   errorSecondary: string;
+  /**
+   * Primary success color
+   */
+  successPrimary: string;
+  /**
+   * Secondary success color
+   */
+  successSecondary: string;
+  /**
+   * Focus outline color
+   */
+  focus: string;
 
   /**
    * Inner border radius: used for most buttons

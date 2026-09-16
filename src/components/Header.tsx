@@ -74,7 +74,7 @@ export const Header: FC<HeaderProps> = ({
           className="ml-auto"
           Icon={Settings}
           label="Settings"
-          type={isSettingsOpen ? "activated" : iconButtonType}
+          type={isSettingsOpen ? "sound" : iconButtonType}
           onClick={enabled ? toggleSettings : undefined}
         />
       ) : null}

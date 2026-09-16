@@ -1,6 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import { DesignSystem } from "./designSystem/DesignSystem";
+import { Router } from "./Router";
 import "./playground.css";
 
 const params = new URLSearchParams(window.location.search);
@@ -37,14 +36,8 @@ if (isAuthRedirect) {
 } else {
   const root = document.getElementById("root");
   if (root != null) {
-    // `#design-system` is a developer-only component gallery, reachable by
-    // typing the URL. Nothing in the playground links to it. A fragment (rather
-    // than a path) keeps this a single-page app, so a static host such as
-    // GitHub Pages serves it without any rewrite rules. Specimens live below
-    // it, as `#design-system/<specimen id>`.
-    const isDesignSystem = /^#design-system(\/|$)/.test(window.location.hash);
     // No StrictMode: its double-mount would create (and tear down) a second
     // Touchpoint instance on launch.
-    createRoot(root).render(isDesignSystem ? <DesignSystem /> : <App />);
+    createRoot(root).render(<Router />);
   }
 }

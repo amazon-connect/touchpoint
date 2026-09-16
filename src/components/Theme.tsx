@@ -39,6 +39,9 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
     "--color-warning-secondary": theme.warningSecondary,
     "--color-error-primary": theme.errorPrimary,
     "--color-error-secondary": theme.errorSecondary,
+    "--color-success-primary": theme.successPrimary,
+    "--color-success-secondary": theme.successSecondary,
+    "--color-focus": theme.focus,
   } as CSSProperties;
 };
 
@@ -49,39 +52,42 @@ const customProperties: Theme = {
   outerBorderRadius: "28px",
 
   primary: "light-dark(rgb(0, 2, 9), rgb(255, 255, 255))",
-  primary90: "light-dark(rgba(0, 2, 9, 0.9), rgba(255, 255, 255, 0.95))",
+  primary90: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",
   primary80: "light-dark(rgba(0, 2, 9, 0.8), rgba(255, 255, 255, 0.85))",
-  primary60: "light-dark(rgba(0, 2, 9, 0.6), rgba(255, 255, 255, 0.65))",
-  primary40: "light-dark(rgba(0, 2, 9, 0.4), rgba(255, 255, 255, 0.45))",
-  primary20: "light-dark(rgba(0, 2, 9, 0.2), rgba(255, 255, 255, 0.25))",
-  primary10: "light-dark(rgba(0, 2, 9, 0.1), rgba(255, 255, 255, 0.15))",
-  primary5: "light-dark(rgba(0, 2, 9, 0.05), rgba(255, 255, 255, 0.08))",
-  primary1: "light-dark(rgba(0, 2, 9, 0.01), rgba(255, 255, 255, 0.01))",
+  primary60: "light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.65))",
+  primary40: "light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.45))",
+  primary20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
+  primary10: "light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.12))",
+  primary5: "light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03))",
+  primary1: "light-dark(rgba(0, 0, 0, 0.01), rgba(255, 255, 255, 0.01))",
 
   secondary: "light-dark(rgb(255, 255, 255), rgb(0, 2, 9))",
-  secondary90: "light-dark(rgba(255, 255, 255, 0.9), rgba(0, 2, 9, 0.95))",
+  secondary90: "light-dark(rgba(255, 255, 255, 0.95), rgba(0, 0, 0, 0.9))",
   secondary80: "light-dark(rgba(255, 255, 255, 0.85), rgba(0, 2, 9, 0.8))",
-  secondary60: "light-dark(rgba(255, 255, 255, 0.65), rgba(0, 2, 9, 0.6))",
-  secondary40: "light-dark(rgba(255, 255, 255, 0.45), rgba(0, 2, 9, 0.4))",
-  secondary20: "light-dark(rgba(255, 255, 255, 0.25), rgba(0, 2, 9, 0.2))",
-  secondary10: "light-dark(rgba(255, 255, 255, 0.15), rgba(0, 2, 9, 0.1))",
-  secondary5: "light-dark(rgba(255, 255, 255, 0.08), rgba(0, 2, 9, 0.05))",
-  secondary1: "light-dark(rgba(255, 255, 255, 0.01), rgba(0, 2, 9, 0.01))",
+  secondary60: "light-dark(rgba(255, 255, 255, 0.65), rgba(0, 0, 0, 0.6))",
+  secondary40: "light-dark(rgba(255, 255, 255, 0.45), rgba(0, 0, 0, 0.4))",
+  secondary20: "light-dark(rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.2))",
+  secondary10: "light-dark(rgba(255, 255, 255, 0.12), rgba(0, 0, 0, 0.1))",
+  secondary5: "light-dark(rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.03))",
+  secondary1: "light-dark(rgba(255, 255, 255, 0.01), rgba(0, 0, 0, 0.01))",
 
   // Accent defaults to black/white (matching primary) so that it stays
   // understated out of the box, and setting a brand accent is clearly visible.
-  accent: "light-dark(rgb(0, 2, 9), rgb(255, 255, 255))",
-  accent20: "light-dark(rgba(0, 2, 9, 0.2), rgba(255, 255, 255, 0.25))",
+  accent: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",
+  accent20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
   // The contrasting foreground on the default black/white accent (i.e. secondary).
   onAccent: "light-dark(rgb(255, 255, 255), rgb(0, 2, 9))",
-  // Base surface fill (per Figma): light #DCDCDC @ 90%, dark #121215 @ 95%.
-  background: "light-dark(rgba(220, 220, 220, 0.9), rgba(18, 18, 21, 0.95))",
-  overlay: "rgba(0, 2, 9, 0.4)",
+  // Base surface fill (per Figma): light #F2F2F2 @ 90%, dark #1B1B21 @ 95%.
+  background: "light-dark(rgba(242, 242, 242, 0.9), rgba(27, 27, 33, 0.95))",
+  overlay: "light-dark(rgba(0, 2, 9, 0.4), rgba(0, 0, 0, 0.4))",
 
   warningPrimary: "light-dark(rgb(220, 159, 3), rgb(255, 214, 108))",
-  warningSecondary: "light-dark(rgb(255, 242, 209), rgb(95, 65, 29))",
-  errorPrimary: "light-dark(rgb(157, 3, 3), rgb(255, 133, 162))",
-  errorSecondary: "light-dark(rgb(255, 223, 230), rgb(94, 4, 4))",
+  warningSecondary: "light-dark(rgb(255, 217, 118), rgb(131, 94, 0))",
+  errorPrimary: "light-dark(rgb(157, 3, 3), rgb(255, 58, 105))",
+  errorSecondary: "light-dark(rgb(255, 92, 137), rgb(157, 3, 3))",
+  successPrimary: "light-dark(rgb(11, 120, 70), rgb(136, 214, 79))",
+  successSecondary: "light-dark(rgb(157, 215, 115), rgb(11, 120, 70))",
+  focus: "light-dark(rgba(0, 127, 217, 0.9), rgba(0, 149, 255, 0.7))",
 };
 
 /**
