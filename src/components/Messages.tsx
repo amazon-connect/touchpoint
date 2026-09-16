@@ -488,6 +488,23 @@ export const Messages: FC<MessagesProps> = ({
 
   const copy = useCopy();
 
+  // Text of the most recent incoming (bot or human agent) message, surfaced in a
+  // visually-hidden aria-live region so screen readers announce messages as they
+  // arrive. Only ResponseType.Application is announced — the user's own messages
+  // are already conveyed as they type/send.
+  const liveAnnouncement = useMemo(() => {
+    for (let i = responses.length - 1; i >= 0; i--) {
+      const response = responses[i];
+      if (response.type === ResponseType.Application) {
+        return response.payload.messages
+          .map((message) => message.text)
+          .filter((text) => text != null && text !== "")
+          .join(". ");
+      }
+    }
+    return "";
+  }, [responses]);
+
   // Avatar + name for the typing/interim indicator: the human agent if one is
   // active, otherwise the assistant.
   const interimAvatar = useMemo(() => {
@@ -524,6 +541,15 @@ export const Messages: FC<MessagesProps> = ({
 
   return (
     <div className={clsx("relative", className)}>
+      {/* Announces incoming messages to assistive tech as they arrive. */}
+      <div
+        className="sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {liveAnnouncement}
+      </div>
       <div
         data-theme={colorMode === "dark" ? "light" : "dark"}
         className={clsx(
