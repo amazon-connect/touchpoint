@@ -72,7 +72,7 @@ export const Authentication: FC<{
           <div
             className={clsx(
               "flex items-center justify-center gap-2 py-1 text-base",
-              isFailure ? "text-red-500" : "text-primary-60",
+              isFailure ? "text-error-primary" : "text-primary-60",
             )}
           >
             {status === "success" ? (

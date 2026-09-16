@@ -41,6 +41,9 @@
   --color-warning-secondary: inherit;
   --color-error-primary: inherit;
   --color-error-secondary: inherit;
+  --color-success-primary: inherit;
+  --color-success-secondary: inherit;
+  --color-focus: inherit;
 
   --animate-shimmer: shimmer 1.5s linear infinite;
   @keyframes shimmer {

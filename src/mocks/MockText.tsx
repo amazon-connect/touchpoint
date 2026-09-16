@@ -62,7 +62,7 @@ export const MockText: FC<{
             Icon={Close}
             label="Close"
             onClick={onClose}
-            type="overlay"
+            type="ghost"
           />
           <IconButton
             Icon={SettingsIcon}
@@ -70,7 +70,7 @@ export const MockText: FC<{
             onClick={() => {
               setSettingsOpen(true);
             }}
-            type="overlay"
+            type="ghost"
           />
         </HeaderContainer>
         {settingsOpen ? (

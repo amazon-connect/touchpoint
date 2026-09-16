@@ -1082,7 +1082,7 @@ const MyDateInput = ({ conversationHandler }) => (
 
 ```ts
 type IconButtonType =
-  "main" | "ghost" | "activated" | "coverup" | "error" | "overlay";
+  "main" | "ghost" | "activated" | "coverup" | "error";
 ```
 
 Represents the different types of icon buttons available in the application.

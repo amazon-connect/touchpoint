@@ -20,7 +20,7 @@ export const LaunchButton: FC<LaunchButtonProps> = (props) => {
   return (
     <button
       className={clsx(
-        "p-3 w-fit bg-background text-primary-80 rounded-outer",
+        "p-3 w-fit bg-background text-primary-80 rounded-outer relative flex items-center gap-2",
         "after:content-[''] after:rounded-outer after:absolute after:inset-0 after:pointer-events-none",
         "hover:after:bg-primary-10",
         props.className,

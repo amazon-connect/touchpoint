@@ -1,75 +1,146 @@
+import { useKeyboardEvent } from "@react-hookz/web";
 import clsx from "clsx";
-import { type FC, useEffect, useState } from "react";
-import type { ColorMode } from "../../interface";
+import { type FC, useCallback, useEffect, useState } from "react";
+import { type WindowSize } from "../../interface";
+import { MockText } from "../../mocks/MockText";
+import { MockVoice } from "../../mocks/MockVoice";
+import { MockVoiceMini } from "../../mocks/MockVoiceMini";
 import { TopBar } from "../components/TopBar";
+import { Link, useRouter } from "../Router";
+import { DESIGN_SYSTEM_ROUTE } from "../routes";
 import { useTheme } from "../theme";
-import { Segmented, type SegmentedOption } from "../ui/Segmented";
+import { Segmented } from "../ui/Segmented";
 import { LibrarySurface } from "./LibrarySurface";
+import { MockHost } from "./MockHost";
 import { SPECIMENS } from "./specimens";
 
-/** Color modes offered for the demo surface. */
-type SurfaceMode = Extract<ColorMode, "light" | "dark">;
-
-const MODES: SegmentedOption<SurfaceMode>[] = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
-
-const MODE_KEY = "touchpoint-colorMode";
-
-/** Hash prefix that routes to this gallery (see `main.tsx`). */
-const ROUTE = "#design-system";
-
-const specimenFromHash = (): string => {
-  const { hash } = window.location;
-  const id = hash.startsWith(`${ROUTE}/`) ? hash.slice(ROUTE.length + 1) : "";
+const specimenFromHash = (hash: string): string => {
+  const id = hash.startsWith(`${DESIGN_SYSTEM_ROUTE}/`)
+    ? hash.slice(DESIGN_SYSTEM_ROUTE.length + 1)
+    : "";
   return SPECIMENS.some((specimen) => specimen.id === id)
     ? id
     : SPECIMENS[0].id;
 };
 
-const readStoredMode = (): SurfaceMode => {
-  try {
-    return sessionStorage.getItem(MODE_KEY) === "dark" ? "dark" : "light";
-  } catch (_e) {
-    return "light";
-  }
-};
+/** Which mock chat frame the floating preview shows. */
+type MockVersion = "mock1" | "mock2" | "mock3";
+
+const MOCK_OPTIONS: { value: MockVersion; label: string }[] = [
+  { value: "mock1", label: "Text" },
+  { value: "mock2", label: "Voice" },
+  { value: "mock3", label: "Voice mini" },
+];
+
+const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
+  { value: "half", label: "Half" },
+  { value: "full", label: "Full" },
+];
 
 /**
  * Developer-facing gallery of the library's UI components, at `#design-system`.
- * Unlinked on purpose: it exists for whoever types the URL, so the playground
- * itself stays a single-purpose page.
  *
- * The components render in a shadow root (see {@link LibrarySurface}) with their
- * own color mode, independent of the page's light/dark theme.
+ * The components render in a shadow root (see {@link LibrarySurface}), in the
+ * color mode matching the page theme — the TopBar switch drives both, so there
+ * is one light/dark control on the page.
+ *
+ * A floating mock chat frame (see {@link MockHost}) previews the library's
+ * top-level widget shell — Text, Voice and Voice-mini — independent of which
+ * specimen is showing, switchable from the sidebar or the 1/2/3 keys.
  */
 export const DesignSystem: FC = () => {
   const [theme, setTheme] = useTheme();
-  const [activeId, setActiveId] = useState(specimenFromHash);
-  const [mode, setMode] = useState<SurfaceMode>(readStoredMode);
-
-  // The hash is the address of a specimen, so back/forward and a pasted link
-  // both land on the right one.
-  useEffect(() => {
-    const onHashChange = (): void => {
-      setActiveId(specimenFromHash());
-    };
-    window.addEventListener("hashchange", onHashChange);
-    return () => {
-      window.removeEventListener("hashchange", onHashChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(MODE_KEY, mode);
-    } catch (_e) {
-      /* sessionStorage unavailable */
-    }
-  }, [mode]);
+  // The fragment is the address of a specimen, so back/forward and a pasted
+  // link both land on the right one.
+  const { hash } = useRouter();
+  const activeId = specimenFromHash(hash);
 
   const active = SPECIMENS.find((specimen) => specimen.id === activeId);
+
+  const [activeMock, setActiveMock] = useState<MockVersion>(() => {
+    const stored = sessionStorage.getItem("touchpoint-activeMock");
+    return stored === "mock1" || stored === "mock2" || stored === "mock3"
+      ? stored
+      : "mock1";
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("touchpoint-activeMock", activeMock);
+  }, [activeMock]);
+
+  const [isMockExpanded, setIsMockExpanded] = useState<boolean>(() => {
+    return sessionStorage.getItem("touchpoint-isMockExpanded") === "true";
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      "touchpoint-isMockExpanded",
+      String(isMockExpanded),
+    );
+  }, [isMockExpanded]);
+
+  const [windowSize, setWindowSize] = useState<WindowSize>(() => {
+    const stored = sessionStorage.getItem("touchpoint-windowSize");
+    return stored === "half" || stored === "full" ? stored : "half";
+  });
+
+  useEffect(() => {
+    sessionStorage.setItem("touchpoint-windowSize", windowSize);
+  }, [windowSize]);
+
+  const expandMock = useCallback(() => {
+    setIsMockExpanded(true);
+  }, []);
+
+  const collapseMock = useCallback(() => {
+    setIsMockExpanded(false);
+  }, []);
+
+  const toggleMock = useCallback(() => {
+    setIsMockExpanded((prev) => !prev);
+  }, []);
+
+  useKeyboardEvent(
+    (event) => event.code === "Digit1",
+    () => {
+      setActiveMock("mock1");
+    },
+    [],
+  );
+
+  useKeyboardEvent(
+    (event) => event.code === "Digit2",
+    () => {
+      setActiveMock("mock2");
+    },
+    [],
+  );
+
+  useKeyboardEvent(
+    (event) => event.code === "Digit3",
+    () => {
+      setActiveMock("mock3");
+    },
+    [],
+  );
+
+  useKeyboardEvent(
+    (event) => event.code === "Space",
+    () => {
+      if (activeMock !== "mock3") {
+        setWindowSize((prev) => (prev === "half" ? "full" : "half"));
+      }
+    },
+    [activeMock],
+  );
+
+  useKeyboardEvent((event) => event.code === "Enter", toggleMock, [
+    toggleMock,
+  ]);
+
+  useKeyboardEvent((event) => event.code === "Escape", collapseMock, [
+    collapseMock,
+  ]);
 
   return (
     <>
@@ -85,9 +156,9 @@ export const DesignSystem: FC = () => {
             Components
           </p>
           {SPECIMENS.map((specimen) => (
-            <a
+            <Link
               key={specimen.id}
-              href={`${ROUTE}/${specimen.id}`}
+              href={`${DESIGN_SYSTEM_ROUTE}/${specimen.id}`}
               aria-current={specimen.id === activeId ? "page" : undefined}
               className={clsx(
                 "rounded-xl px-3 py-2 text-sm no-underline transition-colors",
@@ -97,29 +168,49 @@ export const DesignSystem: FC = () => {
               )}
             >
               {specimen.title}
-            </a>
+            </Link>
           ))}
+          <div className="w-full space-y-4 border-t border-line pt-4">
+            <div className="w-full space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                Chat frame
+              </p>
+              <Segmented
+                label="Chat frame"
+                value={activeMock}
+                options={MOCK_OPTIONS}
+                onChange={setActiveMock}
+              />
+              <p className="text-xs text-muted">or press 1, 2, 3</p>
+            </div>
+            {activeMock !== "mock3" && (
+              <div className="w-full space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Window size
+                </p>
+                <Segmented
+                  label="Window size"
+                  value={windowSize}
+                  options={WINDOW_SIZE_OPTIONS}
+                  onChange={setWindowSize}
+                />
+                <p className="text-xs text-muted">or press space</p>
+              </div>
+            )}
+          </div>
         </nav>
 
         <main className="min-w-0">
-          <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-[26px] font-bold tracking-[-0.01em] text-heading">
-                {active?.title ?? "Design system"}
-              </h1>
-              <p className="max-w-[60ch] text-sm text-muted">
-                {active?.description}
-              </p>
-            </div>
-            <Segmented
-              label="Component color mode"
-              value={mode}
-              options={MODES}
-              onChange={setMode}
-            />
+          <div className="mb-5">
+            <h1 className="text-[26px] font-bold tracking-[-0.01em] text-heading">
+              {active?.title ?? "Design system"}
+            </h1>
+            <p className="max-w-[60ch] text-sm text-muted">
+              {active?.description}
+            </p>
           </div>
           {active != null && (
-            <LibrarySurface colorMode={mode}>
+            <LibrarySurface colorMode={theme}>
               {/* Keyed so switching specimens starts each gallery fresh rather
                   than reconciling one into the next. */}
               <active.Component key={active.id} />
@@ -127,6 +218,36 @@ export const DesignSystem: FC = () => {
           )}
         </main>
       </div>
+      <MockHost>
+        {activeMock === "mock1" && (
+          <MockText
+            embedded={false}
+            colorMode={theme}
+            isExpanded={isMockExpanded}
+            onExpand={expandMock}
+            onClose={collapseMock}
+            windowSize={windowSize}
+          />
+        )}
+        {activeMock === "mock2" && (
+          <MockVoice
+            embedded={false}
+            colorMode={theme}
+            isExpanded={isMockExpanded}
+            onExpand={expandMock}
+            onClose={collapseMock}
+            windowSize={windowSize}
+          />
+        )}
+        {activeMock === "mock3" && (
+          <MockVoiceMini
+            colorMode={theme}
+            isExpanded={isMockExpanded}
+            onExpand={expandMock}
+            onClose={collapseMock}
+          />
+        )}
+      </MockHost>
     </>
   );
 };
