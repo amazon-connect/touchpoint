@@ -52,8 +52,17 @@ jobs:
           # dist-tag, or plain `npm install` would hand it to every consumer.
           # Use the prerelease identifier as the tag: 1.1.0-alpha.3 -> alpha.
           case "$VERSION" in
-            *-*) DIST_TAG="$(echo "${VERSION#*-}" | cut -d. -f1)" ;;
-            *)   DIST_TAG="latest" ;;
+            *-*)
+              PREID="$(echo "${VERSION#*-}" | cut -d. -f1)"
+              case "$PREID" in
+                # A numeric identifier (1.0.2-0, from `npm version prerelease`
+                # with no --preid) is a valid SemVer range, which npm rejects
+                # as a dist-tag. Fall back to a generic channel.
+                *[!0-9]*) DIST_TAG="$PREID" ;;
+                *)        DIST_TAG="next" ;;
+              esac
+              ;;
+            *) DIST_TAG="latest" ;;
           esac
           echo "Publishing $VERSION under dist-tag: $DIST_TAG"
           echo "DIST_TAG=$DIST_TAG" >> "$GITHUB_ENV"
