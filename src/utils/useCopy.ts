@@ -3,7 +3,7 @@ import { createContext, useContext } from "react";
 import { type Copy } from "../interface";
 
 // Localized UI copy for the locales the Amazon Connect chat interface supports:
-// de_DE, en_US, es_ES, fr_FR, id_ID, it_IT, ja_JP, ko_KR, pt_BR, zh_CN, zh_TW.
+// de_DE, en_US, es_ES, fr_FR, fr_CA, id_ID, it_IT, ja_JP, ko_KR, pt_BR, zh_CN, zh_TW.
 
 const en: Copy = {
   escalationAttemptNotice:
@@ -221,6 +221,16 @@ const fr: Copy = {
       inProgress: "En cours",
       complete: "Terminé",
     },
+  },
+};
+
+// Canadian French. Shares wording with France French (`fr`) but follows the
+// Québec/OQLF convention of no space before "?" and "!".
+const frCA: Copy = {
+  ...fr,
+  endConversationConfirm: {
+    ...fr.endConversationConfirm,
+    title: "Êtes-vous sûr?",
   },
 };
 
@@ -618,6 +628,7 @@ export const defaultCopy = (languageCode: string): Copy => {
   const code = (languageCode || "en").toLowerCase().replace(/_/g, "-");
   if (code === "zh-tw" || code.startsWith("zh-hant")) return zhTW;
   if (code.startsWith("zh")) return zhCN;
+  if (code === "fr-ca") return frCA;
   return BY_LANGUAGE[code.split("-")[0]] ?? en;
 };
 
