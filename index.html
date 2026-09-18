@@ -6,14 +6,14 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Touchpoint Playground</title>
     <script>
-      // Set the theme before first paint to avoid a flash of the wrong palette.
+      // Set the color mode before first paint to avoid a flash of the wrong palette.
       (function () {
         try {
-          var t = localStorage.getItem("lsTheme");
-          document.documentElement.dataset.theme =
-            t === "light" || t === "dark" ? t : "dark";
+          var m = localStorage.getItem("lsColorMode");
+          document.documentElement.dataset.colorMode =
+            m === "light" || m === "dark" ? m : "dark";
         } catch (e) {
-          document.documentElement.dataset.theme = "dark";
+          document.documentElement.dataset.colorMode = "dark";
         }
       })();
     </script>

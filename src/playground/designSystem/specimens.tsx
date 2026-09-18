@@ -78,7 +78,7 @@ const CARD_IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
 
 const TextButtons: FC = () => (
   <>
-    <Row label="main" columns>
+    <Row label="type: main" columns>
       <TextButton
         type="main"
         onClick={noop}
@@ -87,7 +87,7 @@ const TextButtons: FC = () => (
       />
       <TextButton type="main" label="Main disabled" Icon={Icons.ArrowForward} />
     </Row>
-    <Row label="ghost (default)" columns>
+    <Row label="type: ghost (default)" columns>
       <TextButton
         type="ghost"
         onClick={noop}
@@ -100,7 +100,7 @@ const TextButtons: FC = () => (
         Icon={Icons.ArrowForward}
       />
     </Row>
-    <Row label="error" columns>
+    <Row label="type: error" columns>
       <TextButton
         type="error"
         onClick={noop}
@@ -123,7 +123,7 @@ const ICON_BUTTON_TYPES: IconButtonType[] = [
 const IconButtons: FC = () => (
   <>
     {ICON_BUTTON_TYPES.map((type) => (
-      <Row key={type} label={type}>
+      <Row key={type} label={`type: ${type}`}>
         <IconButton
           type={type}
           onClick={noop}
@@ -145,7 +145,7 @@ const MESSAGE_BUTTON_TYPES: MessageButtonType[] = [
 const MessageButtons: FC = () => (
   <>
     {MESSAGE_BUTTON_TYPES.map((type) => (
-      <Row key={type} label={type}>
+      <Row key={type} label={`type: ${type}`}>
         <MessageButton
           type={type}
           onClick={noop}
@@ -732,6 +732,13 @@ export interface Specimen {
   description: string;
   /** The gallery of variants. */
   Component: FC;
+  /**
+   * `html`-tagged-template snippet reproducing this gallery in a custom
+   * modality, shown only for components exported to that `html` instance
+   * (see `src/index.tsx`). Omitted for gallery-only entries like colors,
+   * icons, or components not exposed to custom modalities.
+   */
+  code?: string;
 }
 
 /** Every component gallery, in navigation order. */
@@ -749,6 +756,24 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Full-width buttons with a visible label. Omitting onClick disables the button.",
     Component: TextButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <TextButton
+      type="main"
+      label="Confirm"
+      Icon=\${Icons.ArrowForward}
+      onClick=\${() => conversationHandler.sendText("Confirm")}
+    />
+    <TextButton
+      type="error"
+      label="Cancel"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Cancel")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "icon-buttons",
@@ -756,12 +781,48 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Round icon-only buttons; the label becomes the accessible name and the tooltip.",
     Component: IconButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <IconButton
+      type="main"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+    <IconButton
+      type="ghost"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "message-buttons",
     title: "Message buttons",
     description: "Compact icon buttons used within the message transcript.",
     Component: MessageButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data, conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <MessageButton
+      type=\${data.liked ? "selected" : "default"}
+      label="Like"
+      Icon=\${Icons.ThumbUp}
+      onClick=\${() => conversationHandler.sendText("Like")}
+    />
+    <MessageButton
+      type=\${data.liked ? "unselected" : "default"}
+      label="Dislike"
+      Icon=\${Icons.ThumbDown}
+      onClick=\${() => conversationHandler.sendText("Dislike")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "message-status-row",
@@ -782,6 +843,15 @@ export const SPECIMENS: Specimen[] = [
     title: "Typography",
     description: "The two text primitives available to custom modalities.",
     Component: Typography,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = () => html\`
+  <div>
+    <BaseText>This is some standard text.</BaseText>
+    <BaseText faded>This is some faded text.</BaseText>
+    <SmallText>This is some small text.</SmallText>
+  </div>
+\`;`,
   },
   {
     id: "cards",
@@ -789,6 +859,21 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Composable cards: rows of left/right content, an image row, and selected/clickable/link states.",
     Component: Cards,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data, conversationHandler }) => html\`
+  <CustomCard
+    selected=\${data.selected}
+    onClick=\${() => conversationHandler.sendText(data.label)}
+  >
+    <CustomCardImageRow src=\${data.image} alt="" />
+    <CustomCardRow
+      left=\${html\`<BaseText>\${data.label}</BaseText>\`}
+      right=\${html\`<BaseText faded>\${data.price}</BaseText>\`}
+      icon=\${Icons.ArrowForward}
+    />
+  </CustomCard>
+\`;`,
   },
   {
     id: "carousel",
@@ -796,6 +881,33 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Horizontally scrollable row of cards, draggable with the pointer.",
     Component: Carousels,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+// This modality expects the application message to provide a "cities" array, e.g.:
+// {
+//   "cities": [
+//     { "name": "Seattle", "price": "from $189", "image": "https://example.com/seattle.jpg" },
+//     { "name": "Portland", "price": "from $189", "image": "https://example.com/portland.jpg" },
+//     { "name": "Vancouver", "price": "from $189", "image": "https://example.com/vancouver.jpg" },
+//     { "name": "San Diego", "price": "from $189", "image": "https://example.com/san-diego.jpg" },
+//     { "name": "Austin", "price": "from $189", "image": "https://example.com/austin.jpg" }
+//   ]
+// }
+const MyModality = ({ data, conversationHandler }) => html\`
+  <Carousel>
+    \${data.cities.map(
+      (city) => html\`
+        <CustomCard onClick=\${() => conversationHandler.sendText(city.name)}>
+          <CustomCardImageRow src=\${city.image} alt="" />
+          <CustomCardRow
+            left=\${html\`<BaseText>\${city.name}</BaseText>\`}
+            right=\${html\`<BaseText faded>\${city.price}</BaseText>\`}
+          />
+        </CustomCard>
+      \`,
+    )}
+  </Carousel>
+\`;`,
   },
   {
     id: "date-input",
@@ -803,6 +915,11 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Masked date field with a native picker; submits an ISO (YYYY-MM-DD) date.",
     Component: DateInputs,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <DateInput onSubmit=\${(date) => conversationHandler.sendText(date)} />
+\`;`,
   },
   {
     id: "loader",
@@ -815,5 +932,16 @@ export const SPECIMENS: Specimen[] = [
     title: "Icons",
     description: "Every icon exported as `Icons` from the package.",
     Component: IconGrid,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+// Icons are available under their own name, without an "Icons." prefix.
+const MyModality = () => html\`
+  <div style="display: flex; gap: 8px;">
+    <ArrowForward size=\${20} />
+    <Close size=\${20} />
+    <ThumbUp size=\${20} />
+    <Check size=\${20} />
+  </div>
+\`;`,
   },
 ];

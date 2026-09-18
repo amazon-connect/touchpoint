@@ -8,8 +8,10 @@ import { MockVoiceMini } from "../../mocks/MockVoiceMini";
 import { TopBar } from "../components/TopBar";
 import { Link, useRouter } from "../Router";
 import { DESIGN_SYSTEM_ROUTE } from "../routes";
+import { useColorMode } from "../colorMode";
 import { useCustomTheme } from "../customTheme";
-import { useTheme } from "../theme";
+import { CodeBlock } from "../ui/CodeBlock";
+import { Disclosure } from "../ui/Disclosure";
 import { Segmented } from "../ui/Segmented";
 import { LibrarySurface } from "./LibrarySurface";
 import { MockHost } from "./MockHost";
@@ -50,7 +52,7 @@ const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
  * specimen is showing, switchable from the sidebar or the 1/2/3 keys.
  */
 export const DesignSystem: FC = () => {
-  const [theme, setTheme] = useTheme();
+  const [colorMode, setColorMode] = useColorMode();
   // The playground's custom color overrides, propagated to the preview frames.
   const customTheme = useCustomTheme();
   // The fragment is the address of a specimen, so back/forward and a pasted
@@ -142,7 +144,7 @@ export const DesignSystem: FC = () => {
 
   return (
     <>
-      <TopBar theme={theme} onThemeChange={setTheme} />
+      <TopBar theme={colorMode} onThemeChange={setColorMode} />
       {/* Same max width and gutters as the TopBar and the launch form, so the
           header rule lines up with the content below it. */}
       <div className="mx-auto grid max-w-[1080px] grid-cols-1 items-start gap-8 px-4 py-8 md:grid-cols-[220px_minmax(0,1fr)] md:px-5">
@@ -208,11 +210,20 @@ export const DesignSystem: FC = () => {
             </p>
           </div>
           {active != null && (
-            <LibrarySurface colorMode={theme}>
+            <LibrarySurface colorMode={colorMode}>
               {/* Keyed so switching specimens starts each gallery fresh rather
                   than reconciling one into the next. */}
               <active.Component key={active.id} />
             </LibrarySurface>
+          )}
+          {active?.code != null && (
+            // Keyed so the disclosure collapses again when switching specimens.
+            <Disclosure
+              key={active.id}
+              summary="How to build this in a custom modality"
+            >
+              <CodeBlock code={active.code} />
+            </Disclosure>
           )}
         </main>
       </div>
@@ -220,7 +231,7 @@ export const DesignSystem: FC = () => {
         {activeMock === "mock1" && (
           <MockText
             embedded={false}
-            colorMode={theme}
+            colorMode={colorMode}
             theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
@@ -231,7 +242,7 @@ export const DesignSystem: FC = () => {
         {activeMock === "mock2" && (
           <MockVoice
             embedded={false}
-            colorMode={theme}
+            colorMode={colorMode}
             theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
@@ -241,7 +252,7 @@ export const DesignSystem: FC = () => {
         )}
         {activeMock === "mock3" && (
           <MockVoiceMini
-            colorMode={theme}
+            colorMode={colorMode}
             theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
