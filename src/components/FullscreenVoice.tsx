@@ -276,7 +276,7 @@ export const FullscreenVoice: FC<Props> = ({
           <IconButton
             Icon={micEnabled ? Mic : MicOff}
             label="Voice"
-            type={micEnabled ? "sound" : "ghost"}
+            type={micEnabled ? "subtle" : "ghost"}
             onClick={() => {
               setMicEnabled((prev) => !prev);
             }}

@@ -339,7 +339,7 @@ export const Input: FC<InputProps> = ({
                     submit();
                   }
             }
-            type="sound"
+            type="subtle"
             Icon={Send}
           />
         </div>

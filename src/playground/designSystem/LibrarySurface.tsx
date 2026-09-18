@@ -3,6 +3,7 @@ import { createRoot, type Root } from "react-dom/client";
 import type { ColorMode } from "../../interface";
 import { ProviderStack } from "../../ProviderStack";
 import cssRaw from "../../index.css?inline";
+import { useCustomTheme } from "../customTheme";
 
 /** Solid backdrop behind the widget's translucent `background` token. */
 const BACKDROP: Record<string, string> = {
@@ -27,6 +28,9 @@ export const LibrarySurface: FC<{
   /** The components to show. */
   children: ReactNode;
 }> = ({ colorMode, children }) => {
+  // The playground's custom theme, applied so every specimen (including the
+  // Colors gallery's own swatches) reflects the edited palette live.
+  const theme = useCustomTheme();
   const host = useRef<HTMLDivElement>(null);
   const root = useRef<Root | null>(null);
   // Attaching the shadow root is a DOM effect, so the first render has no root
@@ -53,7 +57,7 @@ export const LibrarySurface: FC<{
         <style>{cssRaw}</style>
         <ProviderStack
           className="space-y-6 rounded-outer bg-background p-6"
-          theme={{}}
+          theme={theme}
           colorMode={colorMode}
           languageCode="en-US"
         >
@@ -61,7 +65,7 @@ export const LibrarySurface: FC<{
         </ProviderStack>
       </>,
     );
-  }, [attached, colorMode, children]);
+  }, [attached, colorMode, children, theme]);
 
   useEffect(
     () => () => {

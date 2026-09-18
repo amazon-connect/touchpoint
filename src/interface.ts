@@ -611,12 +611,6 @@ export interface Theme {
    */
   accent20: string;
   /**
-   * Foreground color rendered on top of `accent` (e.g. the send button icon).
-   * If omitted while `accent` is set to a solid color, it is derived
-   * automatically for legible contrast.
-   */
-  onAccent: string;
-  /**
    * The background color of the main Touchpoint interface
    */
   background: string;

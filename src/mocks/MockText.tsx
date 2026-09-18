@@ -9,7 +9,7 @@ import { Input } from "../components/Input";
 import { Close, Settings as SettingsIcon } from "../components/ui/Icons";
 import { Messages } from "../components/Messages";
 import { mockConversationHandler, mockTheme, responses } from "./shared";
-import { type WindowSize, type ColorMode } from "../interface";
+import { type WindowSize, type ColorMode, type Theme } from "../interface";
 import { defaultModalities } from "../components/defaultModalities";
 import { Settings } from "../components/Settings";
 
@@ -20,9 +20,12 @@ export const MockText: FC<{
   onClose: () => void;
   onExpand: () => void;
   windowSize: WindowSize;
+  /** Theme overrides layered on top of the mock's own theme. */
+  theme?: Partial<Theme>;
 }> = (props) => {
   const colorMode = props.colorMode ?? "dark";
   const { isExpanded, onClose, onExpand, windowSize } = props;
+  const theme = { ...mockTheme, ...props.theme };
 
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
@@ -30,7 +33,7 @@ export const MockText: FC<{
     return (
       <ProviderStack
         className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={mockTheme}
+        theme={theme}
         colorMode={colorMode}
         languageCode="en-US"
       >
@@ -49,7 +52,7 @@ export const MockText: FC<{
         "grid grid-cols-2 xl:grid-cols-[1fr_632px]",
         props.embedded ? "w-full h-full" : "fixed inset-0 z-touchpoint",
       )}
-      theme={mockTheme}
+      theme={theme}
       colorMode={colorMode}
       languageCode="en-US"
     >

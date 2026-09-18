@@ -31,7 +31,6 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
 
     "--color-accent": theme.accent,
     "--color-accent-20": theme.accent20,
-    "--color-on-accent": theme.onAccent,
     "--color-background": theme.background,
     "--color-overlay": theme.overlay,
 
@@ -45,7 +44,7 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
   } as CSSProperties;
 };
 
-const customProperties: Theme = {
+export const defaultTheme: Theme = {
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
   innerBorderRadius: "20px",
@@ -73,10 +72,8 @@ const customProperties: Theme = {
 
   // Accent defaults to black/white (matching primary) so that it stays
   // understated out of the box, and setting a brand accent is clearly visible.
-  accent: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",
+  accent: "light-dark(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))",
   accent20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
-  // The contrasting foreground on the default black/white accent (i.e. secondary).
-  onAccent: "light-dark(rgb(255, 255, 255), rgb(0, 2, 9))",
   // Base surface fill (per Figma): light #F2F2F2 @ 90%, dark #1B1B21 @ 95%.
   background: "light-dark(rgba(242, 242, 242, 0.9), rgba(27, 27, 33, 0.95))",
   overlay: "light-dark(rgba(0, 2, 9, 0.4), rgba(0, 0, 0, 0.4))",
@@ -90,67 +87,11 @@ const customProperties: Theme = {
   focus: "light-dark(rgba(0, 127, 217, 0.9), rgba(0, 149, 255, 0.7))",
 };
 
-/**
- * Parses a solid CSS color (hex or rgb/rgba) into `[r, g, b]`. Returns null for
- * anything mode-dependent or otherwise unresolvable (e.g. `light-dark(...)`,
- * `var(...)`, named colors), where a single foreground can't be derived.
- */
-const parseRgb = (color: string): [number, number, number] | null => {
-  const value = color.trim();
-  const hex = /^#([0-9a-f]{3,8})$/i.exec(value);
-  if (hex != null) {
-    let h = hex[1];
-    if (h.length === 3 || h.length === 4) {
-      h = h
-        .split("")
-        .map((c) => c + c)
-        .join("");
-    }
-    return [
-      parseInt(h.slice(0, 2), 16),
-      parseInt(h.slice(2, 4), 16),
-      parseInt(h.slice(4, 6), 16),
-    ];
-  }
-  const rgb = /^rgba?\(([^)]+)\)$/i.exec(value);
-  if (rgb != null) {
-    const parts = rgb[1]
-      .split(/[,/\s]+/)
-      .filter(Boolean)
-      .slice(0, 3)
-      .map(Number);
-    if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
-      return [parts[0], parts[1], parts[2]];
-    }
-  }
-  return null;
-};
-
-/**
- * Derives a legible foreground color for content on top of `accent`. Colored
- * accents keep a light foreground for a branded look; only near-white accents
- * flip to dark. Falls back to secondary (light/dark) when the accent isn't a
- * resolvable solid color.
- */
-const deriveOnAccent = (accent: string): string => {
-  const rgb = parseRgb(accent);
-  if (rgb == null) {
-    return "light-dark(rgb(255, 255, 255), rgb(0, 2, 9))";
-  }
-  const [r, g, b] = rgb;
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.82 ? "rgb(0, 2, 9)" : "rgb(255, 255, 255)";
-};
-
 export const intelligentMerge = (theme: Partial<Theme>): Theme => {
   const computed: Partial<Theme> = {};
 
   if (theme.accent != null && theme.accent20 == null) {
     computed.accent20 = `color-mix(in srgb, ${theme.accent} 20%, transparent)`;
-  }
-
-  if (theme.accent != null && theme.onAccent == null) {
-    computed.onAccent = deriveOnAccent(theme.accent);
   }
 
   if (theme.primary != null) {
@@ -192,7 +133,7 @@ export const intelligentMerge = (theme: Partial<Theme>): Theme => {
       computed.secondary1 = `rgb(from ${theme.secondary} r g b / 0.01)`;
   }
   return {
-    ...customProperties,
+    ...defaultTheme,
     ...computed,
     ...theme,
   };

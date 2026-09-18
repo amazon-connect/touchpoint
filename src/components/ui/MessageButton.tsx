@@ -5,16 +5,14 @@ import { type IconProps } from "./Icons";
 import { HeadlessIconButton } from "./IconButton";
 
 /**
- * Represents the different types of icon buttons available in the application.
+ * Represents the different types of message buttons available in the application.
  *
- * - `main`: The primary icon button.
- * - `ghost`: A transparent or less prominent icon button.
- * - `activated`: An icon button that indicates an active state.
- * - `coverup`: An icon button used to cover up or mask something.
- * - `overlay`: An icon button that appears over other content.
+ * - `default`: The default message button.
+ * - `selected`: A message button showing the selected state.
+ * - `unselected`: A message button showing the unselected state.
  * @category Modality components
  */
-export type MessageButtonType = "main" | "activated";
+export type MessageButtonType = "default" | "selected" | "unselected";
 
 /**
  * Props for the MessageButton component
@@ -36,8 +34,9 @@ export interface MessageButtonProps {
   className?: string;
   /**
    * Visual style variant of the button. One of MessageButtonType.
+   * @default "default"
    */
-  type: MessageButtonType;
+  type?: MessageButtonType;
   /**
    * Icon component to display inside the button
    */
@@ -45,13 +44,16 @@ export interface MessageButtonProps {
 }
 
 const baseClass =
-  "p-2.5 w-8 h-8 transition-colors rounded-inner relative z-10 overflow-hidden focus:outline-0";
+  "p-2.5 w-8 h-8 transition-colors rounded-inner relative z-10 overflow-hidden focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus";
 
-const mainClass =
-  "text-primary-60 hover:bg-primary-10 focus:bg-primary-10 active:bg-secondary-20 disabled:text-primary-20";
+const defaultClass =
+  "text-primary-60 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-20";
 
-const activatedClass =
-  "bg-accent text-on-accent enabled:hover:before:bg-primary-40 focus:before:bg-primary-40 enabled:active:before:bg-secondary-10 disabled:bg-accent-20";
+const selectedClass =
+  "text-primary-90 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-40";
+
+const unselectedClass =
+  "text-primary-40 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-10";
 
 /**
  * A button showing only an icon (textual label is provided for accessibility)
@@ -63,7 +65,6 @@ const activatedClass =
  *   <MessageButton
  *     label="Send message"
  *     onClick={() => alert('Icon button clicked!')}
- *     type="main"
  *     Icon={Icons.ArrowForward}
  *   />
  * );
@@ -72,7 +73,7 @@ const activatedClass =
  */
 export const MessageButton: FC<MessageButtonProps> = ({
   onClick,
-  type,
+  type = "default",
   label,
   className,
   Icon,
@@ -83,8 +84,9 @@ export const MessageButton: FC<MessageButtonProps> = ({
       label={label}
       className={clsx(
         baseClass,
-        type === "main" ? mainClass : null,
-        type === "activated" ? activatedClass : null,
+        type === "default" ? defaultClass : null,
+        type === "selected" ? selectedClass : null,
+        type === "unselected" ? unselectedClass : null,
         className,
       )}
     >

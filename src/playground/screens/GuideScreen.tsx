@@ -11,6 +11,7 @@ import {
   SECTION_IDS,
   SECTIONS,
 } from "../sections";
+import { useCustomTheme } from "../customTheme";
 import { type Settings, UUID_RE } from "../settings";
 import { buildCreateSnippet, buildStepSnippet } from "../snippets";
 import { useTouchpoint } from "../useTouchpoint";
@@ -80,6 +81,7 @@ export const GuideScreen: FC<{
   const [demo, demoActions] = useDemoState();
   const flightSearch = useFlightSearch();
   const activeId = useActiveSection(SECTION_IDS);
+  const customTheme = useCustomTheme();
 
   const [contactId, setContactId] = useState("");
   const [contactResult, setContactResult] = useState<Result | null>(null);
@@ -97,7 +99,12 @@ export const GuideScreen: FC<{
   );
   const touchpoint = useTouchpoint({ settings, colorMode, context });
 
-  const createSnippet = buildCreateSnippet({ settings, colorMode, contactId });
+  const createSnippet = buildCreateSnippet({
+    settings,
+    colorMode,
+    contactId,
+    theme: customTheme,
+  });
   const stepSnippet = buildStepSnippet(step);
   const malformedContactId = contactId !== "" && !UUID_RE.test(contactId);
 

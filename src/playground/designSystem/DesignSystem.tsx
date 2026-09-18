@@ -8,6 +8,7 @@ import { MockVoiceMini } from "../../mocks/MockVoiceMini";
 import { TopBar } from "../components/TopBar";
 import { Link, useRouter } from "../Router";
 import { DESIGN_SYSTEM_ROUTE } from "../routes";
+import { useCustomTheme } from "../customTheme";
 import { useTheme } from "../theme";
 import { Segmented } from "../ui/Segmented";
 import { LibrarySurface } from "./LibrarySurface";
@@ -50,6 +51,8 @@ const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
  */
 export const DesignSystem: FC = () => {
   const [theme, setTheme] = useTheme();
+  // The playground's custom color overrides, propagated to the preview frames.
+  const customTheme = useCustomTheme();
   // The fragment is the address of a specimen, so back/forward and a pasted
   // link both land on the right one.
   const { hash } = useRouter();
@@ -73,10 +76,7 @@ export const DesignSystem: FC = () => {
   });
 
   useEffect(() => {
-    sessionStorage.setItem(
-      "touchpoint-isMockExpanded",
-      String(isMockExpanded),
-    );
+    sessionStorage.setItem("touchpoint-isMockExpanded", String(isMockExpanded));
   }, [isMockExpanded]);
 
   const [windowSize, setWindowSize] = useState<WindowSize>(() => {
@@ -134,9 +134,7 @@ export const DesignSystem: FC = () => {
     [activeMock],
   );
 
-  useKeyboardEvent((event) => event.code === "Enter", toggleMock, [
-    toggleMock,
-  ]);
+  useKeyboardEvent((event) => event.code === "Enter", toggleMock, [toggleMock]);
 
   useKeyboardEvent((event) => event.code === "Escape", collapseMock, [
     collapseMock,
@@ -223,6 +221,7 @@ export const DesignSystem: FC = () => {
           <MockText
             embedded={false}
             colorMode={theme}
+            theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
             onClose={collapseMock}
@@ -233,6 +232,7 @@ export const DesignSystem: FC = () => {
           <MockVoice
             embedded={false}
             colorMode={theme}
+            theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
             onClose={collapseMock}
@@ -242,6 +242,7 @@ export const DesignSystem: FC = () => {
         {activeMock === "mock3" && (
           <MockVoiceMini
             colorMode={theme}
+            theme={customTheme}
             isExpanded={isMockExpanded}
             onExpand={expandMock}
             onClose={collapseMock}

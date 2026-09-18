@@ -132,7 +132,7 @@ export const LoaderAnimation: FC<unknown> = () => {
       stroke="none"
       fill="currentColor"
       style={{
-        filter: `drop-shadow(0 0 ${dropShadowRadius}px var(--accent))`,
+        filter: `drop-shadow(0 0 ${dropShadowRadius}px var(--color-focus))`,
       }}
     >
       <g transform={`translate(50 50) rotate(${spin * 90})`} opacity={opacity}>
