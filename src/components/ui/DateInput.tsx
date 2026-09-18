@@ -105,6 +105,7 @@ export const DateInput: FC<DateInputProps> = ({ onSubmit, className }) => {
               : "placeholder-primary-40",
           )}
           placeholder="MM / DD / YYYY"
+          aria-label="Date"
           onChange={(event) => {
             const value = event.target.value;
             setMaskedValue(value);

@@ -227,7 +227,10 @@ export const Input: FC<InputProps> = ({
         )}
       >
         {uploadErrorMessage != null && (
-          <div className="flex items-center gap-1 px-2 py-1 mb-2 w-full bg-error-secondary rounded-inner">
+          <div
+            role="alert"
+            className="flex items-center gap-1 px-2 py-1 mb-2 w-full bg-error-secondary rounded-inner"
+          >
             <Error size={16} className="flex-none" />
             <span className="truncate">{uploadErrorMessage}</span>
           </div>
@@ -275,6 +278,7 @@ export const Input: FC<InputProps> = ({
             <>
               <label
                 htmlFor="file-upload"
+                aria-label="Upload file"
                 className="p-3 w-10 h-10 flex-none block transition-colors rounded-full bg-primary-80 hover:bg-primary-80 text-secondary-80 cursor-pointer"
               >
                 <Attachment />
@@ -305,6 +309,7 @@ export const Input: FC<InputProps> = ({
               "disabled:text-primary-40",
             )}
             placeholder="Type something"
+            aria-label="Type something"
             maxRows={10}
             onFocus={() => {
               setIsTextAreaInFocus(true);

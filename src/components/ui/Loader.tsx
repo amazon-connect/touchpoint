@@ -150,8 +150,11 @@ export const Loader: FC<LoaderProps> = ({ label, className }) => {
         className,
       )}
     >
-      <div className="flex flex-col items-center justify-center gap-3">
-        <div className={clsx("w-8 h-8 block text-accent")}>
+      <div
+        role="status"
+        className="flex flex-col items-center justify-center gap-3"
+      >
+        <div className={clsx("w-8 h-8 block text-accent")} aria-hidden="true">
           <LoaderAnimation />
         </div>
         {label != null ? (
