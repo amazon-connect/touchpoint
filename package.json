@@ -28,7 +28,8 @@
     "prepublishOnly": "npm run build",
     "lint": "eslint src/ --fix",
     "format": "git ls-files | grep -E '\\.(js|jsx|ts|tsx|css|html)$' | xargs prettier --write",
-    "test": "typedoc --emit none && vitest run",
+    "format:check": "git ls-files | grep -E '\\.(js|jsx|ts|tsx|css|html)$' | xargs prettier --check",
+    "test": "npm run lint:check && npm run format:check && npm run build && typedoc --emit none && vitest run",
     "tsc": "tsc",
     "update-readme": "rm -rf docs/ && typedoc --excludeExternals --externalPattern src/components/ui/Icons.tsx && find docs -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +"
   },

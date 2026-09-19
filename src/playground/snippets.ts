@@ -1,4 +1,5 @@
 import type { ColorMode } from "../interface";
+import type { ColorOverrides } from "./customTheme";
 import {
   isLiveSyncConfigured,
   isVoiceMode,
@@ -16,6 +17,8 @@ interface CreateSnippetParams {
   colorMode: ColorMode;
   /** Contact ID currently entered in the Live Sync section, if any. */
   contactId: string;
+  /** Custom theme color overrides set in the design system, if any. */
+  theme: ColorOverrides;
 }
 
 /**
@@ -30,7 +33,9 @@ export const buildCreateSnippet = ({
   settings,
   colorMode,
   contactId,
+  theme,
 }: CreateSnippetParams): string => {
+  const themeEntries = Object.entries(theme);
   const { inputMode, windowSize, avatars, welcomeScreen, avatarShape } =
     settings;
   const isText = inputMode === "text";
@@ -76,6 +81,13 @@ export const buildCreateSnippet = ({
       ? `  avatarShape: ${q(avatarShape)},`
       : null,
     isText && welcomeScreen === "off" ? "  welcomeScreen: false," : null,
+    ...(themeEntries.length > 0
+      ? [
+          "  theme: {",
+          ...themeEntries.map(([key, value]) => `    ${key}: ${q(value)},`),
+          "  },",
+        ]
+      : []),
     showLiveSync ? "  liveSync: {" : null,
     showLiveSync ? `    deploymentKey: ${q(settings.deploymentKey)},` : null,
     showLiveSync ? `    apiKey: ${q(settings.apiKey)},` : null,

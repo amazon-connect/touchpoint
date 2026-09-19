@@ -8,7 +8,6 @@ import { type ColorMode } from "../interface";
 import {
   Close,
   Settings,
-  Undo,
   Restart,
   Volume,
   VolumeOff,
@@ -74,7 +73,7 @@ export const Header: FC<HeaderProps> = ({
           className="ml-auto"
           Icon={Settings}
           label="Settings"
-          type={isSettingsOpen ? "sound" : iconButtonType}
+          type={isSettingsOpen ? "subtle" : iconButtonType}
           onClick={enabled ? toggleSettings : undefined}
         />
       ) : null}

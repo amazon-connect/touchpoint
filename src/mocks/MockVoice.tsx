@@ -8,7 +8,7 @@ import { Main, HeaderContainer } from "../components/Layout";
 import { IconButton } from "../components/ui/IconButton";
 import { Close, Mic, Settings as SettingsIcon } from "../components/ui/Icons";
 import { mockConversationHandler, mockTheme, responses } from "./shared";
-import { type WindowSize, type ColorMode } from "../interface";
+import { type WindowSize, type ColorMode, type Theme } from "../interface";
 import { VoiceIcon } from "../components/FullscreenVoice";
 import { defaultModalities } from "../components/defaultModalities";
 import { VoiceModalities } from "../components/VoiceModalities";
@@ -22,9 +22,12 @@ export const MockVoice: FC<{
   onClose: () => void;
   onExpand: () => void;
   windowSize: WindowSize;
+  /** Theme overrides layered on top of the mock's own theme. */
+  theme?: Partial<Theme>;
 }> = (props) => {
   const colorMode = props.colorMode ?? "dark";
   const { isExpanded, onClose, onExpand, windowSize } = props;
+  const theme = { ...mockTheme, ...props.theme };
 
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
@@ -32,7 +35,7 @@ export const MockVoice: FC<{
     return (
       <ProviderStack
         className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={mockTheme}
+        theme={theme}
         colorMode={colorMode}
         languageCode="en-US"
       >
@@ -51,7 +54,7 @@ export const MockVoice: FC<{
         "grid grid-cols-2 xl:grid-cols-[1fr_632px]",
         props.embedded ? "w-full h-full" : "fixed inset-0 z-touchpoint",
       )}
-      theme={mockTheme}
+      theme={theme}
       colorMode={colorMode}
       languageCode="en-US"
     >
@@ -131,7 +134,7 @@ export const MockVoice: FC<{
                   <IconButton
                     Icon={Mic}
                     label="Voice"
-                    type={"sound"}
+                    type={"subtle"}
                     onClick={() => {}}
                   />
                 </div>

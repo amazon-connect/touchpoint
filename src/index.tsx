@@ -8,6 +8,7 @@ import cssRaw from "./index.css?inline";
 import * as Icons from "./components/ui/Icons";
 import { TextButton } from "./components/ui/TextButton";
 import { IconButton } from "./components/ui/IconButton";
+import { MessageButton } from "./components/ui/MessageButton";
 import { Ripple } from "./components/Ripple";
 import { BaseText, SmallText } from "./components/ui/Typography";
 import {
@@ -60,7 +61,7 @@ const createHtml = (
  *
  * const MyCustomModality = ({data, conversationHandler}) =>
  *   html`<div style="display: flex; gap: 8px;">
- *    <IconButton label="Cancel" Icon=${Icons.Close} type="ghost" onClick=${cancel()} />
+ *    <IconButton label="Cancel" Icon=${Icons.Close} type="ghost" onClick=${() => {cancel();}} />
  *    <TextButton
  *     label="Submit"
  *     Icon=${Icons.ArrowForward}
@@ -74,6 +75,7 @@ const createHtml = (
 export const html = createHtml({
   TextButton,
   IconButton,
+  MessageButton,
   BaseText,
   SmallText,
   DateInput,
@@ -95,6 +97,10 @@ export {
   type IconButtonProps,
   type IconButtonType,
 } from "./components/ui/IconButton";
+export {
+  type MessageButtonProps,
+  type MessageButtonType,
+} from "./components/ui/MessageButton";
 export { type TextButtonProps } from "./components/ui/TextButton";
 export type {
   WindowSize,
@@ -362,6 +368,7 @@ export { Container as PreviewContainer } from "./preview";
 export {
   TextButton,
   IconButton,
+  MessageButton,
   BaseText,
   SmallText,
   DateInput,

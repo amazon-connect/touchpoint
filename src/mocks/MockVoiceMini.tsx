@@ -6,7 +6,7 @@ import { clsx } from "clsx";
 import { IconButton } from "../components/ui/IconButton";
 import { Close } from "../components/ui/Icons";
 import { mockConversationHandler, mockTheme, responses } from "./shared";
-import { type ColorMode } from "../interface";
+import { type ColorMode, type Theme } from "../interface";
 import { VoiceMiniControls, voiceMiniPanelClass } from "../components/Layout";
 import { VoiceModalities } from "../components/VoiceModalities";
 import { defaultModalities } from "../components/defaultModalities";
@@ -16,15 +16,18 @@ export const MockVoiceMini: FC<{
   isExpanded: boolean;
   onClose: () => void;
   onExpand: () => void;
+  /** Theme overrides layered on top of the mock's own theme. */
+  theme?: Partial<Theme>;
 }> = (props) => {
   const colorMode = props.colorMode ?? "dark";
   const { isExpanded, onClose, onExpand } = props;
+  const theme = { ...mockTheme, ...props.theme };
 
   if (!isExpanded) {
     return (
       <ProviderStack
         className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={mockTheme}
+        theme={theme}
         colorMode={colorMode}
         languageCode="en-US"
       >
@@ -40,7 +43,7 @@ export const MockVoiceMini: FC<{
   return (
     <ProviderStack
       className={clsx("fixed bottom-2 right-2 z-touchpoint")}
-      theme={mockTheme}
+      theme={theme}
       colorMode={colorMode}
       languageCode="en-US"
     >

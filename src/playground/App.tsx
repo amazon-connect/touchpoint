@@ -3,12 +3,12 @@ import type { ColorMode } from "../interface";
 import { TopBar } from "./components/TopBar";
 import { ConfigScreen } from "./screens/ConfigScreen";
 import { GuideScreen } from "./screens/GuideScreen";
+import { useColorMode } from "./colorMode";
 import {
   type Settings,
   settingsFromParams,
   writeSettingsToUrl,
 } from "./settings";
-import { useTheme } from "./theme";
 
 /** What the guide needs, captured at launch so later edits can't disturb it. */
 interface Launched {
@@ -24,7 +24,7 @@ interface Launched {
  * carry a whole setup.
  */
 export const App: FC = () => {
-  const [theme, setTheme] = useTheme();
+  const [colorMode, setColorMode] = useColorMode();
   const [settings, setSettings] = useState<Settings>(() =>
     settingsFromParams(new URLSearchParams(window.location.search)),
   );
@@ -32,7 +32,7 @@ export const App: FC = () => {
 
   return (
     <>
-      <TopBar theme={theme} onThemeChange={setTheme} />
+      <TopBar theme={colorMode} onThemeChange={setColorMode} />
       <div className="mx-auto max-w-[1080px] px-4 pb-30 pt-6 md:px-5 md:pb-40 md:pt-10">
         {launched == null ? (
           <ConfigScreen
@@ -47,7 +47,7 @@ export const App: FC = () => {
                 settings: trimmed,
                 // Contrast the widget against the page: dark page → light
                 // widget, and vice versa.
-                colorMode: theme === "dark" ? "light" : "dark",
+                colorMode: colorMode === "dark" ? "light" : "dark",
               });
             }}
           />

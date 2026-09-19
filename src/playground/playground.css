@@ -17,7 +17,7 @@
 /*
   Palette tokens are aliases (`@theme inline`) so the generated utilities emit
   `var(--pg-…)` rather than a resolved color. That is what lets a single
-  `bg-card` respond to the `[data-theme]` switch below.
+  `bg-card` respond to the `[data-color-mode]` switch below.
 */
 @theme inline {
   --color-canvas: var(--pg-bg);
@@ -45,7 +45,7 @@
 }
 
 :root,
-[data-theme="light"] {
+[data-color-mode="light"] {
   color-scheme: light;
   --pg-bg: #ffffff;
   --pg-card: #ffffff;
@@ -71,7 +71,7 @@
   --pg-danger: #e5484d;
 }
 
-[data-theme="dark"] {
+[data-color-mode="dark"] {
   color-scheme: dark;
   --pg-bg: #0f1419;
   --pg-card: #1a2029;

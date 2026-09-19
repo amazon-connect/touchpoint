@@ -259,11 +259,12 @@ export const UserMessage: FC<{
           )}
         >
           {files.map((file, index) => (
-            // TODO: style, add file name as alt text
+            // TODO: style
             <img
               className="rounded-inner h-20"
               key={index}
               src={URL.createObjectURL(file)}
+              alt={file.name}
             />
           ))}
         </div>

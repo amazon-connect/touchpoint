@@ -10,11 +10,11 @@ import { useAppRoot } from "../../utils/useAppRoot";
  *
  * - `main`: The primary icon button.
  * - `ghost`: A transparent or less prominent icon button.
- * - `sound`: An icon button that indicates an active state.
+ * - `subtle`: An icon button that indicates an active state.
  * - `coverup`: An icon button used to cover up or mask something.
  * @category Modality components
  */
-export type IconButtonType = "main" | "ghost" | "sound" | "coverup" | "error";
+export type IconButtonType = "main" | "ghost" | "subtle" | "coverup" | "error";
 
 /**
  * Props for the IconButton component
@@ -51,16 +51,16 @@ const mainClass =
   "bg-primary-90 text-secondary-90 enabled:hover:before:bg-primary-90 enabled:active:before:bg-secondary-10 disabled:bg-primary-10 disabled:text-secondary-40";
 
 const ghostClass =
-  "text-primary-80 enabled:hover:before:bg-primary-10 enabled:active:before:bg-secondary-10 disabled:text-primary-20";
+  "text-primary-60 enabled:hover:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:text-primary-20";
 
-const soundClass =
-  "bg-accent text-on-accent enabled:hover:before:bg-primary-40 enabled:active:before:bg-secondary-10 disabled:bg-accent-20";
+const subtleClass =
+  "bg-primary-10 text-primary-80 enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-10 disabled:bg-primary-5 disabled:text-primary-20";
 
 const coverupClass =
-  "bg-secondary-60 backdrop-blur-sm text-primary-80 enabled:hover:before:bg-primary-10 enabled:active:before:bg-secondary-10 disabled:bg-secondary-20 disabled:text-primary-20";
+  "bg-secondary-60 backdrop-blur-sm text-primary-80 enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-10 disabled:bg-secondary-20 disabled:text-primary-20";
 
 const errorClass =
-  "bg-error-primary text-secondary enabled:hover:before:bg-primary-10 disabled:bg-secondary-20 disabled:text-primary-20";
+  "bg-error-primary text-secondary-90 enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-5 disabled:bg-secondary-20 disabled:text-primary-20";
 
 // Used in <summary> tags
 export const UnsemanticIconButton: FC<{
@@ -74,7 +74,7 @@ export const UnsemanticIconButton: FC<{
         "block",
         type === "main" ? mainClass : null,
         type === "ghost" ? ghostClass : null,
-        type === "sound" ? soundClass : null,
+        type === "subtle" ? subtleClass : null,
         type === "coverup" ? coverupClass : null,
         type === "error" ? errorClass : null,
       )}
@@ -155,7 +155,7 @@ export const IconButton: FC<IconButtonProps> = ({
         baseClass,
         type === "main" ? mainClass : null,
         type === "ghost" ? ghostClass : null,
-        type === "sound" ? soundClass : null,
+        type === "subtle" ? subtleClass : null,
         type === "coverup" ? coverupClass : null,
         type === "error" ? errorClass : null,
         className,

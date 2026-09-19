@@ -27,12 +27,18 @@ export const LaunchButton: FC<LaunchButtonProps> = (props) => {
       )}
       disabled={props.onClick == null}
       onClick={props.onClick}
+      aria-label={props.label}
     >
       <span className="block flex-none w-8 h-8">
         {props.iconUrl == null ? (
           <Touchpoint />
         ) : (
-          <img src={props.iconUrl} className="w-8 h-8" />
+          <img
+            src={props.iconUrl}
+            alt=""
+            role="presentation"
+            className="w-8 h-8"
+          />
         )}
       </span>
       {(props.showLabel ?? false) ? <span>{props.label}</span> : null}

@@ -64,10 +64,13 @@ export const CustomCard: FC<CustomCardProps> = ({
   newTab,
 }) => {
   const containerClassName = clsx(
-    "block shrink-0 rounded-inner overflow-hidden",
+    "relative block shrink-0 rounded-inner bg-secondary-40 overflow-hidden",
+    "before:content-[''] before:absolute before:inset-0 before:bg-transparent",
     "w-80 space-y-px",
-    selected ? "outline-solid outline-2 outline-accent" : "",
-    onClick != null || href != null ? "hover:bg-primary-5" : "",
+    "focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus",
+    "border border-solid",
+    selected ? "border-accent" : "border-primary-10",
+    onClick != null || href != null ? "hover:before:bg-primary-5" : "",
     className,
   );
 
@@ -174,7 +177,7 @@ export const CustomCardRow: FC<CustomCardRowProps> = ({
     <div
       className={clsx(
         className,
-        "flex items-center relative justify-between gap-2 bg-primary-5 px-3 py-4",
+        "flex items-center relative justify-between gap-2 px-3 py-4",
       )}
     >
       <div className="space-y-1 text-left">{left}</div>

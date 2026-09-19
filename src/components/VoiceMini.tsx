@@ -94,6 +94,7 @@ export const VoiceMini: FC<{
       <img
         className="w-10 h-10 block flex-none object-contain object-center"
         src={brandIcon}
+        alt=""
         role="presentation"
       />
     ) : null;

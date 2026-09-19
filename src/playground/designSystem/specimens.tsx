@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type FC, type ReactNode, useState } from "react";
+import { type FC, type ReactNode, useEffect, useState } from "react";
 import { Carousel } from "../../components/ui/Carousel";
 import {
   CustomCard,
@@ -15,11 +15,20 @@ import * as Icons from "../../components/ui/Icons";
 import { type MessageStatus } from "../../interface";
 import { LaunchButton } from "../../components/ui/LaunchButton";
 import { Loader } from "../../components/ui/Loader";
-import { MessageButton } from "../../components/ui/MessageButton";
+import {
+  MessageButton,
+  type MessageButtonType,
+} from "../../components/ui/MessageButton";
 import { MessageStatusRow } from "../../components/ui/MessageStatusRow";
-import { Radio } from "../../components/ui/Radio";
 import { TextButton } from "../../components/ui/TextButton";
 import { BaseText, SmallText } from "../../components/ui/Typography";
+import { defaultTheme } from "../../components/Theme";
+import {
+  customThemeStore,
+  type EditableColorKey,
+  isEditableColorKey,
+  useCustomTheme,
+} from "../customTheme";
 
 /*
   Everything in this file renders inside the library's shadow root (see
@@ -69,7 +78,7 @@ const CARD_IMAGE = `data:image/svg+xml;utf8,${encodeURIComponent(
 
 const TextButtons: FC = () => (
   <>
-    <Row label="main" columns>
+    <Row label="type: main" columns>
       <TextButton
         type="main"
         onClick={noop}
@@ -78,7 +87,7 @@ const TextButtons: FC = () => (
       />
       <TextButton type="main" label="Main disabled" Icon={Icons.ArrowForward} />
     </Row>
-    <Row label="ghost (default)" columns>
+    <Row label="type: ghost (default)" columns>
       <TextButton
         type="ghost"
         onClick={noop}
@@ -91,7 +100,7 @@ const TextButtons: FC = () => (
         Icon={Icons.ArrowForward}
       />
     </Row>
-    <Row label="error" columns>
+    <Row label="type: error" columns>
       <TextButton
         type="error"
         onClick={noop}
@@ -106,7 +115,7 @@ const TextButtons: FC = () => (
 const ICON_BUTTON_TYPES: IconButtonType[] = [
   "main",
   "ghost",
-  "sound",
+  "subtle",
   "coverup",
   "error",
 ];
@@ -114,7 +123,7 @@ const ICON_BUTTON_TYPES: IconButtonType[] = [
 const IconButtons: FC = () => (
   <>
     {ICON_BUTTON_TYPES.map((type) => (
-      <Row key={type} label={type}>
+      <Row key={type} label={`type: ${type}`}>
         <IconButton
           type={type}
           onClick={noop}
@@ -127,30 +136,29 @@ const IconButtons: FC = () => (
   </>
 );
 
+const MESSAGE_BUTTON_TYPES: MessageButtonType[] = [
+  "default",
+  "selected",
+  "unselected",
+];
+
 const MessageButtons: FC = () => (
   <>
-    <Row label="main">
-      <MessageButton
-        type="main"
-        onClick={noop}
-        label="Main default"
-        Icon={Icons.ThumbUp}
-      />
-      <MessageButton type="main" label="Main disabled" Icon={Icons.ThumbUp} />
-    </Row>
-    <Row label="activated">
-      <MessageButton
-        type="activated"
-        onClick={noop}
-        label="Activated default"
-        Icon={Icons.ThumbUp}
-      />
-      <MessageButton
-        type="activated"
-        label="Activated disabled"
-        Icon={Icons.ThumbUp}
-      />
-    </Row>
+    {MESSAGE_BUTTON_TYPES.map((type) => (
+      <Row key={type} label={`type: ${type}`}>
+        <MessageButton
+          type={type}
+          onClick={noop}
+          label={`${type} default`}
+          Icon={Icons.ThumbUp}
+        />
+        <MessageButton
+          type={type}
+          label={`${type} disabled`}
+          Icon={Icons.ThumbUp}
+        />
+      </Row>
+    ))}
   </>
 );
 
@@ -301,32 +309,6 @@ const DateInputs: FC = () => {
   );
 };
 
-const Radios: FC = () => {
-  const [cabin, setCabin] = useState("economy");
-  const options = [
-    { value: "economy", label: "Economy" },
-    { value: "premium", label: "Premium economy" },
-    { value: "business", label: "Business" },
-  ];
-  return (
-    <>
-      <Row label="default">
-        <Radio
-          name="ds-cabin"
-          options={options}
-          value={cabin}
-          onChange={(value) => {
-            setCabin(String(value));
-          }}
-        />
-      </Row>
-      <Row label="disabled (no onChange)">
-        <Radio name="ds-cabin-disabled" options={options} value={cabin} />
-      </Row>
-    </>
-  );
-};
-
 const Loaders: FC = () => (
   <>
     <Row label="with a label">
@@ -407,7 +389,6 @@ const COLOR_GROUPS: ColorGroup[] = [
     colors: [
       { name: "accent", className: "bg-accent" },
       { name: "accent20", className: "bg-accent-20" },
-      { name: "onAccent", className: "bg-on-accent" },
       { name: "background", className: "bg-background" },
       { name: "overlay", className: "bg-overlay" },
     ],
@@ -439,29 +420,307 @@ const ColorSwatch: FC<Swatch> = ({ name, className }) => (
   </div>
 );
 
-const ColorGrid: FC = () => (
-  <>
-    {COLOR_GROUPS.map((group) => (
-      <div key={group.label} className="space-y-2">
-        <SmallText>{group.label}</SmallText>
+/*
+  The editor UI below renders in the shadow root alongside the swatches, so it
+  can't rely on the playground's Tailwind theme. Rather than depend on which
+  utilities the *library* stylesheet happens to emit, it styles itself with
+  inline styles that read the theme's own CSS custom properties (--color-*,
+  --radius-inner) — the same variables ProviderStack sets — so the popup tracks
+  light/dark and the edited palette automatically.
+*/
+
+/** A subtle text button used inside the color editor and its header. */
+const EditorButton: FC<{
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}> = ({ onClick, disabled = false, children }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      padding: 0,
+      border: "none",
+      background: "none",
+      fontSize: 12,
+      whiteSpace: "nowrap",
+      cursor: disabled ? "default" : "pointer",
+      color: disabled ? "var(--color-primary-40)" : "var(--color-primary-80)",
+    }}
+  >
+    {children}
+  </button>
+);
+
+/** Matches a `#rgb`/`#rrggbb` color the native picker can display. */
+const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+/** Popup with a color picker and a single CSS-color input for one color. */
+const ColorEditorPopup: FC<{
+  colorKey: EditableColorKey;
+  onClose: () => void;
+}> = ({ colorKey, onClose }) => {
+  const overrides = useCustomTheme();
+  const isEdited = colorKey in overrides;
+  const value = overrides[colorKey] ?? defaultTheme[colorKey];
+  // The native picker only understands hex; when the CSS color isn't one (e.g.
+  // `rebeccapurple`, `rgb(...)`, `light-dark(...)`) it falls back to the seed
+  // so it stays usable.
+  const pickerValue = HEX_RE.test(value.trim())
+    ? value.trim()
+    : defaultTheme[colorKey];
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <>
+      {/* Click-away backdrop; covers the viewport so a click anywhere closes. */}
+      <div
+        aria-hidden
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, zIndex: 40 }}
+      />
+      <div
+        role="dialog"
+        aria-label={`Edit ${colorKey} color`}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+        style={{
+          position: "absolute",
+          top: "calc(100% + 8px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 50,
+          width: 208,
+          padding: 12,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          borderRadius: "var(--radius-inner)",
+          border: "1px solid var(--color-primary-20)",
+          background: "var(--color-background)",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
+        }}
+      >
+        <input
+          type="color"
+          value={pickerValue}
+          aria-label={`${colorKey} color picker`}
+          onChange={(event) => {
+            customThemeStore.setColor(colorKey, event.target.value);
+          }}
+          style={{
+            width: "100%",
+            height: 36,
+            padding: 0,
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+          }}
+        />
+        <input
+          type="text"
+          value={value}
+          spellCheck={false}
+          aria-label={`${colorKey} CSS color`}
+          placeholder="e.g. #1c63da or rgb(28 99 218)"
+          onChange={(event) => {
+            customThemeStore.setColor(colorKey, event.target.value);
+          }}
+          style={{
+            width: "100%",
+            padding: "6px 8px",
+            fontSize: 12,
+            fontFamily: "monospace",
+            borderRadius: 6,
+            border: "1px solid var(--color-primary-20)",
+            background: "transparent",
+            color: "var(--color-primary)",
+          }}
+        />
         <div
-          /* Fixed 120px tracks throughout, so every swatch is the same width —
-             a pair group is two of them per row, the rest wrap to fit. */
-          className={clsx(
-            "grid gap-x-2 gap-y-4",
-            group.pairs === true
-              ? "grid-cols-[repeat(2,120px)]"
-              : "grid-cols-[repeat(auto-fill,120px)]",
-          )}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
         >
-          {group.colors.map((color) => (
-            <ColorSwatch key={color.name} {...color} />
-          ))}
+          <EditorButton
+            disabled={!isEdited}
+            onClick={() => {
+              customThemeStore.resetColor(colorKey);
+            }}
+          >
+            <Icons.Refresh size={12} className="text-primary-60" />
+            Reset
+          </EditorButton>
+          <EditorButton onClick={onClose}>Done</EditorButton>
         </div>
       </div>
-    ))}
-  </>
-);
+    </>
+  );
+};
+
+/** A swatch that opens {@link ColorEditorPopup}, flagged editable and edited. */
+const EditableColorSwatch: FC<{
+  colorKey: EditableColorKey;
+  className: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}> = ({ colorKey, className, isOpen, onToggle, onClose }) => {
+  const overrides = useCustomTheme();
+  const isEdited = colorKey in overrides;
+  return (
+    <div
+      className="flex flex-col items-center gap-2 text-center"
+      style={{ position: "relative" }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={`Edit ${colorKey} color`}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        className={clsx(
+          "h-10 w-full rounded-[8px] border border-solid border-primary-20",
+          className,
+        )}
+        style={{
+          position: "relative",
+          cursor: "pointer",
+          ...(isOpen
+            ? { outline: "2px solid var(--color-accent)", outlineOffset: 2 }
+            : {}),
+        }}
+      >
+        {/* Edit affordance: a chip in the corner marks the swatch as clickable. */}
+        <span
+          style={{
+            position: "absolute",
+            top: 2,
+            right: 2,
+            display: "grid",
+            placeItems: "center",
+            width: 18,
+            height: 18,
+            borderRadius: 9999,
+            background: "var(--color-background)",
+          }}
+        >
+          <Icons.Edit size={12} className="text-primary-60" />
+        </span>
+        {isEdited && (
+          // Filled dot: this color has been changed from its default.
+          <span
+            aria-hidden
+            style={{
+              position: "absolute",
+              top: 2,
+              left: 2,
+              width: 8,
+              height: 8,
+              borderRadius: 9999,
+              background: "var(--color-accent)",
+            }}
+          />
+        )}
+      </button>
+      <span className="text-xs break-all text-primary-60">
+        {colorKey}
+        {isEdited ? " (edited)" : ""}
+      </span>
+      {isOpen && <ColorEditorPopup colorKey={colorKey} onClose={onClose} />}
+    </div>
+  );
+};
+
+const ColorGrid: FC = () => {
+  const overrides = useCustomTheme();
+  const [openKey, setOpenKey] = useState<EditableColorKey | null>(null);
+  const hasEdits = Object.keys(overrides).length > 0;
+
+  return (
+    <>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <SmallText>
+          Click accent, primary or secondary to edit. Opacity variants derive
+          automatically.
+        </SmallText>
+        {hasEdits && (
+          <EditorButton
+            onClick={() => {
+              customThemeStore.restoreDefaults();
+              setOpenKey(null);
+            }}
+          >
+            <Icons.Refresh size={12} className="text-primary-60" />
+            Restore defaults
+          </EditorButton>
+        )}
+      </div>
+      {COLOR_GROUPS.map((group) => (
+        <div key={group.label} className="space-y-2">
+          <SmallText>{group.label}</SmallText>
+          <div
+            /* Fixed 120px tracks throughout, so every swatch is the same width —
+               a pair group is two of them per row, the rest wrap to fit. */
+            className={clsx(
+              "grid gap-x-2 gap-y-4",
+              group.pairs === true
+                ? "grid-cols-[repeat(2,120px)]"
+                : "grid-cols-[repeat(auto-fill,120px)]",
+            )}
+          >
+            {group.colors.map((color) => {
+              const key = color.name;
+              if (!isEditableColorKey(key)) {
+                return <ColorSwatch key={key} {...color} />;
+              }
+              return (
+                <EditableColorSwatch
+                  key={key}
+                  colorKey={key}
+                  className={color.className}
+                  isOpen={openKey === key}
+                  onToggle={() => {
+                    setOpenKey((prev) => (prev === key ? null : key));
+                  }}
+                  onClose={() => {
+                    setOpenKey(null);
+                  }}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+};
 
 /** One entry in the design system's navigation. */
 export interface Specimen {
@@ -473,6 +732,13 @@ export interface Specimen {
   description: string;
   /** The gallery of variants. */
   Component: FC;
+  /**
+   * `html`-tagged-template snippet reproducing this gallery in a custom
+   * modality, shown only for components exported to that `html` instance
+   * (see `src/index.tsx`). Omitted for gallery-only entries like colors,
+   * icons, or components not exposed to custom modalities.
+   */
+  code?: string;
 }
 
 /** Every component gallery, in navigation order. */
@@ -490,6 +756,24 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Full-width buttons with a visible label. Omitting onClick disables the button.",
     Component: TextButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <TextButton
+      type="main"
+      label="Confirm"
+      Icon=\${Icons.ArrowForward}
+      onClick=\${() => conversationHandler.sendText("Confirm")}
+    />
+    <TextButton
+      type="error"
+      label="Cancel"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Cancel")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "icon-buttons",
@@ -497,12 +781,48 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Round icon-only buttons; the label becomes the accessible name and the tooltip.",
     Component: IconButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <IconButton
+      type="main"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+    <IconButton
+      type="ghost"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "message-buttons",
     title: "Message buttons",
     description: "Compact icon buttons used within the message transcript.",
     Component: MessageButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data, conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <MessageButton
+      type=\${data.liked ? "selected" : "default"}
+      label="Like"
+      Icon=\${Icons.ThumbUp}
+      onClick=\${() => conversationHandler.sendText("Like")}
+    />
+    <MessageButton
+      type=\${data.liked ? "unselected" : "default"}
+      label="Dislike"
+      Icon=\${Icons.ThumbDown}
+      onClick=\${() => conversationHandler.sendText("Dislike")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "message-status-row",
@@ -523,6 +843,15 @@ export const SPECIMENS: Specimen[] = [
     title: "Typography",
     description: "The two text primitives available to custom modalities.",
     Component: Typography,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = () => html\`
+  <div>
+    <BaseText>This is some standard text.</BaseText>
+    <BaseText faded>This is some faded text.</BaseText>
+    <SmallText>This is some small text.</SmallText>
+  </div>
+\`;`,
   },
   {
     id: "cards",
@@ -530,6 +859,21 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Composable cards: rows of left/right content, an image row, and selected/clickable/link states.",
     Component: Cards,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data, conversationHandler }) => html\`
+  <CustomCard
+    selected=\${data.selected}
+    onClick=\${() => conversationHandler.sendText(data.label)}
+  >
+    <CustomCardImageRow src=\${data.image} alt="" />
+    <CustomCardRow
+      left=\${html\`<BaseText>\${data.label}</BaseText>\`}
+      right=\${html\`<BaseText faded>\${data.price}</BaseText>\`}
+      icon=\${Icons.ArrowForward}
+    />
+  </CustomCard>
+\`;`,
   },
   {
     id: "carousel",
@@ -537,6 +881,33 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Horizontally scrollable row of cards, draggable with the pointer.",
     Component: Carousels,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+// This modality expects the application message to provide a "cities" array, e.g.:
+// {
+//   "cities": [
+//     { "name": "Seattle", "price": "from $189", "image": "https://example.com/seattle.jpg" },
+//     { "name": "Portland", "price": "from $189", "image": "https://example.com/portland.jpg" },
+//     { "name": "Vancouver", "price": "from $189", "image": "https://example.com/vancouver.jpg" },
+//     { "name": "San Diego", "price": "from $189", "image": "https://example.com/san-diego.jpg" },
+//     { "name": "Austin", "price": "from $189", "image": "https://example.com/austin.jpg" }
+//   ]
+// }
+const MyModality = ({ data, conversationHandler }) => html\`
+  <Carousel>
+    \${data.cities.map(
+      (city) => html\`
+        <CustomCard onClick=\${() => conversationHandler.sendText(city.name)}>
+          <CustomCardImageRow src=\${city.image} alt="" />
+          <CustomCardRow
+            left=\${html\`<BaseText>\${city.name}</BaseText>\`}
+            right=\${html\`<BaseText faded>\${city.price}</BaseText>\`}
+          />
+        </CustomCard>
+      \`,
+    )}
+  </Carousel>
+\`;`,
   },
   {
     id: "date-input",
@@ -544,12 +915,11 @@ export const SPECIMENS: Specimen[] = [
     description:
       "Masked date field with a native picker; submits an ISO (YYYY-MM-DD) date.",
     Component: DateInputs,
-  },
-  {
-    id: "radio",
-    title: "Radio",
-    description: "Single-choice list.",
-    Component: Radios,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <DateInput onSubmit=\${(date) => conversationHandler.sendText(date)} />
+\`;`,
   },
   {
     id: "loader",
@@ -562,5 +932,16 @@ export const SPECIMENS: Specimen[] = [
     title: "Icons",
     description: "Every icon exported as `Icons` from the package.",
     Component: IconGrid,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+// Icons are available under their own name, without an "Icons." prefix.
+const MyModality = () => html\`
+  <div style="display: flex; gap: 8px;">
+    <ArrowForward size=\${20} />
+    <Close size=\${20} />
+    <ThumbUp size=\${20} />
+    <Check size=\${20} />
+  </div>
+\`;`,
   },
 ];

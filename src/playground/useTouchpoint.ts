@@ -7,6 +7,7 @@ import type {
   TouchpointInstance,
 } from "../interface";
 import type { ConnectConfig } from "../connect";
+import { customThemeStore } from "./customTheme";
 import { isLiveSyncConfigured, type Settings } from "./settings";
 
 const ignore = (): void => {
@@ -66,6 +67,9 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
   const mount = useCallback((contactId?: string) => {
     const { settings, colorMode } = paramsRef.current;
     const liveSyncEnabled = isLiveSyncConfigured(settings);
+    // The custom theme is chosen in the design system; carry it into the live
+    // widget so a set palette applies here too.
+    const theme = customThemeStore.getSnapshot();
     instance.current?.teardown();
     instance.current = null;
     void create({
@@ -73,6 +77,7 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
       input: settings.inputMode,
       colorMode,
       windowSize: settings.windowSize,
+      ...(Object.keys(theme).length > 0 ? { theme } : {}),
       ...(settings.brandIcon !== "" ? { brandIcon: settings.brandIcon } : {}),
       // Show participant names/avatars in the chat transcript (toggle).
       showParticipantInfo: settings.avatars === "on",

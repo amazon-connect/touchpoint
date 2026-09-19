@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import { type FC, useState } from "react";
+import type { ColorMode } from "../../interface";
 import { Link, useRouter } from "../Router";
 import { activePageHref, PAGES } from "../routes";
-import type { PageTheme } from "../theme";
 import { BrandMark, CloseIcon, MenuIcon, MoonIcon, SunIcon } from "../ui/icons";
 
-const THEMES: { value: PageTheme; label: string; icon: FC }[] = [
+const THEMES: { value: ColorMode; label: string; icon: FC }[] = [
   { value: "light", label: "Light", icon: SunIcon },
   { value: "dark", label: "Dark", icon: MoonIcon },
 ];
@@ -13,9 +13,9 @@ const THEMES: { value: PageTheme; label: string; icon: FC }[] = [
 /** Light/dark switch for the page (independent of the widget's color mode). */
 const ThemeToggle: FC<{
   /** Active theme. */
-  theme: PageTheme;
+  theme: ColorMode;
   /** Called with the newly selected theme. */
-  onChange: (theme: PageTheme) => void;
+  onChange: (theme: ColorMode) => void;
 }> = ({ theme, onChange }) => (
   <div
     role="group"
@@ -82,9 +82,9 @@ const PageLinks: FC<{
  */
 export const TopBar: FC<{
   /** Active page theme. */
-  theme: PageTheme;
+  theme: ColorMode;
   /** Called with the newly selected theme. */
-  onThemeChange: (theme: PageTheme) => void;
+  onThemeChange: (theme: ColorMode) => void;
 }> = ({ theme, onThemeChange }) => {
   const { hash } = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
