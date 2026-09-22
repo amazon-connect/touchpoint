@@ -69,6 +69,14 @@ describe("spokenText", () => {
     // Left encoded, JAWS says "amp".
     expect(spokenText('Tom & Jerry\'s "best"')).toBe('Tom & Jerry\'s "best".');
   });
+
+  it("reads a table cell by cell, header row included", () => {
+    expect(spokenText("| a | b |\n| - | - |\n| 1 | 2 |")).toBe("a. b. 1. 2.");
+  });
+
+  it("speaks no code from embedded markup", () => {
+    expect(spokenText("Hi <script>alert(1)</script> there")).toBe("Hi there.");
+  });
 });
 
 describe("conversationAnnouncement", () => {

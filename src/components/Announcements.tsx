@@ -1,6 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC } from "react";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { ResponseType, type Response } from "@nlxai/core";
 
 import { type AuthenticationStatus } from "../connect";
@@ -17,32 +18,30 @@ import { type GuideReference } from "./ui/GuideCard";
 
 const blockEnd = /<\/(?:p|li|h[1-6]|blockquote|div|td|th|tr|pre)>/gi;
 
-/** `&amp;` must be undone last, or `&amp;lt;` would turn back into a tag. */
-const entities: Array<[RegExp, string]> = [
-  [/&lt;/g, "<"],
-  [/&gt;/g, ">"],
-  [/&quot;/g, '"'],
-  [/&#(?:39|x27);/gi, "'"],
-  [/&amp;/g, "&"],
-];
-
 /**
  * The words to speak for a Markdown message. Runs the same `marked` parse the
  * transcript uses (see {@link SafeMarkdown}) and keeps only the text, so asterisks
  * are not read out and no link or button is duplicated into the tab order.
  */
 export const spokenText = (markdown: string): string => {
-  const html = marked(markdown, { async: false });
-  const withBoundaries = html
+  // The sentence break goes inside the block rather than in place of its closing
+  // tag: DOMPurify parses before it strips, and a table whose `</td>` is gone
+  // loses the cell's text entirely.
+  const withBoundaries = marked(markdown, { async: false })
     .replace(/<br\s*\/?>/gi, ". ")
-    .replace(blockEnd, ". ")
-    .replace(/<[^>]*>/g, "");
-  const decoded = entities.reduce(
-    (text, [pattern, replacement]) => text.replace(pattern, replacement),
-    withBoundaries,
-  );
+    .replace(blockEnd, ". $&");
+  // `ALLOWED_TAGS: []` drops every element but keeps its text, and reading
+  // `textContent` off the returned node decodes entities on the way out — left
+  // encoded, `&amp;` is spoken as "amp". The default `FORBID_CONTENTS` discards
+  // the text of `<thead>` too, which would silence a table's header row.
+  const text =
+    DOMPurify.sanitize(withBoundaries, {
+      ALLOWED_TAGS: [],
+      FORBID_CONTENTS: ["script", "style"],
+      RETURN_DOM: true,
+    }).textContent ?? "";
   return (
-    decoded
+    text
       .replace(/\s+/g, " ")
       .replace(/\s+([.,;:!?])/g, "$1")
       // Block boundaries above leave runs like "$10.." where the text already
