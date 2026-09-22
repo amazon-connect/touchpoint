@@ -937,4 +937,18 @@ export interface Copy {
       complete: string;
     };
   };
+  /**
+   * Text spoken by the screen reader live region as the conversation progresses.
+   * Never shown on screen.
+   */
+  announcements: {
+    /** Spoken after the user sends a message, while the reply is pending. */
+    thinking: string;
+    /** Spoken when a reply arrives that has no text of its own. */
+    received: string;
+    /** Spoken after a reply offering exactly one choice. `{count}` is substituted. */
+    choice: string;
+    /** Spoken after a reply offering several choices. `{count}` is substituted. */
+    choices: string;
+  };
 }

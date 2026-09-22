@@ -25,6 +25,7 @@ import { Header } from "./components/Header";
 import { FullscreenVoice } from "./components/FullscreenVoice";
 import { Settings } from "./components/Settings";
 import { MessageChoices, Messages } from "./components/Messages";
+import { ConversationAnnouncer } from "./components/Announcements";
 import { SafeMarkdown } from "./components/SafeMarkdown";
 import { Loader } from "./components/ui/Loader";
 import { FullscreenError } from "./components/FullscreenError";
@@ -930,6 +931,16 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       ) : null}
       <Main windowSize={windowSize}>
         <>
+          {/* Mounted here, above the settings panel, the welcome screen and the
+              transcript, so that switching between them never re-creates the
+              region — a live region only announces mutations to one the screen
+              reader was already watching. Voice sessions are audible already. */}
+          {input === "text" ? (
+            <ConversationAnnouncer
+              responses={responses}
+              interimMessage={interimMessage}
+            />
+          ) : null}
           <Header
             errorThemedCloseButton={input === "voice"}
             speakerControls={

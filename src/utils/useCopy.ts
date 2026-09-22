@@ -57,6 +57,12 @@ const en: Copy = {
       complete: "Complete",
     },
   },
+  announcements: {
+    thinking: "Thinking",
+    received: "Response received",
+    choice: "{count} option to choose from",
+    choices: "{count} options to choose from",
+  },
 };
 
 const es: Copy = {
@@ -110,6 +116,12 @@ const es: Copy = {
       inProgress: "En progreso",
       complete: "Completada",
     },
+  },
+  announcements: {
+    thinking: "Pensando",
+    received: "Respuesta recibida",
+    choice: "{count} opción para elegir",
+    choices: "{count} opciones para elegir",
   },
 };
 
@@ -167,6 +179,12 @@ const de: Copy = {
       complete: "Abgeschlossen",
     },
   },
+  announcements: {
+    thinking: "Denkt nach",
+    received: "Antwort erhalten",
+    choice: "{count} Option zur Auswahl",
+    choices: "{count} Optionen zur Auswahl",
+  },
 };
 
 const fr: Copy = {
@@ -221,6 +239,12 @@ const fr: Copy = {
       inProgress: "En cours",
       complete: "Terminé",
     },
+  },
+  announcements: {
+    thinking: "Réflexion en cours",
+    received: "Réponse reçue",
+    choice: "{count} option proposée",
+    choices: "{count} options proposées",
   },
 };
 
@@ -286,6 +310,12 @@ const id: Copy = {
       complete: "Selesai",
     },
   },
+  announcements: {
+    thinking: "Sedang berpikir",
+    received: "Respons diterima",
+    choice: "{count} pilihan tersedia",
+    choices: "{count} pilihan tersedia",
+  },
 };
 
 const it: Copy = {
@@ -340,6 +370,12 @@ const it: Copy = {
       complete: "Completato",
     },
   },
+  announcements: {
+    thinking: "Elaborazione in corso",
+    received: "Risposta ricevuta",
+    choice: "{count} opzione tra cui scegliere",
+    choices: "{count} opzioni tra cui scegliere",
+  },
 };
 
 const ja: Copy = {
@@ -393,6 +429,12 @@ const ja: Copy = {
       complete: "完了",
     },
   },
+  announcements: {
+    thinking: "考えています",
+    received: "応答を受信しました",
+    choice: "選択肢が{count}件あります",
+    choices: "選択肢が{count}件あります",
+  },
 };
 
 const ko: Copy = {
@@ -445,6 +487,12 @@ const ko: Copy = {
       inProgress: "진행 중",
       complete: "완료",
     },
+  },
+  announcements: {
+    thinking: "생각 중",
+    received: "응답을 받았습니다",
+    choice: "선택할 수 있는 항목 {count}개",
+    choices: "선택할 수 있는 항목 {count}개",
   },
 };
 
@@ -500,6 +548,12 @@ const pt: Copy = {
       complete: "Concluído",
     },
   },
+  announcements: {
+    thinking: "Pensando",
+    received: "Resposta recebida",
+    choice: "{count} opção para escolher",
+    choices: "{count} opções para escolher",
+  },
 };
 
 const zhCN: Copy = {
@@ -553,6 +607,12 @@ const zhCN: Copy = {
       complete: "已完成",
     },
   },
+  announcements: {
+    thinking: "正在思考",
+    received: "已收到回复",
+    choice: "有 {count} 个选项可选",
+    choices: "有 {count} 个选项可选",
+  },
 };
 
 const zhTW: Copy = {
@@ -605,6 +665,12 @@ const zhTW: Copy = {
       inProgress: "進行中",
       complete: "已完成",
     },
+  },
+  announcements: {
+    thinking: "正在思考",
+    received: "已收到回覆",
+    choice: "有 {count} 個選項可選",
+    choices: "有 {count} 個選項可選",
   },
 };
 
