@@ -917,10 +917,11 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl"
             : isSideBySide
               ? // Docked to the right edge for the full height; the page reflows beside it.
-                "fixed z-touchpoint top-0 bottom-0 right-0 w-full md:w-[440px] border-l border-primary-10"
+                "fixed z-touchpoint top-0 bottom-0 right-0 w-full md:w-[440px]"
               : // half / full overlay covering the viewport.
                 "grid grid-cols-2 xl:grid-cols-[1fr_632px] fixed inset-0 z-touchpoint",
       )}
+      containerStyle={props.containerStyle}
       theme={props.theme}
       colorMode={colorMode}
       languageCode={props.languageCode}

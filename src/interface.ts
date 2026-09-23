@@ -6,6 +6,9 @@ import type {
   ConnectConfig,
   ConnectConversationHandler,
 } from "./connect";
+import type { ContainerStyle } from "./utils/containerStyle";
+
+export type { ContainerStyle } from "./utils/containerStyle";
 
 export type {
   AuthenticationStatus,
@@ -454,6 +457,35 @@ export interface TouchpointConfiguration {
    * Optional theme object to override default theme values
    */
   theme?: Partial<Theme>;
+  /**
+   * Inline style overrides for the full conversation container — the expanded
+   * chat or full-screen voice experience — e.g. to place or size the panel
+   * differently than any of the `windowSize` presets. Applied on top of the
+   * styles the preset sets, so only specify what you want to change.
+   *
+   * Not available for the launch icon or the `voiceMini` widget: both are
+   * compact floating elements positioned on their own terms, and neither is the
+   * conversation container this is meant for.
+   *
+   * Only the properties of {@link ContainerStyle} — the geometry and surface of
+   * the container itself — are supported. Anything else, and any value
+   * containing `url()`, `image-set()`, `element()`, comments or extra
+   * declarations, is dropped with a console warning: the configuration can come
+   * from the `configuration` attribute of the `<connect-touchpoint>` element
+   * and is therefore treated as untrusted input. Use {@link Theme} to restyle
+   * the content inside the container.
+   * @example
+   * ```typescript
+   * const containerStyle: ContainerStyle = {
+   *   // Dock the floating panel to the bottom left instead of the right.
+   *   left: "1rem",
+   *   right: "auto",
+   *   width: "min(420px, calc(100vw - 2rem))",
+   * };
+   * ```
+   * @category Theming
+   */
+  containerStyle?: ContainerStyle;
   /**
    * Optional {@link CustomModalityComponent | custom modality components} to render in Touchpoint
    */
