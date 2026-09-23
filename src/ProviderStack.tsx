@@ -6,7 +6,12 @@ import { Tooltip } from "@base-ui/react/tooltip";
 import { CopyProvider, defaultCopy } from "./utils/useCopy";
 import { type Copy, type ColorMode, type Theme } from "./interface";
 import { AppRootProvider } from "./utils/useAppRoot";
-import { intelligentMerge, toCustomProperties } from "./components/Theme";
+import {
+  intelligentMerge,
+  ProvidedThemeFieldsProvider,
+  type ThemeField,
+  toCustomProperties,
+} from "./components/Theme";
 import {
   sanitizeContainerStyle,
   type ContainerStyle,
@@ -30,6 +35,7 @@ export const ProviderStack: FC<{
   languageCode,
 }) => {
   const themeWithOverrides: Theme = intelligentMerge(theme ?? {});
+  const providedThemeFields = Object.keys(theme ?? {}) as ThemeField[];
   // Sanitized here rather than at the configuration boundary so that every
   // caller of the provider stack gets the same treatment, and so that a warning
   // is only logged once per change of the style object.
@@ -41,23 +47,25 @@ export const ProviderStack: FC<{
   return (
     <Tooltip.Provider>
       <CopyProvider value={{ ...defaultCopy(languageCode), ...(copy ?? {}) }}>
-        <AppRootProvider value={ref}>
-          <div
-            ref={ref}
-            className="contents"
-            style={{
-              ...toCustomProperties(themeWithOverrides),
-              colorScheme: colorMode,
-            }}
-          >
+        <ProvidedThemeFieldsProvider value={providedThemeFields}>
+          <AppRootProvider value={ref}>
             <div
-              className={clsx(className, "font-sans")}
-              style={safeContainerStyle}
+              ref={ref}
+              className="contents"
+              style={{
+                ...toCustomProperties(themeWithOverrides),
+                colorScheme: colorMode,
+              }}
             >
-              {children}
+              <div
+                className={clsx(className, "font-sans")}
+                style={safeContainerStyle}
+              >
+                {children}
+              </div>
             </div>
-          </div>
-        </AppRootProvider>
+          </AppRootProvider>
+        </ProvidedThemeFieldsProvider>
       </CopyProvider>
     </Tooltip.Provider>
   );
