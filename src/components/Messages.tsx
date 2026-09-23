@@ -511,12 +511,8 @@ export const Messages: FC<MessagesProps> = ({
           !chatMode && isWaiting ? "opacity-0" : "opacity-100",
         )}
         ref={containerRef}
-        // A transcript only ever grows at the end, so `role="log"` with
-        // `aria-relevant="additions"` announces each new response without
-        // re-reading the ones already there.
-        role="log"
-        aria-live="polite"
-        aria-relevant="additions"
+        // Deliberately not a live region: incoming responses are announced by the
+        // `ConversationAnnouncer` mounted above every mode (see `Announcements.tsx`).
       >
         {responses.map((response, responseIndex) => {
           // When showParticipantInfo is enabled, every message is laid out left-
