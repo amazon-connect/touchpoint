@@ -1,7 +1,9 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { type CSSProperties } from "react";
+import { createContext, type CSSProperties, useContext } from "react";
 
 import { type Theme } from "../interface";
+
+export type ThemeField = keyof Theme;
 
 export const toCustomProperties = (theme: Theme): CSSProperties => {
   return {
@@ -138,3 +140,14 @@ export const intelligentMerge = (theme: Partial<Theme>): Theme => {
     ...theme,
   };
 };
+
+// Which theme fields the consumer set explicitly, as opposed to the ones filled
+// in by `defaultTheme` or derived by `intelligentMerge`. Components use this to
+// decide whether a field carries brand intent (e.g. an accent worth showing off)
+// or is just the understated default.
+const ProvidedThemeFieldsContext = createContext<readonly ThemeField[]>([]);
+
+export const ProvidedThemeFieldsProvider = ProvidedThemeFieldsContext.Provider;
+
+export const useProvidedThemeFields = (): readonly ThemeField[] =>
+  useContext(ProvidedThemeFieldsContext);

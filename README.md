@@ -70,6 +70,7 @@ const touchpoint = await create({
     // participant token.
     chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
     instanceId: "REPLACE_WITH_INSTANCE_ID",
+    participantDisplayName: "REPLACE_WITH_PARTICIPANT_DISPLAY_NAME",
     contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
     region: "us-east-1",
   },
@@ -144,6 +145,36 @@ const touchpoint = await create({
 });
 ```
 
+#### Container styles
+
+To place or size the expanded panel differently than the `windowSize` presets
+allow, pass `containerStyle`. Touchpoint renders inside a closed shadow root, so
+CSS written on the host page cannot reach it — a style object is the supported way
+in, and it is applied on top of the preset's own styles.
+
+It applies to the full conversation container only — the expanded chat and
+full-screen voice experience. The launch icon and the `voiceMini` widget are
+positioned as compact floating elements of their own and are not affected.
+
+```js
+const touchpoint = await create({
+  config: {
+    /* … */
+  },
+  windowSize: "floating",
+  containerStyle: {
+    borderLeft: "1px solid #efefef",
+  },
+});
+```
+
+The configuration can be supplied as JSON on the `configuration` attribute of the
+`<connect-touchpoint>` element, so it is not assumed to be trusted: only
+container-level properties (placement, size, spacing, borders, shadow, transform,
+…) are accepted, and values that load remote resources (`url()`, `image-set()`,
+`element()`) or try to smuggle in extra declarations are dropped with a console
+warning. Use `theme` to restyle the content inside the container.
+
 ### Welcome screen
 
 For text conversations, the opening assistant message is presented as an
@@ -209,6 +240,7 @@ import { create } from "@amazon-connect-touchpoint/web";
 const touchpoint = await create({
   config: {
     chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    participantDisplayName: "REPLACE_WITH_PARTICIPANT_DISPLAY_NAME",
     instanceId: "REPLACE_WITH_INSTANCE_ID",
     contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
     region: "us-east-1",
@@ -289,6 +321,7 @@ const touchpoint = await create({
     // Your StartChatContact endpoint (e.g. an API Gateway route) that mints a
     // participant token.
     chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    participantDisplayName: "REPLACE_WITH_PARTICIPANT_DISPLAY_NAME",
     instanceId: "REPLACE_WITH_INSTANCE_ID",
     contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
     region: "us-east-1",
@@ -331,6 +364,7 @@ layout.
       // Your StartChatContact endpoint (e.g. an API Gateway route) that mints a
       // participant token.
       chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+      participantDisplayName: "REPLACE_WITH_PARTICIPANT_DISPLAY_NAME",
       instanceId: "REPLACE_WITH_INSTANCE_ID",
       contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
       region: "us-east-1",
@@ -393,7 +427,8 @@ Common entry points:
 
 - [`create(config)`](./docs/README.md) — create and mount a Touchpoint instance.
 - `TouchpointConfiguration` — top-level options (`config`, `input`, `colorMode`,
-  `windowSize`, `theme`, `liveSync`, `brandIcon`, `onContactEnded`,
+  `windowSize`, `theme`, `containerStyle`, `liveSync`, `brandIcon`,
+  `onContactEnded`,
   `welcomeScreen`, `welcomeScreenLogo`, `showParticipantInfo`, `assistantName`,
   `assistantIcon`, `avatarShape`, …).
 - `ConnectConfig` — Amazon Connect Customer connection details.

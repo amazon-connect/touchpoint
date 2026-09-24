@@ -108,6 +108,7 @@ export type {
   ChoiceMessage,
   CustomModalityComponent,
   Theme,
+  ContainerStyle,
   InitializeConversation,
   CustomLaunchButton,
   Input,
