@@ -67,6 +67,7 @@ export const VoiceMiniControls: FC<{
       // Vertical stack on mobile (less likely to cover page content), horizontal
       // from `md` up.
       "bg-background backdrop-blur-overlay rounded-outer p-2 w-fit flex flex-col md:flex-row items-center gap-2",
+      "border border-solid border-primary-10",
       className,
     )}
   >
@@ -83,7 +84,7 @@ export const VoiceMiniControls: FC<{
 );
 
 export const voiceMiniPanelClass =
-  "bg-background backdrop-blur-overlay text-primary-80 rounded-outer p-2 w-[calc(100vw-16px)] max-w-[360px] space-y-4";
+  "bg-background backdrop-blur-overlay text-primary-80 rounded-outer p-2 w-[calc(100vw-16px)] max-w-[360px] space-y-4 border border-solid border-primary-10";
 
 export const VoiceMiniPanel: FC<{
   children: ReactNode;

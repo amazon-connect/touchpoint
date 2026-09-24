@@ -914,7 +914,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           ? "grid grid-cols-2 xl:grid-cols-[1fr_632px] w-full h-full"
           : isFloating
             ? // Detached rounded card hovering over the page (page stays interactive).
-              "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl"
+              "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl border border-solid border-primary-10"
             : isSideBySide
               ? // Docked to the right edge for the full height; the page reflows beside it.
                 "fixed z-touchpoint top-0 bottom-0 right-0 w-full md:w-[440px]"
