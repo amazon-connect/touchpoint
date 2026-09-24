@@ -38,7 +38,7 @@
     "@nlxai/core": "^1.2.7-alpha.3",
     "@react-hookz/web": "^25.0.1",
     "amazon-chime-sdk-js": "^3.32.0",
-    "amazon-connect-chatjs": "^2.3.2",
+    "amazon-connect-chatjs": "^5.2.0",
     "@react-input/mask": "^2.0.4",
     "@rive-app/webgl2": "^2.31.5",
     "@types/json-schema": "^7.0.15",
