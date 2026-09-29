@@ -1,16 +1,22 @@
 import { useSyncExternalStore } from "react";
 
 /** Theme color keys the playground exposes for live editing. */
-export type EditableColorKey = "accent" | "primary" | "secondary";
+export type EditableColorKey =
+  | "accent"
+  | "background"
+  | "primary"
+  | "secondary";
 
 /**
  * The editable colors, in the order they appear in the design system. Editing
- * only these three is enough: `intelligentMerge` (see `components/Theme.tsx`)
+ * only these four is enough: `intelligentMerge` (see `components/Theme.tsx`)
  * derives `accent20`/`onAccent` from `accent` and every opacity variant from
  * `primary`/`secondary`, so the rest of the palette follows for free.
+ * `background` stands alone — nothing is derived from it.
  */
 export const EDITABLE_COLOR_KEYS: EditableColorKey[] = [
   "accent",
+  "background",
   "primary",
   "secondary",
 ];

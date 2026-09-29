@@ -667,8 +667,8 @@ const ColorGrid: FC = () => {
         }}
       >
         <SmallText>
-          Click accent, primary or secondary to edit. Opacity variants derive
-          automatically.
+          Click accent, background, primary or secondary to edit. Opacity
+          variants derive automatically.
         </SmallText>
         {hasEdits && (
           <EditorButton

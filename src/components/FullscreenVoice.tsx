@@ -271,7 +271,7 @@ export const FullscreenVoice: FC<Props> = ({
       <div className="flex items-center justify-center py-4 flex-none">
         <div className="w-fit relative">
           {voice.state?.isUserSpeaking ? (
-            <Ripple className="rounded-inner" />
+            <Ripple className="rounded-full" />
           ) : null}
           <IconButton
             Icon={micEnabled ? Mic : MicOff}
