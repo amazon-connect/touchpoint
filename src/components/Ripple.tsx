@@ -1,6 +1,8 @@
 import type { FC, CSSProperties } from "react";
 import { clsx } from "clsx";
 
+import { useProvidedThemeFields } from "./Theme";
+
 /** Seconds for a single circle to expand and fade out. */
 const DURATION = 1.5;
 
@@ -27,25 +29,43 @@ const PingCircle: FC<{
   );
 };
 /**
- * A ripple effect composed of expanding circles, along with an accent border
+ * A ripple effect composed of expanding circles, optionally with a border
  * tracing the container. The circles are masked so they only ever paint outside
  * the container (see `.touchpoint-ripple`), keeping its contents legible.
+ *
+ * Colored with the theme accent, but only when the consumer set one: the
+ * default accent is black/white (see `defaultTheme`), which would render the
+ * ripple as a grey smudge, so an unset accent falls back to Touchpoint blue.
  * @category Modality components
  */
 export const Ripple: FC<{
+  /** Trace the container with a border while the ripple plays. */
+  withBorder?: boolean;
   className?: string;
   style?: CSSProperties;
-}> = ({ className, style }) => {
-  const cls = clsx("text-accent-20", className);
+}> = ({ withBorder = false, className, style }) => {
+  const hasExplicitAccent = useProvidedThemeFields().includes("accent");
+  const cls = clsx(
+    hasExplicitAccent ? "text-accent-20" : "text-[rgba(0,149,255,0.2)]",
+    className,
+  );
   return (
     <>
-      <div
-        aria-hidden
-        className={clsx(
-          "border border-solid border-accent absolute -inset-px pointer-events-none",
-          className,
-        )}
-      />
+      {withBorder ? (
+        <div
+          aria-hidden
+          // Inset by its own width so the border sits just outside the
+          // container: an opaque container background can't cover it, and it
+          // doesn't paint over the contents either.
+          className={clsx(
+            "border-2 border-solid absolute -inset-0.5 pointer-events-none",
+            hasExplicitAccent
+              ? "border-accent-50"
+              : "border-[rgba(0,149,255,0.5)]",
+            className,
+          )}
+        />
+      ) : null}
       <div
         aria-hidden
         // Twice the size of the container, centered on it: large enough to hold

@@ -639,6 +639,10 @@ export interface Theme {
    */
   accent: string;
   /**
+   * Accent color with 50% opacity
+   */
+  accent50: string;
+  /**
    * Accent color with 20% opacity
    */
   accent20: string;
