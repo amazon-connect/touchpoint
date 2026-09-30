@@ -46,7 +46,10 @@ export const Ripple: FC<{
 }> = ({ withBorder = false, className, style }) => {
   const hasExplicitAccent = useProvidedThemeFields().includes("accent");
   const cls = clsx(
-    hasExplicitAccent ? "text-accent-20" : "text-[rgba(0,149,255,0.2)]",
+    hasExplicitAccent
+      ? "text-accent-20"
+      : // Equivalent to text-focus-20 (the opacity variant does not exist in the theme, hence duplicated here)
+        "text-[light-dark(rgba(0,127,217,0.2),rgba(0,149,255,0.2))]",
     className,
   );
   return (
@@ -61,7 +64,8 @@ export const Ripple: FC<{
             "border-2 border-solid absolute -inset-0.5 pointer-events-none",
             hasExplicitAccent
               ? "border-accent-50"
-              : "border-[rgba(0,149,255,0.5)]",
+              : // Equivalent to border-focus-50 (the opacity variant does not exist in the theme, hence duplicated here)
+                "border-[light-dark(rgba(0,127,217,0.5),rgba(0,149,255,0.5))]",
             className,
           )}
         />
