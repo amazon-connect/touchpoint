@@ -666,26 +666,25 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     // wrapper owns positioning + transform so the widget and its optional border
     // animation move together.
     return (
-      <div
-        ref={voiceMiniDrag.ref}
-        className={clsx(
-          "w-fit",
-          props.embedded ? "" : "fixed z-touchpoint bottom-2 right-2",
-        )}
-        style={
-          props.embedded
-            ? undefined
-            : {
-                transform: `translate(${voiceMiniDrag.offset.x}px, ${voiceMiniDrag.offset.y}px)`,
-              }
-        }
+      <ProviderStack
+        theme={props.theme}
+        colorMode={colorMode}
+        languageCode={props.languageCode}
+        copy={props.copy}
       >
-        <ProviderStack
-          className="w-fit"
-          theme={props.theme}
-          colorMode={colorMode}
-          languageCode={props.languageCode}
-          copy={props.copy}
+        <div
+          ref={voiceMiniDrag.ref}
+          className={clsx(
+            "w-fit",
+            props.embedded ? "" : "fixed z-touchpoint bottom-2 right-2",
+          )}
+          style={
+            props.embedded
+              ? undefined
+              : {
+                  transform: `translate(${voiceMiniDrag.offset.x}px, ${voiceMiniDrag.offset.y}px)`,
+                }
+          }
         >
           {props.animate ? (
             <RiveAnimation restored={restoredConversation} />
@@ -707,8 +706,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               props.embedded ? undefined : voiceMiniDrag.handleProps
             }
           />
-        </ProviderStack>
-      </div>
+        </div>
+      </ProviderStack>
     );
   }
 

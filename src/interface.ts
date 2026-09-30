@@ -692,6 +692,15 @@ export interface Theme {
    * Outer border radius: generally used for elements that contain buttons that have inner border radius. Also used by the launch button.
    */
   outerBorderRadius: string;
+
+  /**
+   * z-index of the main conversation area
+   */
+  zIndexTouchpoint: string;
+  /**
+   * z-index of the launch button
+   */
+  zIndexLaunchButton: string;
 }
 
 /**
