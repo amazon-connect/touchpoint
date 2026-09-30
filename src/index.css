@@ -33,6 +33,7 @@
   --color-secondary-5: inherit;
   --color-secondary-1: inherit;
   --color-accent: inherit;
+  --color-accent-50: inherit;
   --color-accent-20: inherit;
   --color-background: inherit;
   --color-overlay: inherit;
@@ -91,6 +92,39 @@
   background-clip: text;
   background-repeat: no-repeat;
   animation: var(--animate-shimmer);
+}
+
+/*
+  Ripple mask (see Ripple.tsx). The element is twice the size of the container
+  it surrounds, and holds the expanding circles. Two mask layers — a full-size
+  one and a centered, container-sized circle — are composited with `exclude`,
+  which subtracts the circle: the ripple is painted outside the container only,
+  never over its contents. The hole is a circle, which assumes a fully rounded
+  container — every current call site is one.
+*/
+.touchpoint-ripple {
+  --touchpoint-ripple-hole: radial-gradient(
+    closest-side,
+    #000 99%,
+    transparent 100%
+  );
+  --touchpoint-ripple-rest: linear-gradient(#000, #000);
+  -webkit-mask-image:
+    var(--touchpoint-ripple-hole), var(--touchpoint-ripple-rest);
+  mask-image: var(--touchpoint-ripple-hole), var(--touchpoint-ripple-rest);
+  -webkit-mask-size:
+    50% 50%,
+    100% 100%;
+  mask-size:
+    50% 50%,
+    100% 100%;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  /* `xor` is the WebKit-prefixed equivalent, for Safari below 15.4. */
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 /*

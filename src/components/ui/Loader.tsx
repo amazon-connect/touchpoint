@@ -2,6 +2,8 @@
 import { clsx } from "clsx";
 import { useEffect, useRef, useState, type FC } from "react";
 
+import { useProvidedThemeFields } from "../Theme";
+
 // Note: Understanding and debugging this code can be made easier using this
 // notebook: https://observablehq.com/@gampleman/touchpoint-animation-debugging
 
@@ -75,6 +77,7 @@ const getSpin = (t: number): number => {
 };
 
 export const LoaderAnimation: FC<unknown> = () => {
+  const hasExplicitAccent = useProvidedThemeFields().includes("accent");
   const [time, setTime] = useState<{ start: number; current: number } | null>(
     null,
   );
@@ -132,7 +135,9 @@ export const LoaderAnimation: FC<unknown> = () => {
       stroke="none"
       fill="currentColor"
       style={{
-        filter: `drop-shadow(0 0 ${dropShadowRadius}px var(--color-focus))`,
+        filter: `drop-shadow(0 0 ${dropShadowRadius}px var(${
+          hasExplicitAccent ? "--color-accent" : "--color-focus"
+        }))`,
       }}
     >
       <g transform={`translate(50 50) rotate(${spin * 90})`} opacity={opacity}>

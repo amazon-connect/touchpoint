@@ -8,7 +8,6 @@ import { type Theme } from "../interface";
 
 export const mockTheme: Partial<Theme> = {
   fontFamily: "monospace",
-  accent: "light-dark(purple, pink)",
 };
 
 export const mockConversationHandler: ConversationHandler = {

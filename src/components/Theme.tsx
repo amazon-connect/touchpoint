@@ -32,6 +32,7 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
     "--color-secondary-1": theme.secondary1,
 
     "--color-accent": theme.accent,
+    "--color-accent-50": theme.accent50,
     "--color-accent-20": theme.accent20,
     "--color-background": theme.background,
     "--color-overlay": theme.overlay,
@@ -75,6 +76,7 @@ export const defaultTheme: Theme = {
   // Accent defaults to black/white (matching primary) so that it stays
   // understated out of the box, and setting a brand accent is clearly visible.
   accent: "light-dark(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))",
+  accent50: "light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.55))",
   accent20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
   // Base surface fill (per Figma): light #F2F2F2 @ 90%, dark #1B1B21 @ 95%.
   background: "light-dark(rgba(242, 242, 242, 0.9), rgba(27, 27, 33, 0.95))",
@@ -92,8 +94,11 @@ export const defaultTheme: Theme = {
 export const intelligentMerge = (theme: Partial<Theme>): Theme => {
   const computed: Partial<Theme> = {};
 
-  if (theme.accent != null && theme.accent20 == null) {
-    computed.accent20 = `color-mix(in srgb, ${theme.accent} 20%, transparent)`;
+  if (theme.accent != null) {
+    if (theme.accent50 == null)
+      computed.accent50 = `color-mix(in srgb, ${theme.accent} 50%, transparent)`;
+    if (theme.accent20 == null)
+      computed.accent20 = `color-mix(in srgb, ${theme.accent} 20%, transparent)`;
   }
 
   if (theme.primary != null) {

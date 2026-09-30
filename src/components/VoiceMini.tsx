@@ -215,7 +215,7 @@ export const VoiceMini: FC<{
       {brandIconView}
       <div className="w-fit relative">
         {voice.state?.isApplicationSpeaking ? (
-          <Ripple className="rounded-inner" />
+          <Ripple withBorder className="rounded-full" />
         ) : null}
         <IconButton
           Icon={speakersEnabled ? Volume : VolumeOff}
@@ -229,7 +229,7 @@ export const VoiceMini: FC<{
       </div>
       <div className="w-fit relative">
         {voice.state?.isUserSpeaking ? (
-          <Ripple className="rounded-inner" />
+          <Ripple withBorder className="rounded-full" />
         ) : null}
         <IconButton
           Icon={voice.state?.isMicEnabled ? Mic : MicOff}

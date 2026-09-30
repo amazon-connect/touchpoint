@@ -388,6 +388,7 @@ const COLOR_GROUPS: ColorGroup[] = [
     label: "accent and surfaces",
     colors: [
       { name: "accent", className: "bg-accent" },
+      { name: "accent50", className: "bg-accent-50" },
       { name: "accent20", className: "bg-accent-20" },
       { name: "background", className: "bg-background" },
       { name: "overlay", className: "bg-overlay" },
@@ -667,8 +668,8 @@ const ColorGrid: FC = () => {
         }}
       >
         <SmallText>
-          Click accent, primary or secondary to edit. Opacity variants derive
-          automatically.
+          Click accent, background, primary or secondary to edit. Opacity
+          variants derive automatically.
         </SmallText>
         {hasEdits && (
           <EditorButton

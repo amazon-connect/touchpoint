@@ -130,7 +130,7 @@ export const MockVoice: FC<{
               </div>
               <div className="flex items-center justify-center py-4 flex-none">
                 <div className="w-fit relative">
-                  <Ripple className="rounded-inner" />
+                  <Ripple withBorder className="rounded-full" />
                   <IconButton
                     Icon={Mic}
                     label="Voice"
