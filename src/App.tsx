@@ -929,7 +929,10 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}
-      <Main windowSize={windowSize}>
+      <Main
+        windowSize={windowSize}
+        backgroundDepthLayer={props.backgroundDepthLayer}
+      >
         <>
           {/* Mounted here, above the settings panel, the welcome screen and the
               transcript, so that switching between them never re-creates the

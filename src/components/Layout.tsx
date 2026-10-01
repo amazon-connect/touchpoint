@@ -7,10 +7,11 @@ import { Close, Reorder } from "./ui/Icons";
 import { BackgroundDecoration } from "./BackgroundDecoration";
 import { type DragHandleProps } from "../utils/useDraggable";
 
-export const Main: FC<{ windowSize: WindowSize; children: ReactNode }> = ({
-  windowSize,
-  children,
-}) => {
+export const Main: FC<{
+  windowSize: WindowSize;
+  backgroundDepthLayer?: boolean;
+  children: ReactNode;
+}> = ({ windowSize, children, backgroundDepthLayer }) => {
   return (
     <div
       className={clsx(
@@ -24,7 +25,7 @@ export const Main: FC<{ windowSize: WindowSize; children: ReactNode }> = ({
         },
       )}
     >
-      <BackgroundDecoration />
+      <BackgroundDecoration backgroundDepthLayer={backgroundDepthLayer} />
       {children}
     </div>
   );

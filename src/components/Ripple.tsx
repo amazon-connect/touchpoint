@@ -40,10 +40,9 @@ const PingCircle: FC<{
  */
 export const Ripple: FC<{
   /** Trace the container with a border while the ripple plays. */
-  withBorder?: boolean;
   className?: string;
   style?: CSSProperties;
-}> = ({ withBorder = false, className, style }) => {
+}> = ({ className, style }) => {
   const hasExplicitAccent = useProvidedThemeFields().includes("accent");
   const cls = clsx(
     hasExplicitAccent
@@ -54,22 +53,20 @@ export const Ripple: FC<{
   );
   return (
     <>
-      {withBorder ? (
-        <div
-          aria-hidden
-          // Inset by its own width so the border sits just outside the
-          // container: an opaque container background can't cover it, and it
-          // doesn't paint over the contents either.
-          className={clsx(
-            "border-2 border-solid absolute -inset-0.5 pointer-events-none",
-            hasExplicitAccent
-              ? "border-accent-50"
-              : // Equivalent to border-focus-50 (the opacity variant does not exist in the theme, hence duplicated here)
-                "border-[light-dark(rgba(0,127,217,0.5),rgba(0,149,255,0.5))]",
-            className,
-          )}
-        />
-      ) : null}
+      <div
+        aria-hidden
+        // Inset by its own width so the border sits just outside the
+        // container: an opaque container background can't cover it, and it
+        // doesn't paint over the contents either.
+        className={clsx(
+          "border-2 border-solid absolute -inset-0.5 pointer-events-none",
+          hasExplicitAccent
+            ? "border-accent-50"
+            : // Equivalent to border-focus-50 (the opacity variant does not exist in the theme, hence duplicated here)
+              "border-[light-dark(rgba(0,127,217,0.5),rgba(0,149,255,0.5))]",
+          className,
+        )}
+      />
       <div
         aria-hidden
         // Twice the size of the container, centered on it: large enough to hold

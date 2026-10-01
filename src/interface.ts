@@ -420,6 +420,11 @@ export interface TouchpointConfiguration {
    */
   animate?: boolean;
   /**
+   * Controls whether the background should include a depth layer, a collection of various suble gradient and grain effects that add depth
+   * and visual flourish to your application. Omitting the depth layer results in a flatter, cleaner look. Defaults to true.
+   */
+  backgroundDepthLayer?: boolean;
+  /**
    * URL of icon used on the launch icon in the bottom right when the experience is collapsed.
    *
    * When set to `false`, no launch button is shown at all. When not set or set to `true`, the default launch icon is rendered.
