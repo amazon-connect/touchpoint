@@ -20,7 +20,7 @@ import {
   type MessageButtonType,
 } from "../../components/ui/MessageButton";
 import { MessageStatusRow } from "../../components/ui/MessageStatusRow";
-import { TextButton } from "../../components/ui/TextButton";
+import { TextButton, TextButtonGroup } from "../../components/ui/TextButton";
 import { BaseText, SmallText } from "../../components/ui/Typography";
 import { defaultTheme } from "../../components/Theme";
 import {
@@ -108,6 +108,52 @@ const TextButtons: FC = () => (
         Icon={Icons.Close}
       />
       <TextButton type="error" label="Error disabled" Icon={Icons.Close} />
+    </Row>
+  </>
+);
+
+/*
+  `grouped` text buttons round their own first/last corners via `first:`/
+  `last:`, so they are only shown inside a `TextButtonGroup`.
+*/
+const TextButtonGroups: FC = () => (
+  <>
+    <Row label="three options" columns>
+      <TextButtonGroup>
+        <TextButton
+          type="grouped"
+          onClick={noop}
+          label="Check order status"
+          Icon={Icons.ArrowForward}
+        />
+        <TextButton
+          type="grouped"
+          onClick={noop}
+          label="Change delivery date"
+          Icon={Icons.ArrowForward}
+        />
+        <TextButton
+          type="grouped"
+          onClick={noop}
+          label="Something else"
+          Icon={Icons.ArrowForward}
+        />
+      </TextButtonGroup>
+    </Row>
+    <Row label="one option disabled" columns>
+      <TextButtonGroup>
+        <TextButton
+          type="grouped"
+          onClick={noop}
+          label="Grouped default"
+          Icon={Icons.ArrowForward}
+        />
+        <TextButton
+          type="grouped"
+          label="Grouped disabled"
+          Icon={Icons.ArrowForward}
+        />
+      </TextButtonGroup>
     </Row>
   </>
 );
@@ -775,6 +821,13 @@ const MyModality = ({ conversationHandler }) => html\`
     />
   </div>
 \`;`,
+  },
+  {
+    id: "text-button-groups",
+    title: "Text button groups",
+    description:
+      "A bordered stack of `grouped` text buttons, for offering a short list of replies. Only `grouped` text buttons belong inside.",
+    Component: TextButtonGroups,
   },
   {
     id: "icon-buttons",

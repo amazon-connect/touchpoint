@@ -26,7 +26,7 @@ import { SafeMarkdown } from "./SafeMarkdown";
 import { useCopy } from "../utils/useCopy";
 import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
-import { TextButton } from "./ui/TextButton";
+import { TextButton, TextButtonGroup } from "./ui/TextButton";
 import {
   Send,
   ArrowRight,
@@ -94,31 +94,34 @@ export const MessageChoices: FC<{
   messageIndex: number;
 }> = ({ handler, message, responseIndex, messageIndex }) => {
   return message.choices.length > 0 ? (
-    <ul className="space-y-2 max-h-[40vh] overflow-auto no-scrollbar">
+    <TextButtonGroup
+      role="group"
+      aria-label="Response options"
+      className="max-h-[40vh] overflow-auto no-scrollbar"
+    >
       {message.choices.map((choice, key) =>
         message.selectedChoiceId == null ||
         choice.choiceId === message.selectedChoiceId ? (
-          <li key={key} className="w-full">
-            <TextButton
-              type="ghost"
-              Icon={Send}
-              onClick={
-                message.selectedChoiceId == null
-                  ? () => {
-                      handler.sendChoice(
-                        choice.choiceId,
-                        {},
-                        { responseIndex, messageIndex },
-                      );
-                    }
-                  : undefined
-              }
-              label={choice.choiceText}
-            />
-          </li>
+          <TextButton
+            key={key}
+            type="ghost"
+            Icon={Send}
+            onClick={
+              message.selectedChoiceId == null
+                ? () => {
+                    handler.sendChoice(
+                      choice.choiceId,
+                      {},
+                      { responseIndex, messageIndex },
+                    );
+                  }
+                : undefined
+            }
+            label={choice.choiceText}
+          />
         ) : null,
       )}
-    </ul>
+    </TextButtonGroup>
   ) : null;
 };
 
