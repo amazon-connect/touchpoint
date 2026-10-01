@@ -58,6 +58,46 @@ export class MissingAudioPermissionsError extends Error {
 /** Volume above which an attendee is considered to be speaking. */
 const SPEAKING_VOLUME_THRESHOLD = 0.05;
 
+/** How long a speaking indicator lingers after speech stops, to smooth over brief pauses. */
+const SPEAKING_OFF_DELAY_MS = 500;
+
+/**
+ * Creates a setter for a speaking flag that switches on instantly, but off only after
+ * {@link SPEAKING_OFF_DELAY_MS} of continuous silence. Speech resuming within that window
+ * cancels the pending switch-off, so short gaps between words don't flicker the UI.
+ * @param isOn - reads the currently published value of the flag
+ * @param apply - publishes a new value of the flag
+ * @returns `set` to feed raw values in, `cancel` to drop any pending switch-off
+ */
+const createSpeakingFlag = (
+  isOn: () => boolean,
+  apply: (speaking: boolean) => void,
+): { set: (speaking: boolean) => void; cancel: () => void } => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  const cancel = (): void => {
+    if (timeout != null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  return {
+    set: (speaking) => {
+      if (speaking) {
+        cancel();
+        if (!isOn()) {
+          apply(true);
+        }
+      } else if (isOn() && timeout == null) {
+        timeout = setTimeout(() => {
+          timeout = null;
+          apply(false);
+        }, SPEAKING_OFF_DELAY_MS);
+      }
+    },
+    cancel,
+  };
+};
+
 /**
  * Opens an Amazon Connect in-app/web voice session over WebRTC using the Amazon Chime SDK.
  *
@@ -87,6 +127,19 @@ export const initiateVoice = async (
     onStateChanged?.(state);
   };
 
+  const userSpeaking = createSpeakingFlag(
+    () => state.isUserSpeaking,
+    (isUserSpeaking) => {
+      setState({ isUserSpeaking });
+    },
+  );
+  const applicationSpeaking = createSpeakingFlag(
+    () => state.isApplicationSpeaking,
+    (isApplicationSpeaking) => {
+      setState({ isApplicationSpeaking });
+    },
+  );
+
   const startWebRtcContact = (
     handler as unknown as {
       startWebRtcContact?: () => Promise<WebRtcConnectionData>;
@@ -102,6 +155,8 @@ export const initiateVoice = async (
   const volumeSubscriptions = new Set<string>();
 
   const disconnect = async (): Promise<void> => {
+    userSpeaking.cancel();
+    applicationSpeaking.cancel();
     setState({ isUserSpeaking: false, isApplicationSpeaking: false });
     const av = meetingSession?.audioVideo;
     if (av != null) {
@@ -193,14 +248,13 @@ export const initiateVoice = async (
             (id, volume, muted) => {
               const speaking =
                 volume != null && volume > SPEAKING_VOLUME_THRESHOLD && !muted;
-              // The volume indicator fires many times per second; only propagate on an
-              // actual transition to avoid a re-render storm (which visibly shakes the UI).
+              // The volume indicator fires many times per second; the speaking flags only
+              // propagate actual transitions, avoiding a re-render storm (which visibly
+              // shakes the UI), and hold on briefly after speech stops.
               if (id === localAttendeeId) {
-                if (state.isUserSpeaking !== speaking) {
-                  setState({ isUserSpeaking: speaking });
-                }
-              } else if (state.isApplicationSpeaking !== speaking) {
-                setState({ isApplicationSpeaking: speaking });
+                userSpeaking.set(speaking);
+              } else {
+                applicationSpeaking.set(speaking);
               }
             },
           );
