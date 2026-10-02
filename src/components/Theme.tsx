@@ -37,6 +37,9 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
     "--color-background": theme.background,
     "--color-overlay": theme.overlay,
 
+    "--z-index-touchpoint": theme.zIndexTouchpoint,
+    "--z-index-launch-button": theme.zIndexLaunchButton,
+
     "--color-warning-primary": theme.warningPrimary,
     "--color-warning-secondary": theme.warningSecondary,
     "--color-error-primary": theme.errorPrimary,
@@ -52,6 +55,9 @@ export const defaultTheme: Theme = {
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
   innerBorderRadius: "20px",
   outerBorderRadius: "28px",
+
+  zIndexTouchpoint: "1000",
+  zIndexLaunchButton: "100",
 
   primary: "light-dark(rgb(0, 2, 9), rgb(255, 255, 255))",
   primary90: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",

@@ -11,8 +11,8 @@
   --radius-inner: inherit;
   --radius-outer: inherit;
 
-  --z-index-touchpoint: 1000;
-  --z-index-launch-button: 100;
+  --z-index-touchpoint: inherit;
+  --z-index-launch-button: inherit;
 
   --color-primary: inherit;
   --color-primary-90: inherit;
