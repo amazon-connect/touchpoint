@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { type FC, type ReactNode, useMemo, useRef } from "react";
+import { type FC, type ReactNode, useRef } from "react";
 import { clsx } from "clsx";
 import { Tooltip } from "@base-ui/react/tooltip";
 
@@ -12,15 +12,13 @@ import {
   type ThemeField,
   toCustomProperties,
 } from "./components/Theme";
-import {
-  sanitizeContainerStyle,
-  type ContainerStyle,
-} from "./utils/containerStyle";
+import { type CustomStyle } from "./utils/containerStyle";
 
 export const ProviderStack: FC<{
   colorMode: ColorMode;
   className?: string;
-  containerStyle?: ContainerStyle;
+  /** Already sanitized by the configuration normalization in `App`. */
+  containerStyle?: CustomStyle;
   theme?: Partial<Theme>;
   children?: ReactNode;
   languageCode: string;
@@ -36,13 +34,6 @@ export const ProviderStack: FC<{
 }) => {
   const themeWithOverrides: Theme = intelligentMerge(theme ?? {});
   const providedThemeFields = Object.keys(theme ?? {}) as ThemeField[];
-  // Sanitized here rather than at the configuration boundary so that every
-  // caller of the provider stack gets the same treatment, and so that a warning
-  // is only logged once per change of the style object.
-  const safeContainerStyle = useMemo(
-    () => sanitizeContainerStyle(containerStyle),
-    [containerStyle],
-  );
   const ref = useRef<HTMLDivElement>(null);
   return (
     <Tooltip.Provider>
@@ -59,7 +50,7 @@ export const ProviderStack: FC<{
             >
               <div
                 className={clsx(className, "font-sans")}
-                style={safeContainerStyle}
+                style={containerStyle}
               >
                 {children}
               </div>

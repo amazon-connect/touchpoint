@@ -34,7 +34,7 @@ export interface MessageButtonProps {
   className?: string;
   /**
    * Visual style variant of the button. One of MessageButtonType.
-   * @default "default"
+   * @defaultValue `"default"`
    */
   type?: MessageButtonType;
   /**

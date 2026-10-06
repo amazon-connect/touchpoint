@@ -15,6 +15,7 @@ import { Settings } from "../components/Settings";
 
 export const MockText: FC<{
   embedded: boolean;
+  backgroundDepthLayer: boolean;
   colorMode?: ColorMode;
   isExpanded: boolean;
   onClose: () => void;
@@ -59,7 +60,10 @@ export const MockText: FC<{
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}
-      <Main windowSize={windowSize}>
+      <Main
+        windowSize={windowSize}
+        backgroundDepthLayer={props.backgroundDepthLayer}
+      >
         <HeaderContainer>
           <IconButton
             Icon={Close}

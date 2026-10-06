@@ -221,31 +221,63 @@
 }
 
 /*
-  Depth for the main surface (see BackgroundDecoration.tsx). Layered radial
-  glows give the interface dimension even over a blank page, while staying
+  Depth for the main surface (see BackgroundDecoration.tsx). Four stacked
+  layers give the interface dimension even over a blank page, while staying
   translucent enough to still read as an overlay above real page content.
   Colors resolve per color mode via light-dark() (color-scheme is set upstream).
+
+  The layers are separate elements rather than one element's background layers
+  because the sheen blends with the surface fill underneath (`mix-blend-mode`,
+  which is per-element) and the grain is masked (a mask would clip the
+  gradients). They paint in source order, so each class below sits above the
+  previous one.
 */
-.touchpoint-bg-decoration {
-  background:
-    /* Soft light glow — white in light, pink-tinted (#F6D7FF) in dark */
-    radial-gradient(
-      95% 75% at 18% -6%,
-      light-dark(rgba(255, 255, 255, 0.95), rgba(246, 215, 255, 0.1)),
-      transparent 58%
-    ),
-    /* Cool wash — periwinkle #929BF9 fading toward cyan #92D7F9 (dark) */
-    radial-gradient(
-        120% 100% at 88% 106%,
-        light-dark(rgba(146, 155, 249, 0.3), rgba(146, 155, 249, 0.16)),
-        light-dark(rgba(146, 155, 249, 0), rgba(146, 215, 249, 0)) 62%
-      ),
-    /* Vignette to settle the edges — #000408 in dark */
-    radial-gradient(
-        130% 120% at 50% 40%,
-        transparent 52%,
-        light-dark(rgba(0, 0, 0, 0.06), rgba(0, 4, 8, 0.55))
-      );
+
+/* Tinted glow bleeding in from the right edge. */
+.touchpoint-bg-wash {
+  background: radial-gradient(
+    62.5% 100% at 100% 48%,
+    light-dark(rgba(80, 110, 176, 0.2), rgba(174, 186, 255, 0.2)),
+    light-dark(rgba(80, 110, 176, 0), rgba(174, 186, 255, 0))
+  );
+}
+
+/*
+  Diagonal sheen from the top-left. Soft light rather than a plain white
+  overlay: it lifts the midtones of the fill without washing it out, so the
+  surface still reads as the same color.
+*/
+.touchpoint-bg-sheen {
+  background: linear-gradient(
+    158.26deg,
+    light-dark(rgba(255, 255, 255, 1), rgba(255, 255, 255, 0.5)) 1%,
+    rgba(255, 255, 255, 0) 99%
+  );
+  mix-blend-mode: soft-light;
+}
+
+/* Shade settling the bottom edge, so the sheen reads as directional light. */
+.touchpoint-bg-shade {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0),
+    light-dark(rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5))
+  );
+}
+
+/*
+  Film of grain over everything, which keeps the large gradients from banding.
+  The noise is generated rather than shipped as an image: a tiled bitmap fine
+  enough to read as grain is megabytes, and this library publishes as a single
+  bundle. Masking a flat fill (rather than painting the noise directly) is what
+  lets the strength vary per color mode, since `light-dark()` takes colors but
+  not numbers like `opacity`.
+*/
+.touchpoint-bg-grain {
+  --touchpoint-bg-grain-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-color: light-dark(rgba(0, 0, 0, 0.03), rgba(0, 0, 0, 0.1));
+  -webkit-mask-image: var(--touchpoint-bg-grain-image);
+  mask-image: var(--touchpoint-bg-grain-image);
 }
 
 .markdown ul {

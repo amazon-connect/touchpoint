@@ -26,7 +26,7 @@ import { SafeMarkdown } from "./SafeMarkdown";
 import { useCopy } from "../utils/useCopy";
 import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
-import { TextButton } from "./ui/TextButton";
+import { TextButton, TextButtonGroup } from "./ui/TextButton";
 import {
   Send,
   ArrowRight,
@@ -53,6 +53,7 @@ import {
   type OpenGuide,
 } from "./ui/GuideCard";
 import { type ResolvedView } from "../connect";
+import { type CustomStyle } from "../utils/containerStyle";
 
 export interface MessagesProps {
   interimMessage?: string;
@@ -60,6 +61,10 @@ export interface MessagesProps {
   responses: Response[];
   userMessageBubble: boolean;
   agentMessageBubble: boolean;
+  /** Already sanitized by the configuration normalization in `App`. */
+  userMessageBubbleStyle?: CustomStyle;
+  /** Already sanitized by the configuration normalization in `App`. */
+  agentMessageBubbleStyle?: CustomStyle;
   showParticipantInfo: boolean;
   assistantName?: string;
   /** Optional custom avatar image for the assistant. */
@@ -94,31 +99,34 @@ export const MessageChoices: FC<{
   messageIndex: number;
 }> = ({ handler, message, responseIndex, messageIndex }) => {
   return message.choices.length > 0 ? (
-    <ul className="space-y-2 max-h-[40vh] overflow-auto no-scrollbar">
+    <TextButtonGroup
+      role="group"
+      aria-label="Response options"
+      className="max-h-[40vh] overflow-auto no-scrollbar"
+    >
       {message.choices.map((choice, key) =>
         message.selectedChoiceId == null ||
         choice.choiceId === message.selectedChoiceId ? (
-          <li key={key} className="w-full">
-            <TextButton
-              type="ghost"
-              Icon={Send}
-              onClick={
-                message.selectedChoiceId == null
-                  ? () => {
-                      handler.sendChoice(
-                        choice.choiceId,
-                        {},
-                        { responseIndex, messageIndex },
-                      );
-                    }
-                  : undefined
-              }
-              label={choice.choiceText}
-            />
-          </li>
+          <TextButton
+            key={key}
+            type="ghost"
+            Icon={Send}
+            onClick={
+              message.selectedChoiceId == null
+                ? () => {
+                    handler.sendChoice(
+                      choice.choiceId,
+                      {},
+                      { responseIndex, messageIndex },
+                    );
+                  }
+                : undefined
+            }
+            label={choice.choiceText}
+          />
         ) : null,
       )}
-    </ul>
+    </TextButtonGroup>
   ) : null;
 };
 
@@ -222,9 +230,10 @@ export const UserMessage: FC<{
   text: string;
   files?: File[];
   bubble: boolean;
+  bubbleStyle?: CustomStyle;
   status?: MessageStatus;
   align?: "left" | "right";
-}> = ({ text, bubble, files, status, align = "right" }) => {
+}> = ({ text, bubble, bubbleStyle, files, status, align = "right" }) => {
   const alignRight = align === "right";
   return (
     <div className="space-y-2">
@@ -237,8 +246,9 @@ export const UserMessage: FC<{
         <div
           className={clsx(
             "text-primary-60 rounded-inner whitespace-pre-wrap",
-            bubble ? "bg-primary-5 p-3" : "",
+            bubble ? "bg-primary-10 px-3 py-2" : "",
           )}
+          style={bubble ? bubbleStyle : undefined}
         >
           {text}
         </div>
@@ -392,6 +402,8 @@ export const Messages: FC<MessagesProps> = ({
   uploadedFiles,
   userMessageBubble,
   agentMessageBubble,
+  userMessageBubbleStyle,
+  agentMessageBubbleStyle,
   showParticipantInfo,
   assistantName,
   assistantIcon,
@@ -589,6 +601,7 @@ export const Messages: FC<MessagesProps> = ({
                     <UserMessage
                       text={response.payload.text}
                       bubble={userMessageBubble}
+                      bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       status={
                         responseIndex === lastUserResponseIndex
@@ -610,6 +623,7 @@ export const Messages: FC<MessagesProps> = ({
                   {wrap(
                     <UserMessage
                       bubble={userMessageBubble}
+                      bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       text={response.payload.utterance}
                       files={response.payload.uploadIds
@@ -688,9 +702,14 @@ export const Messages: FC<MessagesProps> = ({
                           className={clsx(
                             "space-y-6 markdown",
                             agentMessageBubble
-                              ? "p-3 w-fit bg-secondary-40 mr-10 rounded-inner"
+                              ? "px-3 py-2 w-fit bg-secondary-40 mr-10 rounded-inner"
                               : "",
                           )}
+                          style={
+                            agentMessageBubble
+                              ? agentMessageBubbleStyle
+                              : undefined
+                          }
                           contents={message.text}
                         />
                       </div>
@@ -769,6 +788,7 @@ export const Messages: FC<MessagesProps> = ({
                       key={messageIndex}
                       text={selectedChoice.choiceText}
                       bubble={userMessageBubble}
+                      bubbleStyle={userMessageBubbleStyle}
                     />
                   );
                 }

@@ -17,6 +17,7 @@ import { Settings } from "../components/Settings";
 
 export const MockVoice: FC<{
   embedded: boolean;
+  backgroundDepthLayer: boolean;
   colorMode?: ColorMode;
   isExpanded: boolean;
   onClose: () => void;
@@ -61,7 +62,10 @@ export const MockVoice: FC<{
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}
-      <Main windowSize={windowSize}>
+      <Main
+        windowSize={windowSize}
+        backgroundDepthLayer={props.backgroundDepthLayer}
+      >
         <HeaderContainer>
           <IconButton
             Icon={Close}
@@ -130,7 +134,7 @@ export const MockVoice: FC<{
               </div>
               <div className="flex items-center justify-center py-4 flex-none">
                 <div className="w-fit relative">
-                  <Ripple withBorder className="rounded-full" />
+                  <Ripple className="rounded-full" />
                   <IconButton
                     Icon={Mic}
                     label="Voice"

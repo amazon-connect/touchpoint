@@ -31,13 +31,16 @@ import { Loader } from "./components/ui/Loader";
 import { FullscreenError } from "./components/FullscreenError";
 import { Input } from "./components/Input";
 import type {
-  WindowSize,
   ChoiceMessage,
+  CustomModalityComponent,
   LiveSyncCustomAction,
   LiveSyncContextInput,
   PageState,
+  TouchpointConfiguration,
 } from "./interface";
 import type { NormalizedTouchpointConfiguration } from "./types";
+import { defaultModalities } from "./components/defaultModalities";
+import { sanitizeContainerStyle } from "./utils/containerStyle";
 import { VoiceMini } from "./components/VoiceMini";
 import { actionHandler } from "./liveSync/actionHandler";
 import { RiveAnimation } from "./components/RiveAnimation";
@@ -104,9 +107,69 @@ const StartNewConversationButton: FC<{ onClick: () => void }> = ({
 };
 
 /**
+ * Resolves every defaulted setting and sanitizes all custom style objects, so
+ * that no component downstream has to apply a default or re-sanitize.
+ *
+ * Custom styles can come from the `configuration` attribute of the
+ * `<connect-touchpoint>` element and are therefore treated as untrusted input;
+ * sanitizing here means a warning is logged once per configuration change.
+ * @param configuration - the raw configuration provided by the host
+ * @param embedded - whether Touchpoint renders inline (affects the default window size)
+ * @returns the normalized configuration
+ */
+const normalizeConfiguration = (
+  configuration: TouchpointConfiguration,
+  embedded: boolean,
+): NormalizedTouchpointConfiguration => {
+  const modalityComponents: Record<string, CustomModalityComponent<unknown>> = {
+    ...(configuration.modalityComponents ?? {}),
+    ...defaultModalities,
+  };
+
+  return {
+    ...configuration,
+    languageCode:
+      configuration.languageCode ??
+      (typeof navigator !== "undefined" ? navigator.language : undefined) ??
+      "en-US",
+    input: configuration.input ?? "text",
+    windowSize: configuration.windowSize ?? (embedded ? "full" : "half"),
+    colorMode: configuration.colorMode ?? "dark",
+    animate: configuration.animate ?? false,
+    backgroundDepthLayer: configuration.backgroundDepthLayer ?? true,
+    launchIcon: configuration.launchIcon ?? true,
+    userMessageBubble: configuration.userMessageBubble ?? true,
+    agentMessageBubble: configuration.agentMessageBubble ?? false,
+    chatMode: configuration.chatMode ?? true,
+    welcomeScreen: configuration.welcomeScreen ?? true,
+    welcomeScreenLogo: configuration.welcomeScreenLogo ?? true,
+    showParticipantInfo: configuration.showParticipantInfo ?? false,
+    showVoiceTranscript: configuration.showVoiceTranscript ?? false,
+    escalationPhrase:
+      configuration.escalationPhrase ?? "I'd like to talk to an agent",
+    modalityComponents,
+    containerStyle: sanitizeContainerStyle(configuration.containerStyle),
+    userMessageBubbleStyle:
+      configuration.userMessageBubbleStyle == null
+        ? undefined
+        : sanitizeContainerStyle(configuration.userMessageBubbleStyle),
+    agentMessageBubbleStyle:
+      configuration.agentMessageBubbleStyle == null
+        ? undefined
+        : sanitizeContainerStyle(configuration.agentMessageBubbleStyle),
+    // Amazon Connect drives the greeting from the contact flow when the
+    // participant connects, so there is nothing to send client-side. (NLX's
+    // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
+    // Chat Interface integration.)
+    initializeConversation: configuration.initializeConversation ?? (() => {}),
+  };
+};
+
+/**
  * Main Touchpoint creation properties object
  */
-interface Props extends NormalizedTouchpointConfiguration {
+interface Props {
+  configuration: TouchpointConfiguration;
   embedded: boolean;
   onClose: ((event: Event) => void) | null;
   enableSettings: boolean;
@@ -122,16 +185,33 @@ export interface AppRef {
 }
 
 const App = forwardRef<AppRef, Props>((props, ref) => {
+  // Defaults and style sanitization are applied here, once per configuration
+  // change, so the rest of the tree only ever sees resolved values.
+  const configuration = useMemo(
+    () => normalizeConfiguration(props.configuration, props.embedded),
+    [props.configuration, props.embedded],
+  );
+
   // Only text chat opens a Connect chat session. Voice/voice-mini use a WebRTC
   // contact instead, and "external" opens nothing on its own — it renders no UI
   // and only connects Live Sync to the provided contact ID.
-  const chatEnabled = (props.input ?? "text") === "text";
+  const chatEnabled = configuration.input === "text";
   const handler = useMemo(
     () =>
-      buildConnectHandler(props.config, props.languageCode, props.liveSync, {
-        chatEnabled,
-      }),
-    [props.config, props.languageCode, props.liveSync, chatEnabled],
+      buildConnectHandler(
+        configuration.config,
+        configuration.languageCode,
+        configuration.liveSync,
+        {
+          chatEnabled,
+        },
+      ),
+    [
+      configuration.config,
+      configuration.languageCode,
+      configuration.liveSync,
+      chatEnabled,
+    ],
   );
 
   const conversationId = handler.currentConversationId();
@@ -167,14 +247,17 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
 
   const [responses, setResponses] = useState<Response[]>([]);
 
-  const colorMode = props.colorMode ?? "dark";
+  const colorMode = configuration.colorMode;
 
   const [isExpanded, setIsExpanded] = useState(
-    props.embedded || props.input === "external" || restoredConversation,
+    props.embedded ||
+      configuration.input === "external" ||
+      restoredConversation,
   );
 
   const configValid =
-    props.config?.chatEndpoint != null || props.config?.details != null;
+    configuration.config?.chatEndpoint != null ||
+    configuration.config?.details != null;
 
   // The handler tags the "Conversation has ended" notice; when present, the input
   // is replaced with a "Start new conversation" button.
@@ -239,9 +322,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     };
     return {
       escalate: () => {
-        handler.sendText(
-          props.escalationPhrase ?? "I'd like to talk to an agent",
-        );
+        handler.sendText(configuration.escalationPhrase);
       },
       startAuthentication: () => {
         void connectHandler.startAuthentication?.();
@@ -263,15 +344,17 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         connectHandler.submitView?.({ action, data, viewName });
       },
     };
-  }, [handler, props.escalationPhrase]);
+  }, [handler, configuration.escalationPhrase]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
   const isExpandedRef = useRef<boolean>(
-    props.embedded || props.input === "external" || restoredConversation,
+    props.embedded ||
+      configuration.input === "external" ||
+      restoredConversation,
   );
 
-  const input = props.input ?? "text";
+  const input = configuration.input;
 
   const hangUp = useCallback(() => {
     sessionStorage.removeItem("touchpointActiveVoiceConversationId");
@@ -297,7 +380,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
 
   // Fires the public `onContactEnded` hook with a cancelable event and reports
   // whether the host cancelled the default action.
-  const { onContactEnded } = props;
+  const { onContactEnded } = configuration;
   const emitContactEnded = useCallback((): boolean => {
     const event = new Event("contactended", { cancelable: true });
     onContactEnded?.(event);
@@ -432,7 +515,10 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     conversationInitialized.current = true;
 
     if (input !== "text" || responseData == null || responseData.length === 0) {
-      props.initializeConversation(handler, props.initialContext);
+      configuration.initializeConversation(
+        handler,
+        configuration.initialContext,
+      );
     }
     const newConversationId = handler.currentConversationId();
     if (newConversationId != null)
@@ -440,16 +526,15 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         "touchpointActiveVoiceConversationId",
         newConversationId,
       );
-  }, [handler, isExpanded, hangUp, input, props, responseData]);
+  }, [handler, isExpanded, hangUp, input, configuration, responseData]);
 
   useEffect(() => {
-    if (props.liveSync != null) {
-      return actionHandler(handler, props.liveSync, pageState);
+    if (configuration.liveSync != null) {
+      return actionHandler(handler, configuration.liveSync, pageState);
     }
-  }, [props.liveSync, handler]);
+  }, [configuration.liveSync, handler]);
 
-  const windowSize: WindowSize =
-    props.windowSize ?? (props.embedded ? "full" : "half");
+  const windowSize = configuration.windowSize;
 
   // Detached layouts that leave the page visible and interactive (no overlay).
   const isFloating = !props.embedded && windowSize === "floating";
@@ -550,7 +635,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   // layout if any response carries modalities or a guide, or isn't a plain
   // assistant message (e.g. a Notice or Failure).
   const welcomeResponses = useMemo<ApplicationResponse[] | null>(() => {
-    if (props.welcomeScreen === false) {
+    if (!configuration.welcomeScreen) {
       return null;
     }
     if (input !== "text" || conversationEnded) {
@@ -576,7 +661,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     // May be empty during the connecting/thinking phase before the first message
     // arrives — the welcome screen shows a centered loader in that case.
     return applicationResponses;
-  }, [props.welcomeScreen, input, conversationEnded, responses]);
+  }, [configuration.welcomeScreen, input, conversationEnded, responses]);
 
   // While the chat session is still being established, the customer can't send
   // anything yet, so the input is hidden (in both the immersive and normal
@@ -587,15 +672,12 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   // suppressed so there's a single logo; it returns once the conversation starts.
   const welcomeLogoActive =
     welcomeResponses != null &&
-    props.welcomeScreenLogo !== false &&
-    props.brandIcon != null;
+    configuration.welcomeScreenLogo &&
+    configuration.brandIcon != null;
 
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
-  const modalityComponents = useMemo(
-    () => props.modalityComponents ?? {},
-    [props.modalityComponents],
-  );
+  const modalityComponents = configuration.modalityComponents;
 
   const [fullscreenVoiceSpeakersEnabled, setFullscreenVoiceSpeakersEnabled] =
     useState<boolean>(true);
@@ -607,7 +689,10 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     handler.reset({ clearResponses: true });
     hangUp();
     if (input !== "voice") {
-      props.initializeConversation(handler, props.initialContext);
+      configuration.initializeConversation(
+        handler,
+        configuration.initialContext,
+      );
     }
     const newConversationId = handler.currentConversationId();
     if (sessionStorage.getItem("touchpointConversationId") !== null) {
@@ -634,22 +719,24 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   if (input === "external") return null;
 
   if (!isExpanded) {
-    return props.launchIcon !== false ? (
+    return configuration.launchIcon !== false ? (
       <ProviderStack
         className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={props.theme}
+        theme={configuration.theme}
         colorMode={colorMode}
-        languageCode={props.languageCode}
-        copy={props.copy}
+        languageCode={configuration.languageCode}
+        copy={configuration.copy}
       >
         <LaunchButton
           className="backdrop-blur-sm"
           iconUrl={
-            typeof props.launchIcon === "string" ? props.launchIcon : undefined
+            typeof configuration.launchIcon === "string"
+              ? configuration.launchIcon
+              : undefined
           }
           Custom={
-            typeof props.launchIcon === "function"
-              ? props.launchIcon
+            typeof configuration.launchIcon === "function"
+              ? configuration.launchIcon
               : undefined
           }
           onClick={() => {
@@ -667,10 +754,10 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     // animation move together.
     return (
       <ProviderStack
-        theme={props.theme}
+        theme={configuration.theme}
         colorMode={colorMode}
-        languageCode={props.languageCode}
-        copy={props.copy}
+        languageCode={configuration.languageCode}
+        copy={configuration.copy}
       >
         <div
           ref={voiceMiniDrag.ref}
@@ -686,16 +773,16 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
                 }
           }
         >
-          {props.animate ? (
+          {configuration.animate ? (
             <RiveAnimation restored={restoredConversation} />
           ) : null}
           <VoiceMini
             key={voiceKey}
             handler={handler}
             responses={responses}
-            showTranscript={props.showVoiceTranscript ?? false}
-            context={props.initialContext}
-            brandIcon={props.brandIcon}
+            showTranscript={configuration.showVoiceTranscript}
+            context={configuration.initialContext}
+            brandIcon={configuration.brandIcon}
             onClose={() => {
               onClose(new Event("close"));
             }}
@@ -785,7 +872,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           <div className="grow flex flex-col items-center justify-center gap-6 overflow-auto p-2 md:p-3 w-full md:max-w-content md:mx-auto">
             {showWelcomeLogo ? (
               <img
-                src={props.brandIcon}
+                src={configuration.brandIcon}
                 role="presentation"
                 className="w-12 h-12 flex-none object-contain object-center"
               />
@@ -819,19 +906,21 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       <>
         <Messages
           enabled={props.enabled}
-          userMessageBubble={props.userMessageBubble ?? false}
-          agentMessageBubble={props.agentMessageBubble ?? false}
-          showParticipantInfo={props.showParticipantInfo ?? false}
-          assistantName={props.assistantName}
-          assistantIcon={props.assistantIcon}
-          avatarShape={props.avatarShape}
+          userMessageBubble={configuration.userMessageBubble}
+          agentMessageBubble={configuration.agentMessageBubble}
+          userMessageBubbleStyle={configuration.userMessageBubbleStyle}
+          agentMessageBubbleStyle={configuration.agentMessageBubbleStyle}
+          showParticipantInfo={configuration.showParticipantInfo}
+          assistantName={configuration.assistantName}
+          assistantIcon={configuration.assistantIcon}
+          avatarShape={configuration.avatarShape}
           onDownloadAttachment={connectActions.downloadAttachment}
           onDescribeView={connectActions.describeView}
           onSubmitView={connectActions.submitView}
           onAuthenticate={connectActions.startAuthentication}
           onCancelAuthentication={connectActions.cancelAuthentication}
-          viewRendererInstanceUrl={props.config?.instanceUrl}
-          chatMode={props.chatMode ?? true}
+          viewRendererInstanceUrl={configuration.config?.instanceUrl}
+          chatMode={configuration.chatMode}
           interimMessage={interimMessage}
           lastApplicationResponseIndex={lastApplicationResponse?.index}
           responses={responses}
@@ -886,8 +975,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       <FullscreenVoice
         key={voiceKey}
         responses={responses}
-        brandIcon={props.brandIcon}
-        showTranscript={props.showVoiceTranscript ?? false}
+        brandIcon={configuration.brandIcon}
+        showTranscript={configuration.showVoiceTranscript}
         handler={handler}
         speakersEnabled={fullscreenVoiceSpeakersEnabled}
         colorMode={colorMode}
@@ -899,7 +988,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           isSettingsOpen ? "hidden" : "grow",
           windowSize === "full" ? "w-full md:max-w-content md:mx-auto" : "",
         )}
-        context={props.initialContext}
+        context={configuration.initialContext}
         modalityComponents={modalityComponents}
         onVoiceSessionEnded={handleVoiceEnded}
       />
@@ -920,16 +1009,19 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               : // half / full overlay covering the viewport.
                 "grid grid-cols-2 xl:grid-cols-[1fr_632px] fixed inset-0 z-touchpoint",
       )}
-      containerStyle={props.containerStyle}
-      theme={props.theme}
+      containerStyle={configuration.containerStyle}
+      theme={configuration.theme}
       colorMode={colorMode}
-      languageCode={props.languageCode}
-      copy={props.copy}
+      languageCode={configuration.languageCode}
+      copy={configuration.copy}
     >
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}
-      <Main windowSize={windowSize}>
+      <Main
+        windowSize={windowSize}
+        backgroundDepthLayer={configuration.backgroundDepthLayer}
+      >
         <>
           {/* Mounted here, above the settings panel, the welcome screen and the
               transcript, so that switching between them never re-creates the

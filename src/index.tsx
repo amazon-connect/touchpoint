@@ -18,13 +18,7 @@ import {
 } from "./components/ui/CustomCard";
 import { Carousel } from "./components/ui/Carousel";
 import { DateInput } from "./components/ui/DateInput";
-import { defaultModalities } from "./components/defaultModalities";
-import type {
-  TouchpointConfiguration,
-  CustomModalityComponent,
-  TouchpointInstance,
-} from "./interface";
-import type { NormalizedTouchpointConfiguration } from "./types";
+import type { TouchpointConfiguration, TouchpointInstance } from "./interface";
 
 /**
  * If you wish to build custom modalities using JSX, you will want to
@@ -133,30 +127,6 @@ export {
   type AccessibilityInformation,
 } from "./liveSync/analyzePageForms";
 
-const normalizeConfiguration = (
-  configuration: TouchpointConfiguration,
-): NormalizedTouchpointConfiguration => {
-  const modalityComponents: Record<string, CustomModalityComponent<unknown>> = {
-    ...(configuration.modalityComponents ?? {}),
-    ...defaultModalities,
-  };
-
-  return {
-    ...configuration,
-    languageCode:
-      configuration.languageCode ??
-      (typeof navigator !== "undefined" ? navigator.language : undefined) ??
-      "en-US",
-    input: configuration.input ?? "text",
-    modalityComponents,
-    // Amazon Connect drives the greeting from the contact flow when the
-    // participant connects, so there is nothing to send client-side. (NLX's
-    // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
-    // Chat Interface integration.)
-    initializeConversation: configuration.initializeConversation ?? (() => {}),
-  };
-};
-
 /**
  * Injects some sane default styling for embedded toucbhpoints.
  * This is only done once, so if you create multiple touchpoints, they will all share the same styles.
@@ -241,15 +211,11 @@ class NlxTouchpointElement extends HTMLElement {
     this.#shadowRoot ??= this.attachShadow({ mode: "closed" });
     this.#root ??= createRoot(this.#shadowRoot);
     if (this.#touchpointConfiguration != null) {
-      const configuration = normalizeConfiguration(
-        this.#touchpointConfiguration,
-      );
-
       this.#root.render(
         <>
           <style>{cssRaw}</style>
           <App
-            {...configuration}
+            configuration={this.#touchpointConfiguration}
             embedded={this.embedded}
             onClose={this.onClose}
             enableSettings={this.enableSettings}
