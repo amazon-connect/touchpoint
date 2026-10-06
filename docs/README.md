@@ -183,7 +183,91 @@ A promise that resolves to a TouchpointInstance
 
 Main Touchpoint creation properties object
 
-#### Properties
+#### Theming
+
+##### userMessageBubbleStyle?
+
+```ts
+optional userMessageBubbleStyle?: ContainerStyle;
+```
+
+Inline style overrides for the user message bubble. Only applied when
+[TouchpointConfiguration.userMessageBubble](#usermessagebubble) is enabled.
+
+Only the properties of [CustomStyle](#containerstyle-1) are supported; anything else,
+and any value containing `url()`, `image-set()`, `element()`, comments or
+extra declarations, is dropped with a console warning, as the
+configuration can come from the `configuration` attribute of the
+`<connect-touchpoint>` element and is therefore treated as untrusted input.
+
+###### Example
+
+```typescript
+const userMessageBubbleStyle: CustomStyle = {
+  backgroundColor: "#e8f0fe",
+  borderRadius: "1rem",
+};
+```
+
+##### agentMessageBubbleStyle?
+
+```ts
+optional agentMessageBubbleStyle?: ContainerStyle;
+```
+
+Inline style overrides for the agent message bubble. Only applied when
+[TouchpointConfiguration.agentMessageBubble](#agentmessagebubble) is enabled.
+
+Only the properties of [CustomStyle](#containerstyle-1) are supported; anything else,
+and any value containing `url()`, `image-set()`, `element()`, comments or
+extra declarations, is dropped with a console warning, as the
+configuration can come from the `configuration` attribute of the
+`<connect-touchpoint>` element and is therefore treated as untrusted input.
+
+###### Example
+
+```typescript
+const agentMessageBubbleStyle: CustomStyle = {
+  backgroundColor: "#f3f3f3",
+  borderRadius: "1rem",
+};
+```
+
+##### containerStyle?
+
+```ts
+optional containerStyle?: ContainerStyle;
+```
+
+Inline style overrides for the full conversation container — the expanded
+chat or full-screen voice experience — e.g. to place or size the panel
+differently than any of the `windowSize` presets. Applied on top of the
+styles the preset sets, so only specify what you want to change.
+
+Not available for the launch icon or the `voiceMini` widget: both are
+compact floating elements positioned on their own terms, and neither is the
+conversation container this is meant for.
+
+Only the properties of [CustomStyle](#containerstyle-1) — the geometry and surface of
+the container itself — are supported. Anything else, and any value
+containing `url()`, `image-set()`, `element()`, comments or extra
+declarations, is dropped with a console warning: the configuration can come
+from the `configuration` attribute of the `<connect-touchpoint>` element
+and is therefore treated as untrusted input. Use [Theme](#theme-1) to restyle
+the content inside the container.
+
+###### Example
+
+```typescript
+const containerStyle: CustomStyle = {
+  // Dock the floating panel to the bottom left instead of the right.
+  left: "1rem",
+  right: "auto",
+  width: "min(420px, calc(100vw - 2rem))",
+};
+```
+
+#### Other
 
 ##### config
 
@@ -291,6 +375,15 @@ optional animate?: boolean;
 ```
 
 Include border animation. Currently only supported in Voice Mini.
+
+##### backgroundDepthLayer?
+
+```ts
+optional backgroundDepthLayer?: boolean;
+```
+
+Controls whether the background should include a depth layer, a collection of various suble gradient and grain effects that add depth
+and visual flourish to your application. Omitting the depth layer results in a flatter, cleaner look. Defaults to true.
 
 ##### launchIcon?
 
@@ -833,6 +926,14 @@ Accent color used for prominent buttons (e.g. the send button), the loader
 animation, and selected card outlines. Defaults to black/white so that
 setting a brand accent produces a clearly visible change.
 
+##### accent50
+
+```ts
+accent50: string;
+```
+
+Accent color with 50% opacity
+
 ##### accent20
 
 ```ts
@@ -840,16 +941,6 @@ accent20: string;
 ```
 
 Accent color with 20% opacity
-
-##### onAccent
-
-```ts
-onAccent: string;
-```
-
-Foreground color rendered on top of `accent` (e.g. the send button icon).
-If omitted while `accent` is set to a solid color, it is derived
-automatically for legible contrast.
 
 ##### background
 
@@ -899,6 +990,30 @@ errorSecondary: string;
 
 Secondary error color
 
+##### successPrimary
+
+```ts
+successPrimary: string;
+```
+
+Primary success color
+
+##### successSecondary
+
+```ts
+successSecondary: string;
+```
+
+Secondary success color
+
+##### focus
+
+```ts
+focus: string;
+```
+
+Focus outline color
+
 ##### innerBorderRadius
 
 ```ts
@@ -915,6 +1030,36 @@ outerBorderRadius: string;
 
 Outer border radius: generally used for elements that contain buttons that have inner border radius. Also used by the launch button.
 
+##### zIndexTouchpoint
+
+```ts
+zIndexTouchpoint: string;
+```
+
+z-index of the main conversation area
+
+##### zIndexLaunchButton
+
+```ts
+zIndexLaunchButton: string;
+```
+
+z-index of the launch button
+
+---
+
+### ContainerStyle
+
+```ts
+type ContainerStyle = Pick<CSSProperties, (typeof allowedProperties)[number]>;
+```
+
+Style overrides applied to the full conversation container — the expanded chat
+or full-screen voice experience, not the launch icon or the `voiceMini` widget.
+
+Only the properties in this type are supported; see
+`TouchpointConfiguration.containerStyle`.
+
 ## Modality components
 
 ### Ripple
@@ -926,7 +1071,13 @@ const Ripple: FC<{
 }>;
 ```
 
-A ripple effect composed of expanding circles.
+A ripple effect composed of expanding circles, optionally with a border
+tracing the container. The circles are masked so they only ever paint outside
+the container (see `.touchpoint-ripple`), keeping its contents legible.
+
+Colored with the theme accent, but only when the consumer set one: the
+default accent is black/white (see `defaultTheme`), which would render the
+ripple as a grey smudge, so an unset accent falls back to Touchpoint blue.
 
 ---
 
@@ -1081,17 +1232,15 @@ const MyDateInput = ({ conversationHandler }) => (
 ### IconButtonType
 
 ```ts
-type IconButtonType =
-  "main" | "ghost" | "activated" | "coverup" | "error";
+type IconButtonType = "main" | "ghost" | "subtle" | "coverup" | "error";
 ```
 
 Represents the different types of icon buttons available in the application.
 
 - `main`: The primary icon button.
 - `ghost`: A transparent or less prominent icon button.
-- `activated`: An icon button that indicates an active state.
+- `subtle`: An icon button that indicates an active state.
 - `coverup`: An icon button used to cover up or mask something.
-- `overlay`: An icon button that appears over other content.
 
 ---
 
@@ -1126,6 +1275,50 @@ const MyIconButton = () => (
 
 ---
 
+### MessageButtonType
+
+```ts
+type MessageButtonType = "default" | "selected" | "unselected";
+```
+
+Represents the different types of message buttons available in the application.
+
+- `default`: The default message button.
+- `selected`: A message button showing the selected state.
+- `unselected`: A message button showing the unselected state.
+
+---
+
+### MessageButton
+
+```ts
+const MessageButton: FC<{
+  onClick?: () => void;
+  label: string;
+  className?: string;
+  type?: MessageButtonType;
+  Icon: FC<IconProps>;
+}>;
+```
+
+A button showing only an icon (textual label is provided for accessibility)
+
+#### Example
+
+```tsx
+import { MessageButton, Icons, React } from "@amazon-connect-touchpoint/web";
+
+const MyMessageButton = () => (
+  <MessageButton
+    label="Send message"
+    onClick={() => alert("Icon button clicked!")}
+    Icon={Icons.ArrowForward}
+  />
+);
+```
+
+---
+
 ### TextButton
 
 ```ts
@@ -1133,7 +1326,7 @@ const TextButton: FC<{
   onClick?: () => void;
   label: string;
   className?: string;
-  type?: "main" | "error" | "ghost";
+  type?: "main" | "error" | "ghost" | "grouped";
   Icon: FC<IconProps>;
 }>;
 ```
@@ -1226,7 +1419,9 @@ const MyCustomModality = ({ data, conversationHandler }) =>
       label="Cancel"
       Icon=${Icons.Close}
       type="ghost"
-      onClick=${cancel()}
+      onClick=${() => {
+     cancel();
+   }}
     />
     <TextButton
       label="Submit"

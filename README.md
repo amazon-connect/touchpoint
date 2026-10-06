@@ -175,6 +175,42 @@ container-level properties (placement, size, spacing, borders, shadow, transform
 `element()`) or try to smuggle in extra declarations are dropped with a console
 warning. Use `theme` to restyle the content inside the container.
 
+#### Message bubbles
+
+Transcript messages can be rendered as bubbles, independently for each side:
+`userMessageBubble` for the customer's messages and `agentMessageBubble` for the
+assistant's. With bubbles off, messages render as plain text on the background.
+
+Each bubble can then be restyled with `userMessageBubbleStyle` /
+`agentMessageBubbleStyle`. These are only applied when the matching
+`*MessageBubble` flag is enabled — a style object on its own does not turn
+bubbles on.
+
+```js
+const touchpoint = await create({
+  config: {
+    /* … */
+  },
+  input: "text",
+  userMessageBubble: true,
+  agentMessageBubble: true,
+  userMessageBubbleStyle: {
+    backgroundColor: "#e8f0fe",
+    borderRadius: "1rem",
+  },
+  agentMessageBubbleStyle: {
+    backgroundColor: "#f3f3f3",
+    borderRadius: "1rem",
+  },
+});
+```
+
+The bubble styles use the same allowlist and sanitization as `containerStyle`:
+only the supported properties are kept, and anything containing `url()`,
+`image-set()`, `element()`, comments, or extra declarations is dropped with a
+console warning, since the configuration may arrive as untrusted JSON on the
+`configuration` attribute of the `<connect-touchpoint>` element.
+
 ### Welcome screen
 
 For text conversations, the opening assistant message is presented as an
@@ -428,7 +464,8 @@ Common entry points:
 - [`create(config)`](./docs/README.md) — create and mount a Touchpoint instance.
 - `TouchpointConfiguration` — top-level options (`config`, `input`, `colorMode`,
   `windowSize`, `theme`, `containerStyle`, `liveSync`, `brandIcon`,
-  `onContactEnded`,
+  `onContactEnded`, `userMessageBubble`, `agentMessageBubble`,
+  `userMessageBubbleStyle`, `agentMessageBubbleStyle`,
   `welcomeScreen`, `welcomeScreenLogo`, `showParticipantInfo`, `assistantName`,
   `assistantIcon`, `avatarShape`, …).
 - `ConnectConfig` — Amazon Connect Customer connection details.
