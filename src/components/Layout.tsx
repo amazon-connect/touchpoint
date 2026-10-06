@@ -9,7 +9,7 @@ import { type DragHandleProps } from "../utils/useDraggable";
 
 export const Main: FC<{
   windowSize: WindowSize;
-  backgroundDepthLayer?: boolean;
+  backgroundDepthLayer: boolean;
   children: ReactNode;
 }> = ({ windowSize, children, backgroundDepthLayer }) => {
   return (

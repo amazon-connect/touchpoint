@@ -231,6 +231,7 @@ export const DesignSystem: FC = () => {
         {activeMock === "mock1" && (
           <MockText
             embedded={false}
+            backgroundDepthLayer
             colorMode={colorMode}
             theme={customTheme}
             isExpanded={isMockExpanded}
@@ -242,6 +243,7 @@ export const DesignSystem: FC = () => {
         {activeMock === "mock2" && (
           <MockVoice
             embedded={false}
+            backgroundDepthLayer
             colorMode={colorMode}
             theme={customTheme}
             isExpanded={isMockExpanded}

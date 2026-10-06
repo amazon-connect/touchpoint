@@ -53,10 +53,7 @@ import {
   type OpenGuide,
 } from "./ui/GuideCard";
 import { type ResolvedView } from "../connect";
-import {
-  sanitizeContainerStyle,
-  type CustomStyle,
-} from "../utils/containerStyle";
+import { type CustomStyle } from "../utils/containerStyle";
 
 export interface MessagesProps {
   interimMessage?: string;
@@ -64,7 +61,9 @@ export interface MessagesProps {
   responses: Response[];
   userMessageBubble: boolean;
   agentMessageBubble: boolean;
+  /** Already sanitized by the configuration normalization in `App`. */
   userMessageBubbleStyle?: CustomStyle;
+  /** Already sanitized by the configuration normalization in `App`. */
   agentMessageBubbleStyle?: CustomStyle;
   showParticipantInfo: boolean;
   assistantName?: string;
@@ -424,21 +423,6 @@ export const Messages: FC<MessagesProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const safeUserMessageBubbleStyle = useMemo(
-    () =>
-      userMessageBubbleStyle == null
-        ? undefined
-        : sanitizeContainerStyle(userMessageBubbleStyle),
-    [userMessageBubbleStyle],
-  );
-  const safeAgentMessageBubbleStyle = useMemo(
-    () =>
-      agentMessageBubbleStyle == null
-        ? undefined
-        : sanitizeContainerStyle(agentMessageBubbleStyle),
-    [agentMessageBubbleStyle],
-  );
-
   // The guide currently opened into its full-view modal, if any.
   const [activeGuide, setActiveGuide] = useState<OpenGuide | null>(null);
 
@@ -617,7 +601,7 @@ export const Messages: FC<MessagesProps> = ({
                     <UserMessage
                       text={response.payload.text}
                       bubble={userMessageBubble}
-                      bubbleStyle={safeUserMessageBubbleStyle}
+                      bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       status={
                         responseIndex === lastUserResponseIndex
@@ -639,7 +623,7 @@ export const Messages: FC<MessagesProps> = ({
                   {wrap(
                     <UserMessage
                       bubble={userMessageBubble}
-                      bubbleStyle={safeUserMessageBubbleStyle}
+                      bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       text={response.payload.utterance}
                       files={response.payload.uploadIds
@@ -723,7 +707,7 @@ export const Messages: FC<MessagesProps> = ({
                           )}
                           style={
                             agentMessageBubble
-                              ? safeAgentMessageBubbleStyle
+                              ? agentMessageBubbleStyle
                               : undefined
                           }
                           contents={message.text}
@@ -804,7 +788,7 @@ export const Messages: FC<MessagesProps> = ({
                       key={messageIndex}
                       text={selectedChoice.choiceText}
                       bubble={userMessageBubble}
-                      bubbleStyle={safeUserMessageBubbleStyle}
+                      bubbleStyle={userMessageBubbleStyle}
                     />
                   );
                 }

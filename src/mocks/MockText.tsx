@@ -15,7 +15,7 @@ import { Settings } from "../components/Settings";
 
 export const MockText: FC<{
   embedded: boolean;
-  backgroundDepthLayer?: boolean;
+  backgroundDepthLayer: boolean;
   colorMode?: ColorMode;
   isExpanded: boolean;
   onClose: () => void;

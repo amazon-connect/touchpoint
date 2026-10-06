@@ -17,7 +17,7 @@ import { Settings } from "../components/Settings";
 
 export const MockVoice: FC<{
   embedded: boolean;
-  backgroundDepthLayer?: boolean;
+  backgroundDepthLayer: boolean;
   colorMode?: ColorMode;
   isExpanded: boolean;
   onClose: () => void;

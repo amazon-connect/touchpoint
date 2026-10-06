@@ -31,14 +31,14 @@ const Layer: FC<{ className: string }> = ({ className }) => (
  * showing around the surface.
  */
 export const BackgroundDecoration: FC<{
-  backgroundDepthLayer?: boolean;
+  backgroundDepthLayer: boolean;
 }> = ({ backgroundDepthLayer }) => {
   const hasExplicitBackground = useProvidedThemeFields().includes("background");
   return (
     <>
       <Layer className="bg-background backdrop-blur-overlay" />
       {hasExplicitBackground ? null : <Layer className="touchpoint-bg-wash" />}
-      {backgroundDepthLayer !== false ? (
+      {backgroundDepthLayer ? (
         <>
           <Layer className="touchpoint-bg-sheen" />
           <Layer className="touchpoint-bg-shade" />
