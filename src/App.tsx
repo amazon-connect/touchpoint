@@ -819,8 +819,10 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       <>
         <Messages
           enabled={props.enabled}
-          userMessageBubble={props.userMessageBubble ?? false}
+          userMessageBubble={props.userMessageBubble ?? true}
           agentMessageBubble={props.agentMessageBubble ?? false}
+          userMessageBubbleStyle={props.userMessageBubbleStyle}
+          agentMessageBubbleStyle={props.agentMessageBubbleStyle}
           showParticipantInfo={props.showParticipantInfo ?? false}
           assistantName={props.assistantName}
           assistantIcon={props.assistantIcon}

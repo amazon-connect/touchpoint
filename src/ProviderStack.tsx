@@ -14,13 +14,13 @@ import {
 } from "./components/Theme";
 import {
   sanitizeContainerStyle,
-  type ContainerStyle,
+  type CustomStyle,
 } from "./utils/containerStyle";
 
 export const ProviderStack: FC<{
   colorMode: ColorMode;
   className?: string;
-  containerStyle?: ContainerStyle;
+  containerStyle?: CustomStyle;
   theme?: Partial<Theme>;
   children?: ReactNode;
   languageCode: string;

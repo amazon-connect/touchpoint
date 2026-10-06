@@ -53,6 +53,10 @@ import {
   type OpenGuide,
 } from "./ui/GuideCard";
 import { type ResolvedView } from "../connect";
+import {
+  sanitizeContainerStyle,
+  type CustomStyle,
+} from "../utils/containerStyle";
 
 export interface MessagesProps {
   interimMessage?: string;
@@ -60,6 +64,8 @@ export interface MessagesProps {
   responses: Response[];
   userMessageBubble: boolean;
   agentMessageBubble: boolean;
+  userMessageBubbleStyle?: CustomStyle;
+  agentMessageBubbleStyle?: CustomStyle;
   showParticipantInfo: boolean;
   assistantName?: string;
   /** Optional custom avatar image for the assistant. */
@@ -225,9 +231,10 @@ export const UserMessage: FC<{
   text: string;
   files?: File[];
   bubble: boolean;
+  bubbleStyle?: CustomStyle;
   status?: MessageStatus;
   align?: "left" | "right";
-}> = ({ text, bubble, files, status, align = "right" }) => {
+}> = ({ text, bubble, bubbleStyle, files, status, align = "right" }) => {
   const alignRight = align === "right";
   return (
     <div className="space-y-2">
@@ -240,8 +247,9 @@ export const UserMessage: FC<{
         <div
           className={clsx(
             "text-primary-60 rounded-inner whitespace-pre-wrap",
-            bubble ? "bg-primary-5 p-3" : "",
+            bubble ? "bg-primary-10 px-3 py-2" : "",
           )}
+          style={bubble ? bubbleStyle : undefined}
         >
           {text}
         </div>
@@ -395,6 +403,8 @@ export const Messages: FC<MessagesProps> = ({
   uploadedFiles,
   userMessageBubble,
   agentMessageBubble,
+  userMessageBubbleStyle,
+  agentMessageBubbleStyle,
   showParticipantInfo,
   assistantName,
   assistantIcon,
@@ -413,6 +423,21 @@ export const Messages: FC<MessagesProps> = ({
   enabled,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const safeUserMessageBubbleStyle = useMemo(
+    () =>
+      userMessageBubbleStyle == null
+        ? undefined
+        : sanitizeContainerStyle(userMessageBubbleStyle),
+    [userMessageBubbleStyle],
+  );
+  const safeAgentMessageBubbleStyle = useMemo(
+    () =>
+      agentMessageBubbleStyle == null
+        ? undefined
+        : sanitizeContainerStyle(agentMessageBubbleStyle),
+    [agentMessageBubbleStyle],
+  );
 
   // The guide currently opened into its full-view modal, if any.
   const [activeGuide, setActiveGuide] = useState<OpenGuide | null>(null);
@@ -592,6 +617,7 @@ export const Messages: FC<MessagesProps> = ({
                     <UserMessage
                       text={response.payload.text}
                       bubble={userMessageBubble}
+                      bubbleStyle={safeUserMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       status={
                         responseIndex === lastUserResponseIndex
@@ -613,6 +639,7 @@ export const Messages: FC<MessagesProps> = ({
                   {wrap(
                     <UserMessage
                       bubble={userMessageBubble}
+                      bubbleStyle={safeUserMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       text={response.payload.utterance}
                       files={response.payload.uploadIds
@@ -691,9 +718,14 @@ export const Messages: FC<MessagesProps> = ({
                           className={clsx(
                             "space-y-6 markdown",
                             agentMessageBubble
-                              ? "p-3 w-fit bg-secondary-40 mr-10 rounded-inner"
+                              ? "px-3 py-2 w-fit bg-secondary-40 mr-10 rounded-inner"
                               : "",
                           )}
+                          style={
+                            agentMessageBubble
+                              ? safeAgentMessageBubbleStyle
+                              : undefined
+                          }
                           contents={message.text}
                         />
                       </div>
@@ -772,6 +804,7 @@ export const Messages: FC<MessagesProps> = ({
                       key={messageIndex}
                       text={selectedChoice.choiceText}
                       bubble={userMessageBubble}
+                      bubbleStyle={safeUserMessageBubbleStyle}
                     />
                   );
                 }

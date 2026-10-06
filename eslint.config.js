@@ -95,7 +95,15 @@ export default [
       ],
       "jsdoc/check-tag-names": [
         "error",
-        { definedTags: ["category", "hidden", "typeParam", "inline"] },
+        {
+          definedTags: [
+            "category",
+            "defaultValue",
+            "hidden",
+            "typeParam",
+            "inline",
+          ],
+        },
       ],
       "jsdoc/require-param": "off",
       "jsdoc/require-returns": "off",

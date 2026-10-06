@@ -119,7 +119,7 @@ const allowedPropertySet = new Set<string>(allowedProperties);
  * `TouchpointConfiguration.containerStyle`.
  * @category Theming
  */
-export type ContainerStyle = Pick<
+export type CustomStyle = Pick<
   CSSProperties,
   (typeof allowedProperties)[number]
 >;
@@ -171,7 +171,7 @@ const warn = (message: string): void => {
  * @param style - the caller-provided style object, of unknown shape at runtime
  * @returns a style object containing only allowlisted properties with plain values
  */
-export const sanitizeContainerStyle = (style: unknown): ContainerStyle => {
+export const sanitizeContainerStyle = (style: unknown): CustomStyle => {
   if (style == null) {
     return {};
   }

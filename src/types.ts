@@ -5,6 +5,11 @@ export type NormalizedTouchpointConfiguration = TouchpointConfiguration &
   Required<
     Pick<
       TouchpointConfiguration,
-      "initializeConversation" | "input" | "languageCode"
+      | "initializeConversation"
+      | "input"
+      | "languageCode"
+      | "modalityComponents"
+      | "userMessageBubble"
+      | "agentMessageBubble"
     >
   >;

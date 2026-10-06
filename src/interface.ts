@@ -6,9 +6,9 @@ import type {
   ConnectConfig,
   ConnectConversationHandler,
 } from "./connect";
-import type { ContainerStyle } from "./utils/containerStyle";
+import type { CustomStyle } from "./utils/containerStyle";
 
-export type { ContainerStyle } from "./utils/containerStyle";
+export type { CustomStyle as ContainerStyle } from "./utils/containerStyle";
 
 export type {
   AuthenticationStatus,
@@ -439,6 +439,44 @@ export interface TouchpointConfiguration {
    */
   agentMessageBubble?: boolean;
   /**
+   * Inline style overrides for the user message bubble. Only applied when
+   * {@link TouchpointConfiguration.userMessageBubble} is enabled.
+   *
+   * Only the properties of {@link CustomStyle} are supported; anything else,
+   * and any value containing `url()`, `image-set()`, `element()`, comments or
+   * extra declarations, is dropped with a console warning, as the
+   * configuration can come from the `configuration` attribute of the
+   * `<connect-touchpoint>` element and is therefore treated as untrusted input.
+   * @example
+   * ```typescript
+   * const userMessageBubbleStyle: CustomStyle = {
+   *   backgroundColor: "#e8f0fe",
+   *   borderRadius: "1rem",
+   * };
+   * ```
+   * @category Theming
+   */
+  userMessageBubbleStyle?: CustomStyle;
+  /**
+   * Inline style overrides for the agent message bubble. Only applied when
+   * {@link TouchpointConfiguration.agentMessageBubble} is enabled.
+   *
+   * Only the properties of {@link CustomStyle} are supported; anything else,
+   * and any value containing `url()`, `image-set()`, `element()`, comments or
+   * extra declarations, is dropped with a console warning, as the
+   * configuration can come from the `configuration` attribute of the
+   * `<connect-touchpoint>` element and is therefore treated as untrusted input.
+   * @example
+   * ```typescript
+   * const agentMessageBubbleStyle: CustomStyle = {
+   *   backgroundColor: "#f3f3f3",
+   *   borderRadius: "1rem",
+   * };
+   * ```
+   * @category Theming
+   */
+  agentMessageBubbleStyle?: CustomStyle;
+  /**
    * Enables chat mode, a classic chat experience with inline loaders and the chat history visible at all times.
    */
   chatMode?: boolean;
@@ -472,7 +510,7 @@ export interface TouchpointConfiguration {
    * compact floating elements positioned on their own terms, and neither is the
    * conversation container this is meant for.
    *
-   * Only the properties of {@link ContainerStyle} — the geometry and surface of
+   * Only the properties of {@link CustomStyle} — the geometry and surface of
    * the container itself — are supported. Anything else, and any value
    * containing `url()`, `image-set()`, `element()`, comments or extra
    * declarations, is dropped with a console warning: the configuration can come
@@ -481,7 +519,7 @@ export interface TouchpointConfiguration {
    * the content inside the container.
    * @example
    * ```typescript
-   * const containerStyle: ContainerStyle = {
+   * const containerStyle: CustomStyle = {
    *   // Dock the floating panel to the bottom left instead of the right.
    *   left: "1rem",
    *   right: "auto",
@@ -490,7 +528,7 @@ export interface TouchpointConfiguration {
    * ```
    * @category Theming
    */
-  containerStyle?: ContainerStyle;
+  containerStyle?: CustomStyle;
   /**
    * Optional {@link CustomModalityComponent | custom modality components} to render in Touchpoint
    */

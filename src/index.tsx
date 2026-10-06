@@ -148,6 +148,8 @@ const normalizeConfiguration = (
       (typeof navigator !== "undefined" ? navigator.language : undefined) ??
       "en-US",
     input: configuration.input ?? "text",
+    userMessageBubble: configuration.userMessageBubble ?? true,
+    agentMessageBubble: configuration.agentMessageBubble ?? false,
     modalityComponents,
     // Amazon Connect drives the greeting from the contact flow when the
     // participant connects, so there is nothing to send client-side. (NLX's
