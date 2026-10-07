@@ -102,7 +102,6 @@ export type {
   ChoiceMessage,
   CustomModalityComponent,
   Theme,
-  ContainerStyle,
   InitializeConversation,
   CustomLaunchButton,
   Input,
@@ -119,6 +118,7 @@ export type {
   ChatDetails,
   DetailsRequestParams,
 } from "./interface";
+export { type CustomStyle } from "./utils/customStyle";
 
 export {
   analyzePageForms,

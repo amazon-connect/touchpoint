@@ -6,7 +6,8 @@ import { GuideScreen } from "./screens/GuideScreen";
 import { useColorMode } from "./colorMode";
 import {
   type Settings,
-  settingsFromParams,
+  settingsStore,
+  useSettings,
   writeSettingsToUrl,
 } from "./settings";
 
@@ -25,9 +26,9 @@ interface Launched {
  */
 export const App: FC = () => {
   const [colorMode, setColorMode] = useColorMode();
-  const [settings, setSettings] = useState<Settings>(() =>
-    settingsFromParams(new URLSearchParams(window.location.search)),
-  );
+  // The configuration is held in `settingsStore` so the design system (its own
+  // React root, inside a shadow DOM) can edit the same state.
+  const settings = useSettings();
   const [launched, setLaunched] = useState<Launched | null>(null);
 
   return (
@@ -38,10 +39,10 @@ export const App: FC = () => {
           <ConfigScreen
             settings={settings}
             onChange={(patch) => {
-              setSettings((previous) => ({ ...previous, ...patch }));
+              settingsStore.patch(patch);
             }}
             onLaunch={(trimmed) => {
-              setSettings(trimmed);
+              settingsStore.replace(trimmed);
               writeSettingsToUrl(trimmed);
               setLaunched({
                 settings: trimmed,

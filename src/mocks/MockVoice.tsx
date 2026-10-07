@@ -3,7 +3,6 @@ import { useState, type FC } from "react";
 import { clsx } from "clsx";
 
 import { ProviderStack } from "../ProviderStack";
-import { LaunchButton } from "../components/ui/LaunchButton";
 import { Main, HeaderContainer } from "../components/Layout";
 import { IconButton } from "../components/ui/IconButton";
 import { Close, Mic, Settings as SettingsIcon } from "../components/ui/Icons";
@@ -19,41 +18,26 @@ export const MockVoice: FC<{
   embedded: boolean;
   backgroundDepthLayer: boolean;
   colorMode?: ColorMode;
-  isExpanded: boolean;
   onClose: () => void;
-  onExpand: () => void;
   windowSize: WindowSize;
   /** Theme overrides layered on top of the mock's own theme. */
   theme?: Partial<Theme>;
 }> = (props) => {
   const colorMode = props.colorMode ?? "dark";
-  const { isExpanded, onClose, onExpand, windowSize } = props;
+  const { onClose, windowSize } = props;
   const theme = { ...mockTheme, ...props.theme };
 
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
-  if (!isExpanded) {
-    return (
-      <ProviderStack
-        className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={theme}
-        colorMode={colorMode}
-        languageCode="en-US"
-      >
-        <LaunchButton
-          className="backdrop-blur-sm"
-          onClick={onExpand}
-          label="Expand chat"
-        />
-      </ProviderStack>
-    );
-  }
-
   return (
     <ProviderStack
       className={clsx(
-        "grid grid-cols-2 xl:grid-cols-[1fr_632px]",
-        props.embedded ? "w-full h-full" : "fixed inset-0 z-touchpoint",
+        props.embedded
+          ? "grid grid-cols-2 xl:grid-cols-[1fr_632px] w-full h-full"
+          : windowSize === "floating"
+            ? // Detached rounded card hovering over the page, as in `App`.
+              "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl border border-solid border-primary-10"
+            : "grid grid-cols-2 xl:grid-cols-[1fr_632px] fixed inset-0 z-touchpoint",
       )}
       theme={theme}
       colorMode={colorMode}

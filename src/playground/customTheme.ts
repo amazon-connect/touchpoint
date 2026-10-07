@@ -18,8 +18,32 @@ export const EDITABLE_COLOR_KEYS: EditableColorKey[] = [
   "secondary",
 ];
 
+/**
+ * Theme keys that are plain, non-color values: the font stack, the two corner
+ * radii and the two stacking orders. They are edited as free text (they are
+ * `string` in `Theme`, not numbers) in the design system's General entry.
+ */
+export type EditableGeneralKey =
+  | "fontFamily"
+  | "innerBorderRadius"
+  | "outerBorderRadius"
+  | "zIndexTouchpoint"
+  | "zIndexLaunchButton";
+
+/** The editable non-color values, in the order they appear in the UI. */
+export const EDITABLE_GENERAL_KEYS: EditableGeneralKey[] = [
+  "fontFamily",
+  "innerBorderRadius",
+  "outerBorderRadius",
+  "zIndexTouchpoint",
+  "zIndexLaunchButton",
+];
+
+/** Any theme field the playground exposes for live editing. */
+export type EditableThemeKey = EditableColorKey | EditableGeneralKey;
+
 /** Overrides map: only edited keys are present. Shape is a `Partial<Theme>`. */
-export type ColorOverrides = Partial<Record<EditableColorKey, string>>;
+export type ThemeOverrides = Partial<Record<EditableThemeKey, string>>;
 
 const STORAGE_KEY = "lsCustomTheme";
 
@@ -27,7 +51,11 @@ const STORAGE_KEY = "lsCustomTheme";
 export const isEditableColorKey = (key: string): key is EditableColorKey =>
   (EDITABLE_COLOR_KEYS as string[]).includes(key);
 
-const readStored = (): ColorOverrides => {
+/** Narrows an arbitrary string to one of the editable theme fields. */
+export const isEditableThemeKey = (key: string): key is EditableThemeKey =>
+  isEditableColorKey(key) || (EDITABLE_GENERAL_KEYS as string[]).includes(key);
+
+const readStored = (): ThemeOverrides => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw == null) {
@@ -37,9 +65,9 @@ const readStored = (): ColorOverrides => {
     if (parsed == null || typeof parsed !== "object") {
       return {};
     }
-    const result: ColorOverrides = {};
+    const result: ThemeOverrides = {};
     for (const [key, value] of Object.entries(parsed)) {
-      if (isEditableColorKey(key) && typeof value === "string") {
+      if (isEditableThemeKey(key) && typeof value === "string") {
         result[key] = value;
       }
     }
@@ -49,7 +77,7 @@ const readStored = (): ColorOverrides => {
   }
 };
 
-let overrides: ColorOverrides = readStored();
+let overrides: ThemeOverrides = readStored();
 const listeners = new Set<() => void>();
 
 const persist = (): void => {
@@ -80,13 +108,15 @@ export const customThemeStore = {
       listeners.delete(listener);
     };
   },
-  getSnapshot: (): ColorOverrides => overrides,
-  setColor: (key: EditableColorKey, value: string): void => {
+  getSnapshot: (): ThemeOverrides => overrides,
+  /** Overrides one theme field, color or otherwise. */
+  setField: (key: EditableThemeKey, value: string): void => {
     overrides = { ...overrides, [key]: value };
     persist();
     emit();
   },
-  resetColor: (key: EditableColorKey): void => {
+  /** Drops one override, so the library's default applies again. */
+  resetField: (key: EditableThemeKey): void => {
     if (!(key in overrides)) {
       return;
     }
@@ -98,18 +128,26 @@ export const customThemeStore = {
     persist();
     emit();
   },
-  restoreDefaults: (): void => {
-    if (Object.keys(overrides).length === 0) {
+  /**
+   * Drops a group of overrides at once, for the "restore defaults" buttons:
+   * each gallery resets only the fields it edits.
+   */
+  restoreDefaults: (keys: EditableThemeKey[]): void => {
+    if (!keys.some((key) => key in overrides)) {
       return;
     }
-    overrides = {};
+    overrides = Object.fromEntries(
+      Object.entries(overrides).filter(
+        ([existing]) => !(keys as string[]).includes(existing),
+      ),
+    );
     persist();
     emit();
   },
 };
 
 /** Subscribes to the custom-theme overrides. Safe across React roots. */
-export const useCustomTheme = (): ColorOverrides =>
+export const useCustomTheme = (): ThemeOverrides =>
   useSyncExternalStore(
     customThemeStore.subscribe,
     customThemeStore.getSnapshot,

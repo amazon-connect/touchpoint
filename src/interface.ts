@@ -6,9 +6,7 @@ import type {
   ConnectConfig,
   ConnectConversationHandler,
 } from "./connect";
-import type { CustomStyle } from "./utils/containerStyle";
-
-export type { CustomStyle as ContainerStyle } from "./utils/containerStyle";
+import type { CustomStyle } from "./utils/customStyle";
 
 export type {
   AuthenticationStatus,
@@ -442,16 +440,18 @@ export interface TouchpointConfiguration {
    * Inline style overrides for the user message bubble. Only applied when
    * {@link TouchpointConfiguration.userMessageBubble} is enabled.
    *
-   * Only the properties of {@link CustomStyle} are supported; anything else,
-   * and any value containing `url()`, `image-set()`, `element()`, comments or
-   * extra declarations, is dropped with a console warning, as the
-   * configuration can come from the `configuration` attribute of the
-   * `<connect-touchpoint>` element and is therefore treated as untrusted input.
+   * Only the properties of {@link CustomStyle} — which include the text
+   * `color` — are supported; anything else, and any value
+   * containing `url()`, `image-set()`, `element()`, comments or extra
+   * declarations, is dropped with a console warning, as the configuration can
+   * come from the `configuration` attribute of the `<connect-touchpoint>`
+   * element and is therefore treated as untrusted input.
    * @example
    * ```typescript
    * const userMessageBubbleStyle: CustomStyle = {
    *   backgroundColor: "#e8f0fe",
-   *   borderRadius: "1rem",
+   *   color: "#102a43",
+   *   borderRadius: "20px",
    * };
    * ```
    * @category Theming
@@ -461,16 +461,18 @@ export interface TouchpointConfiguration {
    * Inline style overrides for the agent message bubble. Only applied when
    * {@link TouchpointConfiguration.agentMessageBubble} is enabled.
    *
-   * Only the properties of {@link CustomStyle} are supported; anything else,
-   * and any value containing `url()`, `image-set()`, `element()`, comments or
-   * extra declarations, is dropped with a console warning, as the
-   * configuration can come from the `configuration` attribute of the
-   * `<connect-touchpoint>` element and is therefore treated as untrusted input.
+   * Only the properties of {@link CustomStyle} — which include the text
+   * `color` — are supported; anything else, and any value
+   * containing `url()`, `image-set()`, `element()`, comments or extra
+   * declarations, is dropped with a console warning, as the configuration can
+   * come from the `configuration` attribute of the `<connect-touchpoint>`
+   * element and is therefore treated as untrusted input.
    * @example
    * ```typescript
    * const agentMessageBubbleStyle: CustomStyle = {
    *   backgroundColor: "#f3f3f3",
-   *   borderRadius: "1rem",
+   *   color: "#102a43",
+   *   borderRadius: "20px",
    * };
    * ```
    * @category Theming

@@ -1,7 +1,6 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC } from "react";
 import { ProviderStack } from "../ProviderStack";
-import { LaunchButton } from "../components/ui/LaunchButton";
 import { clsx } from "clsx";
 import { IconButton } from "../components/ui/IconButton";
 import { Close } from "../components/ui/Icons";
@@ -13,32 +12,13 @@ import { defaultModalities } from "../components/defaultModalities";
 
 export const MockVoiceMini: FC<{
   colorMode?: ColorMode;
-  isExpanded: boolean;
   onClose: () => void;
-  onExpand: () => void;
   /** Theme overrides layered on top of the mock's own theme. */
   theme?: Partial<Theme>;
 }> = (props) => {
   const colorMode = props.colorMode ?? "dark";
-  const { isExpanded, onClose, onExpand } = props;
+  const { onClose } = props;
   const theme = { ...mockTheme, ...props.theme };
-
-  if (!isExpanded) {
-    return (
-      <ProviderStack
-        className="fixed z-launch-button bottom-2 right-2 w-fit"
-        theme={theme}
-        colorMode={colorMode}
-        languageCode="en-US"
-      >
-        <LaunchButton
-          className="backdrop-blur-sm"
-          onClick={onExpand}
-          label="Expand chat"
-        />
-      </ProviderStack>
-    );
-  }
 
   return (
     <ProviderStack

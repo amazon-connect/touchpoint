@@ -1,7 +1,6 @@
 import { useKeyboardEvent } from "@react-hookz/web";
 import clsx from "clsx";
-import { type FC, useCallback, useEffect, useState } from "react";
-import { type WindowSize } from "../../interface";
+import { type FC, useCallback } from "react";
 import { MockText } from "../../mocks/MockText";
 import { MockVoice } from "../../mocks/MockVoice";
 import { MockVoiceMini } from "../../mocks/MockVoiceMini";
@@ -10,12 +9,13 @@ import { Link, useRouter } from "../Router";
 import { DESIGN_SYSTEM_ROUTE } from "../routes";
 import { useColorMode } from "../colorMode";
 import { useCustomTheme } from "../customTheme";
+import { useSettings } from "../settings";
 import { CodeBlock } from "../ui/CodeBlock";
 import { Disclosure } from "../ui/Disclosure";
-import { Segmented } from "../ui/Segmented";
 import { LibrarySurface } from "./LibrarySurface";
+import { mockPreviewStore, useMockPreview } from "./mockPreview";
 import { MockHost } from "./MockHost";
-import { SPECIMENS } from "./specimens";
+import { SPECIMEN_SECTIONS, SPECIMENS } from "./specimens";
 
 const specimenFromHash = (hash: string): string => {
   const id = hash.startsWith(`${DESIGN_SYSTEM_ROUTE}/`)
@@ -26,20 +26,6 @@ const specimenFromHash = (hash: string): string => {
     : SPECIMENS[0].id;
 };
 
-/** Which mock chat frame the floating preview shows. */
-type MockVersion = "mock1" | "mock2" | "mock3";
-
-const MOCK_OPTIONS: { value: MockVersion; label: string }[] = [
-  { value: "mock1", label: "Text" },
-  { value: "mock2", label: "Voice" },
-  { value: "mock3", label: "Voice mini" },
-];
-
-const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
-  { value: "half", label: "Half" },
-  { value: "full", label: "Full" },
-];
-
 /**
  * Developer-facing gallery of the library's UI components, at `#design-system`.
  *
@@ -47,14 +33,16 @@ const WINDOW_SIZE_OPTIONS: { value: WindowSize; label: string }[] = [
  * color mode matching the page theme — the TopBar switch drives both, so there
  * is one light/dark control on the page.
  *
- * A floating mock chat frame (see {@link MockHost}) previews the library's
- * top-level widget shell — Text, Voice and Voice-mini — independent of which
- * specimen is showing, switchable from the sidebar or the 1/2/3 keys.
+ * The "Mock screens" example previews the library's top-level widget shells —
+ * Text, Voice and Voice mini — launched from that page and rendered over the
+ * whole viewport (see {@link MockHost}) until closed (button or Escape).
  */
 export const DesignSystem: FC = () => {
   const [colorMode, setColorMode] = useColorMode();
   // The playground's custom color overrides, propagated to the preview frames.
   const customTheme = useCustomTheme();
+  // Transcript customizations, edited in the "Chat transcript" example.
+  const settings = useSettings();
   // The fragment is the address of a specimen, so back/forward and a pasted
   // link both land on the right one.
   const { hash } = useRouter();
@@ -62,85 +50,14 @@ export const DesignSystem: FC = () => {
 
   const active = SPECIMENS.find((specimen) => specimen.id === activeId);
 
-  const [activeMock, setActiveMock] = useState<MockVersion>(() => {
-    const stored = sessionStorage.getItem("touchpoint-activeMock");
-    return stored === "mock1" || stored === "mock2" || stored === "mock3"
-      ? stored
-      : "mock1";
-  });
+  // The mock screen preview, driven by the "Mock screens" example.
+  const mock = useMockPreview();
 
-  useEffect(() => {
-    sessionStorage.setItem("touchpoint-activeMock", activeMock);
-  }, [activeMock]);
-
-  const [isMockExpanded, setIsMockExpanded] = useState<boolean>(() => {
-    return sessionStorage.getItem("touchpoint-isMockExpanded") === "true";
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem("touchpoint-isMockExpanded", String(isMockExpanded));
-  }, [isMockExpanded]);
-
-  const [windowSize, setWindowSize] = useState<WindowSize>(() => {
-    const stored = sessionStorage.getItem("touchpoint-windowSize");
-    return stored === "half" || stored === "full" ? stored : "half";
-  });
-
-  useEffect(() => {
-    sessionStorage.setItem("touchpoint-windowSize", windowSize);
-  }, [windowSize]);
-
-  const expandMock = useCallback(() => {
-    setIsMockExpanded(true);
+  const closeMock = useCallback(() => {
+    mockPreviewStore.patch({ isOpen: false });
   }, []);
 
-  const collapseMock = useCallback(() => {
-    setIsMockExpanded(false);
-  }, []);
-
-  const toggleMock = useCallback(() => {
-    setIsMockExpanded((prev) => !prev);
-  }, []);
-
-  useKeyboardEvent(
-    (event) => event.code === "Digit1",
-    () => {
-      setActiveMock("mock1");
-    },
-    [],
-  );
-
-  useKeyboardEvent(
-    (event) => event.code === "Digit2",
-    () => {
-      setActiveMock("mock2");
-    },
-    [],
-  );
-
-  useKeyboardEvent(
-    (event) => event.code === "Digit3",
-    () => {
-      setActiveMock("mock3");
-    },
-    [],
-  );
-
-  useKeyboardEvent(
-    (event) => event.code === "Space",
-    () => {
-      if (activeMock !== "mock3") {
-        setWindowSize((prev) => (prev === "half" ? "full" : "half"));
-      }
-    },
-    [activeMock],
-  );
-
-  useKeyboardEvent((event) => event.code === "Enter", toggleMock, [toggleMock]);
-
-  useKeyboardEvent((event) => event.code === "Escape", collapseMock, [
-    collapseMock,
-  ]);
+  useKeyboardEvent((event) => event.code === "Escape", closeMock, [closeMock]);
 
   return (
     <>
@@ -149,55 +66,37 @@ export const DesignSystem: FC = () => {
           header rule lines up with the content below it. */}
       <div className="mx-auto grid max-w-[1080px] grid-cols-1 items-start gap-8 px-4 py-8 md:grid-cols-[220px_minmax(0,1fr)] md:px-5">
         <nav
-          aria-label="Components"
+          aria-label="Design system"
           className="flex flex-wrap gap-1 md:sticky md:top-[84px] md:flex-col"
         >
-          <p className="w-full text-xs font-semibold uppercase tracking-wide text-muted">
-            Components
-          </p>
-          {SPECIMENS.map((specimen) => (
-            <Link
-              key={specimen.id}
-              href={`${DESIGN_SYSTEM_ROUTE}/${specimen.id}`}
-              aria-current={specimen.id === activeId ? "page" : undefined}
+          {SPECIMEN_SECTIONS.map((section, index) => (
+            <div
+              key={section.label}
               className={clsx(
-                "rounded-xl px-3 py-2 text-sm no-underline transition-colors",
-                specimen.id === activeId
-                  ? "bg-sidebar-active font-semibold text-heading"
-                  : "text-muted hover:text-heading",
+                "flex w-full flex-wrap gap-1 md:flex-col",
+                index > 0 && "mt-6",
               )}
             >
-              {specimen.title}
-            </Link>
-          ))}
-          <div className="w-full space-y-4 border-t border-line pt-4">
-            <div className="w-full space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                Chat frame
+              <p className="w-full py-1 text-xs font-semibold uppercase tracking-wide text-muted">
+                {section.label}
               </p>
-              <Segmented
-                label="Chat frame"
-                value={activeMock}
-                options={MOCK_OPTIONS}
-                onChange={setActiveMock}
-              />
-              <p className="text-xs text-muted">or press 1, 2, 3</p>
+              {section.specimens.map((specimen) => (
+                <Link
+                  key={specimen.id}
+                  href={`${DESIGN_SYSTEM_ROUTE}/${specimen.id}`}
+                  aria-current={specimen.id === activeId ? "page" : undefined}
+                  className={clsx(
+                    "rounded-xl px-3 py-2 text-sm no-underline transition-colors",
+                    specimen.id === activeId
+                      ? "bg-sidebar-active text-heading"
+                      : "text-muted hover:bg-black/5",
+                  )}
+                >
+                  {specimen.title}
+                </Link>
+              ))}
             </div>
-            {activeMock !== "mock3" && (
-              <div className="w-full space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                  Window size
-                </p>
-                <Segmented
-                  label="Window size"
-                  value={windowSize}
-                  options={WINDOW_SIZE_OPTIONS}
-                  onChange={setWindowSize}
-                />
-                <p className="text-xs text-muted">or press space</p>
-              </div>
-            )}
-          </div>
+          ))}
         </nav>
 
         <main className="min-w-0">
@@ -209,12 +108,27 @@ export const DesignSystem: FC = () => {
               {active?.description}
             </p>
           </div>
-          {active != null && (
-            <LibrarySurface colorMode={colorMode}>
-              {/* Keyed so switching specimens starts each gallery fresh rather
-                  than reconciling one into the next. */}
-              <active.Component key={active.id} />
-            </LibrarySurface>
+          {/* Keyed so switching specimens starts each gallery fresh rather
+              than reconciling one into the next. Entries made of page chrome
+              (`surface: "page"`) skip the shadow-root surface. */}
+          {active != null &&
+            (active.surface === "page" ? (
+              <active.Component key={active.id} colorMode={colorMode} />
+            ) : (
+              <LibrarySurface colorMode={colorMode}>
+                <active.Component key={active.id} colorMode={colorMode} />
+              </LibrarySurface>
+            ))}
+          {active?.Snippet != null && (
+            // Keyed so the disclosure collapses again when switching specimens.
+            // The snippet tracks the live edits, so it always matches the
+            // gallery above it.
+            <Disclosure
+              key={`${active.id}-snippet`}
+              summary="How this looks in code"
+            >
+              <active.Snippet />
+            </Disclosure>
           )}
           {active?.code != null && (
             // Keyed so the disclosure collapses again when switching specimens.
@@ -228,37 +142,38 @@ export const DesignSystem: FC = () => {
         </main>
       </div>
       <MockHost>
-        {activeMock === "mock1" && (
+        {mock.isOpen && mock.screen === "text" && (
           <MockText
             embedded={false}
-            backgroundDepthLayer
+            backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
             colorMode={colorMode}
             theme={customTheme}
-            isExpanded={isMockExpanded}
-            onExpand={expandMock}
-            onClose={collapseMock}
-            windowSize={windowSize}
+            onClose={closeMock}
+            windowSize={mock.windowSize}
+            userMessageBubble={settings.userMessageBubble === "on"}
+            agentMessageBubble={settings.agentMessageBubble === "on"}
+            userMessageBubbleStyle={settings.userMessageBubbleStyle}
+            agentMessageBubbleStyle={settings.agentMessageBubbleStyle}
+            showParticipantInfo={settings.avatars === "on"}
+            assistantName={settings.assistantName}
+            avatarShape={settings.avatarShape}
           />
         )}
-        {activeMock === "mock2" && (
+        {mock.isOpen && mock.screen === "voice" && (
           <MockVoice
             embedded={false}
-            backgroundDepthLayer
+            backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
             colorMode={colorMode}
             theme={customTheme}
-            isExpanded={isMockExpanded}
-            onExpand={expandMock}
-            onClose={collapseMock}
-            windowSize={windowSize}
+            onClose={closeMock}
+            windowSize={mock.windowSize}
           />
         )}
-        {activeMock === "mock3" && (
+        {mock.isOpen && mock.screen === "voiceMini" && (
           <MockVoiceMini
             colorMode={colorMode}
             theme={customTheme}
-            isExpanded={isMockExpanded}
-            onExpand={expandMock}
-            onClose={collapseMock}
+            onClose={closeMock}
           />
         )}
       </MockHost>

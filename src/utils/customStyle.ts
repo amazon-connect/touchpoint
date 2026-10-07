@@ -65,7 +65,9 @@ const allowedProperties = [
   "paddingInlineStart",
   "paddingInlineEnd",
 
-  // Surface.
+  // Surface. `color` is included for the message bubbles, whose text the style
+  // wraps; on the container it simply sets the inherited text color.
+  "color",
   "backgroundColor",
   "opacity",
   "backdropFilter",
@@ -112,11 +114,13 @@ const allowedProperties = [
 const allowedPropertySet = new Set<string>(allowedProperties);
 
 /**
- * Style overrides applied to the full conversation container — the expanded chat
- * or full-screen voice experience, not the launch icon or the `voiceMini` widget.
+ * Style overrides applied to a caller-styleable surface: the full conversation
+ * container — the expanded chat or full-screen voice experience, not the launch
+ * icon or the `voiceMini` widget — and the user/agent message bubbles.
  *
  * Only the properties in this type are supported; see
- * `TouchpointConfiguration.containerStyle`.
+ * `TouchpointConfiguration.containerStyle` and
+ * `TouchpointConfiguration.userMessageBubbleStyle`.
  * @category Theming
  */
 export type CustomStyle = Pick<
@@ -156,13 +160,14 @@ const maxValueLength = 500;
 
 const warn = (message: string): void => {
   // eslint-disable-next-line no-console
-  console.warn(`[touchpoint] containerStyle: ${message}`);
+  console.warn(`[touchpoint] customStyle: ${message}`);
 };
 
 /**
- * Validates caller-provided container styles before they reach the DOM.
+ * Validates a caller-provided custom style — `containerStyle` or a message
+ * bubble style — before it reaches the DOM.
  *
- * `containerStyle` can arrive from places that are not the application's own
+ * Such a style can arrive from places that are not the application's own
  * source code — notably the `configuration` attribute of the
  * `<connect-touchpoint>` element, which may be rendered by a server or a
  * no-code tool — so it is treated as untrusted input rather than trusted
@@ -171,7 +176,7 @@ const warn = (message: string): void => {
  * @param style - the caller-provided style object, of unknown shape at runtime
  * @returns a style object containing only allowlisted properties with plain values
  */
-export const sanitizeContainerStyle = (style: unknown): CustomStyle => {
+export const sanitizeCustomStyle = (style: unknown): CustomStyle => {
   if (style == null) {
     return {};
   }

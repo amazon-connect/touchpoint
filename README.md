@@ -15,13 +15,13 @@ To run Touchpoint you need an Amazon Connect Customer instance with a contact
 flow, plus a browser-facing endpoint that mints the contact credentials. Gather
 the following before you call `create()`:
 
-| What you need | Where it comes from |
-| --- | --- |
-| **StartChatContact endpoint** (chat) | An API Gateway/Lambda route that calls Amazon Connect's `StartChatContact` and returns participant credentials. Deploy the [StartChatContact API](https://github.com/amazon-connect/amazon-connect-chat-ui-examples/tree/master/cloudformationTemplates/startChatContactAPI). Required for `input: "text"`. Passed as `config.chatEndpoint`. |
+| What you need                           | Where it comes from                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **StartChatContact endpoint** (chat)    | An API Gateway/Lambda route that calls Amazon Connect's `StartChatContact` and returns participant credentials. Deploy the [StartChatContact API](https://github.com/amazon-connect/amazon-connect-chat-ui-examples/tree/master/cloudformationTemplates/startChatContactAPI). Required for `input: "text"`. Passed as `config.chatEndpoint`. |
 | **StartWebRTCContact endpoint** (voice) | An endpoint that calls `StartWebRTCContact` and returns the Chime connection data. Deploy the [StartWebRTCContact sample](https://github.com/amazon-connect/amazon-connect-in-app-calling-examples/tree/main/Backend/AmazonConnectNetraApiSample). Required for `input: "voice"` and `input: "voiceMini"`. Passed as `config.voiceEndpoint`. |
-| **Instance ID** | The Amazon Connect Customer instance (UUID) the contact is created in. `config.instanceId`. |
-| **Contact Flow ID** | The contact flow (UUID) that handles the contact. `config.contactFlowId`. |
-| **Region** | AWS region of your instance, e.g. `us-west-2`. `config.region`. |
+| **Instance ID**                         | The Amazon Connect Customer instance (UUID) the contact is created in. `config.instanceId`.                                                                                                                                                                                                                                                  |
+| **Contact Flow ID**                     | The contact flow (UUID) that handles the contact. `config.contactFlowId`.                                                                                                                                                                                                                                                                    |
+| **Region**                              | AWS region of your instance, e.g. `us-west-2`. `config.region`.                                                                                                                                                                                                                                                                              |
 
 That's everything you need for chat and voice. **Live Sync is optional** — it
 additionally requires an Agentic CX designer (ACXD) application; see below.
@@ -117,9 +117,7 @@ voice conversations already run alongside the page.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   input: "text",
   windowSize: "side-by-side",
 });
@@ -135,9 +133,7 @@ is derived automatically.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   theme: {
     accent: "#22c55e",
     // Optional overrides: primary, secondary, background, fontFamily, …
@@ -158,9 +154,7 @@ positioned as compact floating elements of their own and are not affected.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   windowSize: "floating",
   containerStyle: {
     borderLeft: "1px solid #efefef",
@@ -188,25 +182,26 @@ bubbles on.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   input: "text",
   userMessageBubble: true,
   agentMessageBubble: true,
   userMessageBubbleStyle: {
     backgroundColor: "#e8f0fe",
-    borderRadius: "1rem",
+    color: "#102a43",
+    borderRadius: "20px",
   },
   agentMessageBubbleStyle: {
     backgroundColor: "#f3f3f3",
-    borderRadius: "1rem",
+    color: "#102a43",
+    borderRadius: "20px",
   },
 });
 ```
 
-The bubble styles use the same allowlist and sanitization as `containerStyle`:
-only the supported properties are kept, and anything containing `url()`,
+The bubble styles use the same allowlist and sanitization as `containerStyle`
+(the shared `CustomStyle` type, which includes the text `color`): only the
+supported properties are kept, and anything containing `url()`,
 `image-set()`, `element()`, comments, or extra declarations is dropped with a
 console warning, since the configuration may arrive as untrusted JSON on the
 `configuration` attribute of the `<connect-touchpoint>` element.
@@ -228,9 +223,7 @@ top of the welcome screen; set `welcomeScreenLogo: false` to hide it.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   input: "text",
   welcomeScreen: false, // opt out of the immersive welcome screen
 });
@@ -246,9 +239,7 @@ avatars are `"round"` (default) or `"square"`.
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   input: "text",
   showParticipantInfo: true,
   assistantName: "Ada",
@@ -368,12 +359,26 @@ const touchpoint = await create({
       return html`
         <div>
           <p>Are you sure?</p>
-          <IconButton type="main" label="Yes" onClick=${() => { conversationHandler.sendText("yes"); }} icon={Check} />
-          <IconButton type="ghost" label="No" onClick=${() => { conversationHandler.sendText("no"); }} icon={Close} />
+          <IconButton
+            type="main"
+            label="Yes"
+            onClick=${() => {
+            conversationHandler.sendText("yes");
+          }}
+            icon="{Check}"
+          />
+          <IconButton
+            type="ghost"
+            label="No"
+            onClick=${() => {
+            conversationHandler.sendText("no");
+          }}
+            icon="{Close}"
+          />
         </div>
       `;
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -430,9 +435,7 @@ visible. The event is cancelable, so you can take over:
 
 ```js
 const touchpoint = await create({
-  config: {
-    /* … */
-  },
+  config: {/* … */},
   input: "voice",
   onContactEnded: (event) => {
     // Keep the widget open and handle the end yourself:

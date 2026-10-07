@@ -82,6 +82,7 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
       // Show participant names/avatars in the chat transcript (toggle).
       showParticipantInfo: settings.avatars === "on",
       welcomeScreen: settings.welcomeScreen === "on",
+      backgroundDepthLayer: settings.backgroundDepthLayer === "on",
       ...(settings.avatars === "on" && settings.assistantName !== ""
         ? { assistantName: settings.assistantName }
         : {}),
@@ -90,6 +91,16 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
         : {}),
       ...(settings.avatars === "on" && settings.avatarShape !== "round"
         ? { avatarShape: settings.avatarShape }
+        : {}),
+      // Message bubbles and their inline styles, as customized in the design
+      // system's transcript example.
+      userMessageBubble: settings.userMessageBubble === "on",
+      agentMessageBubble: settings.agentMessageBubble === "on",
+      ...(settings.userMessageBubbleStyle != null
+        ? { userMessageBubbleStyle: settings.userMessageBubbleStyle }
+        : {}),
+      ...(settings.agentMessageBubbleStyle != null
+        ? { agentMessageBubbleStyle: settings.agentMessageBubbleStyle }
         : {}),
       ...(liveSyncEnabled
         ? {

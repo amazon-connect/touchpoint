@@ -12,7 +12,7 @@ import {
   type ThemeField,
   toCustomProperties,
 } from "./components/Theme";
-import { type CustomStyle } from "./utils/containerStyle";
+import { type CustomStyle } from "./utils/customStyle";
 
 export const ProviderStack: FC<{
   colorMode: ColorMode;

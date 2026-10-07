@@ -40,7 +40,7 @@ import type {
 } from "./interface";
 import type { NormalizedTouchpointConfiguration } from "./types";
 import { defaultModalities } from "./components/defaultModalities";
-import { sanitizeContainerStyle } from "./utils/containerStyle";
+import { sanitizeCustomStyle } from "./utils/customStyle";
 import { VoiceMini } from "./components/VoiceMini";
 import { actionHandler } from "./liveSync/actionHandler";
 import { RiveAnimation } from "./components/RiveAnimation";
@@ -148,15 +148,15 @@ const normalizeConfiguration = (
     escalationPhrase:
       configuration.escalationPhrase ?? "I'd like to talk to an agent",
     modalityComponents,
-    containerStyle: sanitizeContainerStyle(configuration.containerStyle),
+    containerStyle: sanitizeCustomStyle(configuration.containerStyle),
     userMessageBubbleStyle:
       configuration.userMessageBubbleStyle == null
         ? undefined
-        : sanitizeContainerStyle(configuration.userMessageBubbleStyle),
+        : sanitizeCustomStyle(configuration.userMessageBubbleStyle),
     agentMessageBubbleStyle:
       configuration.agentMessageBubbleStyle == null
         ? undefined
-        : sanitizeContainerStyle(configuration.agentMessageBubbleStyle),
+        : sanitizeCustomStyle(configuration.agentMessageBubbleStyle),
     // Amazon Connect drives the greeting from the contact flow when the
     // participant connects, so there is nothing to send client-side. (NLX's
     // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect

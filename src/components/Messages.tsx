@@ -53,7 +53,7 @@ import {
   type OpenGuide,
 } from "./ui/GuideCard";
 import { type ResolvedView } from "../connect";
-import { type CustomStyle } from "../utils/containerStyle";
+import { type CustomStyle } from "../utils/customStyle";
 
 export interface MessagesProps {
   interimMessage?: string;

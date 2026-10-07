@@ -4,46 +4,12 @@ import type { ColorMode } from "../../interface";
 import { Link, useRouter } from "../Router";
 import { activePageHref, PAGES } from "../routes";
 import { BrandMark, CloseIcon, MenuIcon, MoonIcon, SunIcon } from "../ui/icons";
+import { Segmented, type SegmentedOption } from "../ui/Segmented";
 
-const THEMES: { value: ColorMode; label: string; icon: FC }[] = [
-  { value: "light", label: "Light", icon: SunIcon },
-  { value: "dark", label: "Dark", icon: MoonIcon },
+const THEMES: SegmentedOption<ColorMode>[] = [
+  { value: "light", label: "Light", Icon: SunIcon },
+  { value: "dark", label: "Dark", Icon: MoonIcon },
 ];
-
-/** Light/dark switch for the page (independent of the widget's color mode). */
-const ThemeToggle: FC<{
-  /** Active theme. */
-  theme: ColorMode;
-  /** Called with the newly selected theme. */
-  onChange: (theme: ColorMode) => void;
-}> = ({ theme, onChange }) => (
-  <div
-    role="group"
-    aria-label="Theme"
-    className="flex gap-0.5 rounded-full border border-line bg-surface p-[3px]"
-  >
-    {THEMES.map(({ value, label, icon: Icon }) => (
-      <button
-        key={value}
-        type="button"
-        aria-label={label}
-        aria-pressed={theme === value}
-        title={label}
-        onClick={() => {
-          onChange(value);
-        }}
-        className={clsx(
-          "flex h-[26px] w-[38px] items-center justify-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-          theme === value
-            ? "bg-card text-heading shadow-[0_1px_3px_rgba(0,0,0,0.18)]"
-            : "text-muted hover:text-heading",
-        )}
-      >
-        <Icon />
-      </button>
-    ))}
-  </div>
-);
 
 /** The page links, laid out inline in the bar or stacked in the menu. */
 const PageLinks: FC<{
@@ -112,7 +78,15 @@ export const TopBar: FC<{
           <span>Touchpoint</span>
         </Link>
         <div className="ml-auto flex items-center gap-2">
-          <ThemeToggle theme={theme} onChange={onThemeChange} />
+          {/* Light/dark switch for the page, independent of the widget's own
+              color mode. */}
+          <Segmented
+            label="Theme"
+            value={theme}
+            options={THEMES}
+            onChange={onThemeChange}
+            variant="icons"
+          />
           <nav aria-label="Pages" className="hidden items-center gap-1 md:flex">
             <PageLinks activeHref={activeHref} onNavigate={closeMenu} />
           </nav>
