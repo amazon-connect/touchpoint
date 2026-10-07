@@ -1,11 +1,27 @@
 import type { ColorMode } from "../interface";
-import type { ColorOverrides } from "./customTheme";
+import type { EditableThemeKey, ThemeOverrides } from "./customTheme";
 import {
+  type BubbleStyle,
   isLiveSyncConfigured,
   isVoiceMode,
   type Settings,
   UUID_RE,
 } from "./settings";
+
+/** Renders a bubble style object as the lines of a `create()` option. */
+const styleLines = (
+  option: string,
+  style: BubbleStyle | undefined,
+): string[] =>
+  style == null
+    ? []
+    : [
+        `  ${option}: {`,
+        ...Object.entries(style).map(
+          ([key, value]) => `    ${key}: ${q(value)},`,
+        ),
+        "  },",
+      ];
 
 const q = (value: string): string => JSON.stringify(value);
 
@@ -17,8 +33,8 @@ interface CreateSnippetParams {
   colorMode: ColorMode;
   /** Contact ID currently entered in the Live Sync section, if any. */
   contactId: string;
-  /** Custom theme color overrides set in the design system, if any. */
-  theme: ColorOverrides;
+  /** Custom theme overrides set in the design system, if any. */
+  theme: ThemeOverrides;
 }
 
 /**
@@ -81,6 +97,21 @@ export const buildCreateSnippet = ({
       ? `  avatarShape: ${q(avatarShape)},`
       : null,
     isText && welcomeScreen === "off" ? "  welcomeScreen: false," : null,
+    settings.backgroundDepthLayer === "off"
+      ? "  backgroundDepthLayer: false,"
+      : null,
+    isText
+      ? `  userMessageBubble: ${settings.userMessageBubble === "on"},`
+      : null,
+    isText
+      ? `  agentMessageBubble: ${settings.agentMessageBubble === "on"},`
+      : null,
+    ...(isText
+      ? styleLines("userMessageBubbleStyle", settings.userMessageBubbleStyle)
+      : []),
+    ...(isText
+      ? styleLines("agentMessageBubbleStyle", settings.agentMessageBubbleStyle)
+      : []),
     ...(themeEntries.length > 0
       ? [
           "  theme: {",
@@ -109,6 +140,93 @@ export const buildCreateSnippet = ({
   ]
     .filter((line) => line !== null)
     .join("\n");
+};
+
+/*
+  The design system's configuration entries each show how to reproduce the
+  customization they edit. They are fragments of a `create()` call rather than a
+  complete one: only the fields the gallery configures are emitted (everything
+  in Touchpoint has a default, so an unset field is simply left out), with a
+  note standing in for the configuration every integration needs anyway.
+*/
+
+const CREATE_NOTE = [
+  "  // Plus the configuration every integration needs: `config` with your",
+  "  // endpoints, `instanceId` and `contactFlowId`, `input`, `windowSize`, …",
+  "  // (the launch screen's snippet shows a complete call).",
+];
+
+/** Wraps emitted option lines in the import and the `create()` call. */
+const createFragment = (lines: string[]): string =>
+  [
+    'import { create } from "@amazon-connect-touchpoint/web";',
+    "",
+    "const touchpoint = await create({",
+    ...CREATE_NOTE,
+    ...lines,
+    "});",
+  ].join("\n");
+
+/**
+ * The `create()` fragment for a group of theme overrides (the design system's
+ * General and Colors entries). Keys left at their default are omitted, and the
+ * `theme` option disappears entirely when the group is untouched.
+ */
+export const buildThemeSnippet = (
+  overrides: ThemeOverrides,
+  keys: EditableThemeKey[],
+): string => {
+  const set = keys.filter((key) => overrides[key] != null);
+  return createFragment(
+    set.length === 0
+      ? []
+      : [
+          "  theme: {",
+          ...set.map((key) => `    ${key}: ${q(overrides[key] as string)},`),
+          "  },",
+        ],
+  );
+};
+
+/**
+ * The `create()` fragment for the transcript customizations (the design
+ * system's Chat transcript entry). Each option is emitted only where it
+ * differs from Touchpoint's own default, so the snippet is exactly what the
+ * current preview needs.
+ */
+export const buildTranscriptSnippet = (settings: Settings): string => {
+  const withAvatars = settings.avatars === "on";
+  return createFragment(
+    [
+      // Defaults: user bubbles on, agent bubbles off.
+      settings.userMessageBubble === "off"
+        ? "  userMessageBubble: false,"
+        : null,
+      settings.agentMessageBubble === "on"
+        ? "  agentMessageBubble: true,"
+        : null,
+      ...styleLines("userMessageBubbleStyle", settings.userMessageBubbleStyle),
+      ...styleLines(
+        "agentMessageBubbleStyle",
+        settings.agentMessageBubbleStyle,
+      ),
+      // Participant info is off by default; its fields only apply when it is on.
+      withAvatars ? "  showParticipantInfo: true," : null,
+      withAvatars && settings.assistantName !== ""
+        ? `  assistantName: ${q(settings.assistantName)},`
+        : null,
+      withAvatars && settings.assistantIcon !== ""
+        ? `  assistantIcon: ${q(settings.assistantIcon)},`
+        : null,
+      withAvatars && settings.avatarShape !== "round"
+        ? `  avatarShape: ${q(settings.avatarShape)},`
+        : null,
+      // The depth layers are drawn by default.
+      settings.backgroundDepthLayer === "off"
+        ? "  backgroundDepthLayer: false,"
+        : null,
+    ].filter((line): line is string => line !== null),
+  );
 };
 
 /** Keeps the `sendStep` snippet in sync with the script-step inputs above it. */

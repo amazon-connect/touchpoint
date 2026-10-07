@@ -188,55 +188,59 @@ Main Touchpoint creation properties object
 ##### userMessageBubbleStyle?
 
 ```ts
-optional userMessageBubbleStyle?: ContainerStyle;
+optional userMessageBubbleStyle?: CustomStyle;
 ```
 
 Inline style overrides for the user message bubble. Only applied when
 [TouchpointConfiguration.userMessageBubble](#usermessagebubble) is enabled.
 
-Only the properties of [CustomStyle](#containerstyle-1) are supported; anything else,
-and any value containing `url()`, `image-set()`, `element()`, comments or
-extra declarations, is dropped with a console warning, as the
-configuration can come from the `configuration` attribute of the
-`<connect-touchpoint>` element and is therefore treated as untrusted input.
+Only the properties of [CustomStyle](#customstyle) — which include the text
+`color` — are supported; anything else, and any value
+containing `url()`, `image-set()`, `element()`, comments or extra
+declarations, is dropped with a console warning, as the configuration can
+come from the `configuration` attribute of the `<connect-touchpoint>`
+element and is therefore treated as untrusted input.
 
 ###### Example
 
 ```typescript
 const userMessageBubbleStyle: CustomStyle = {
   backgroundColor: "#e8f0fe",
-  borderRadius: "1rem",
+  color: "#102a43",
+  borderRadius: "20px",
 };
 ```
 
 ##### agentMessageBubbleStyle?
 
 ```ts
-optional agentMessageBubbleStyle?: ContainerStyle;
+optional agentMessageBubbleStyle?: CustomStyle;
 ```
 
 Inline style overrides for the agent message bubble. Only applied when
 [TouchpointConfiguration.agentMessageBubble](#agentmessagebubble) is enabled.
 
-Only the properties of [CustomStyle](#containerstyle-1) are supported; anything else,
-and any value containing `url()`, `image-set()`, `element()`, comments or
-extra declarations, is dropped with a console warning, as the
-configuration can come from the `configuration` attribute of the
-`<connect-touchpoint>` element and is therefore treated as untrusted input.
+Only the properties of [CustomStyle](#customstyle) — which include the text
+`color` — are supported; anything else, and any value
+containing `url()`, `image-set()`, `element()`, comments or extra
+declarations, is dropped with a console warning, as the configuration can
+come from the `configuration` attribute of the `<connect-touchpoint>`
+element and is therefore treated as untrusted input.
 
 ###### Example
 
 ```typescript
 const agentMessageBubbleStyle: CustomStyle = {
   backgroundColor: "#f3f3f3",
-  borderRadius: "1rem",
+  color: "#102a43",
+  borderRadius: "20px",
 };
 ```
 
 ##### containerStyle?
 
 ```ts
-optional containerStyle?: ContainerStyle;
+optional containerStyle?: CustomStyle;
 ```
 
 Inline style overrides for the full conversation container — the expanded
@@ -248,7 +252,7 @@ Not available for the launch icon or the `voiceMini` widget: both are
 compact floating elements positioned on their own terms, and neither is the
 conversation container this is meant for.
 
-Only the properties of [CustomStyle](#containerstyle-1) — the geometry and surface of
+Only the properties of [CustomStyle](#customstyle) — the geometry and surface of
 the container itself — are supported. Anything else, and any value
 containing `url()`, `image-set()`, `element()`, comments or extra
 declarations, is dropped with a console warning: the configuration can come
@@ -1048,17 +1052,19 @@ z-index of the launch button
 
 ---
 
-### ContainerStyle
+### CustomStyle
 
 ```ts
-type ContainerStyle = Pick<CSSProperties, (typeof allowedProperties)[number]>;
+type CustomStyle = Pick<CSSProperties, (typeof allowedProperties)[number]>;
 ```
 
-Style overrides applied to the full conversation container — the expanded chat
-or full-screen voice experience, not the launch icon or the `voiceMini` widget.
+Style overrides applied to a caller-styleable surface: the full conversation
+container — the expanded chat or full-screen voice experience, not the launch
+icon or the `voiceMini` widget — and the user/agent message bubbles.
 
 Only the properties in this type are supported; see
-`TouchpointConfiguration.containerStyle`.
+`TouchpointConfiguration.containerStyle` and
+`TouchpointConfiguration.userMessageBubbleStyle`.
 
 ## Modality components
 

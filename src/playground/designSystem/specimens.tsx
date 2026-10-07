@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { type FC, type ReactNode, useEffect, useState } from "react";
+import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Carousel } from "../../components/ui/Carousel";
 import {
   CustomCard,
@@ -12,7 +12,21 @@ import {
   type IconButtonType,
 } from "../../components/ui/IconButton";
 import * as Icons from "../../components/ui/Icons";
-import { type MessageStatus } from "../../interface";
+import { type ColorMode, type MessageStatus } from "../../interface";
+import { BackgroundDecoration } from "../../components/BackgroundDecoration";
+import { Messages } from "../../components/Messages";
+import { defaultModalities } from "../../components/defaultModalities";
+import { mockConversationHandler, responses } from "../../mocks/shared";
+import {
+  type BubbleStyle,
+  DEFAULT_BUBBLE_STYLE,
+  hasTranscriptEdits,
+  restoreTranscriptDefaults,
+  type Settings,
+  settingsStore,
+  type Toggle,
+  useSettings,
+} from "../settings";
 import { LaunchButton } from "../../components/ui/LaunchButton";
 import { Loader } from "../../components/ui/Loader";
 import {
@@ -25,10 +39,22 @@ import { BaseText, SmallText } from "../../components/ui/Typography";
 import { defaultTheme } from "../../components/Theme";
 import {
   customThemeStore,
+  EDITABLE_COLOR_KEYS,
+  EDITABLE_GENERAL_KEYS,
   type EditableColorKey,
+  type EditableGeneralKey,
   isEditableColorKey,
   useCustomTheme,
 } from "../customTheme";
+import { buildThemeSnippet, buildTranscriptSnippet } from "../snippets";
+import { CodeBlock } from "../ui/CodeBlock";
+import { Segmented, type SegmentedOption } from "../ui/Segmented";
+import {
+  type MockScreen,
+  type MockWindowSize,
+  mockPreviewStore,
+  useMockPreview,
+} from "./mockPreview";
 
 /*
   Everything in this file renders inside the library's shadow root (see
@@ -395,53 +421,46 @@ interface Swatch {
 }
 
 /**
- * A group of swatches. `pairs` lays them out two-by-two, so each primary step
- * sits beside the secondary step at the same alpha — they're mirror images, and
- * the pairing shows that.
+ * A column of swatches in the single colors table. The primary and secondary
+ * columns sit side by side, so each primary step lines up with the secondary
+ * step at the same alpha — they're mirror images, and the pairing shows that.
  */
 interface ColorGroup {
   label: string;
-  pairs?: boolean;
   colors: Swatch[];
 }
 
-const COLOR_GROUPS: ColorGroup[] = [
+const COLOR_COLUMNS: ColorGroup[] = [
   {
-    label: "primary and secondary",
-    pairs: true,
+    label: "Primary",
     colors: [
       { name: "primary", className: "bg-primary" },
-      { name: "secondary", className: "bg-secondary" },
       { name: "primary90", className: "bg-primary-90" },
-      { name: "secondary90", className: "bg-secondary-90" },
       { name: "primary80", className: "bg-primary-80" },
-      { name: "secondary80", className: "bg-secondary-80" },
       { name: "primary60", className: "bg-primary-60" },
-      { name: "secondary60", className: "bg-secondary-60" },
       { name: "primary40", className: "bg-primary-40" },
-      { name: "secondary40", className: "bg-secondary-40" },
       { name: "primary20", className: "bg-primary-20" },
-      { name: "secondary20", className: "bg-secondary-20" },
       { name: "primary10", className: "bg-primary-10" },
-      { name: "secondary10", className: "bg-secondary-10" },
       { name: "primary5", className: "bg-primary-5" },
-      { name: "secondary5", className: "bg-secondary-5" },
       { name: "primary1", className: "bg-primary-1" },
+    ],
+  },
+  {
+    label: "Secondary",
+    colors: [
+      { name: "secondary", className: "bg-secondary" },
+      { name: "secondary90", className: "bg-secondary-90" },
+      { name: "secondary80", className: "bg-secondary-80" },
+      { name: "secondary60", className: "bg-secondary-60" },
+      { name: "secondary40", className: "bg-secondary-40" },
+      { name: "secondary20", className: "bg-secondary-20" },
+      { name: "secondary10", className: "bg-secondary-10" },
+      { name: "secondary5", className: "bg-secondary-5" },
       { name: "secondary1", className: "bg-secondary-1" },
     ],
   },
   {
-    label: "accent and surfaces",
-    colors: [
-      { name: "accent", className: "bg-accent" },
-      { name: "accent50", className: "bg-accent-50" },
-      { name: "accent20", className: "bg-accent-20" },
-      { name: "background", className: "bg-background" },
-      { name: "overlay", className: "bg-overlay" },
-    ],
-  },
-  {
-    label: "status",
+    label: "Status",
     colors: [
       { name: "warningPrimary", className: "bg-warning-primary" },
       { name: "warningSecondary", className: "bg-warning-secondary" },
@@ -450,6 +469,16 @@ const COLOR_GROUPS: ColorGroup[] = [
       { name: "successPrimary", className: "bg-success-primary" },
       { name: "successSecondary", className: "bg-success-secondary" },
       { name: "focus", className: "bg-focus" },
+    ],
+  },
+  {
+    label: "Miscellaneous",
+    colors: [
+      { name: "accent", className: "bg-accent" },
+      { name: "accent50", className: "bg-accent-50" },
+      { name: "accent20", className: "bg-accent-20" },
+      { name: "background", className: "bg-background" },
+      { name: "overlay", className: "bg-overlay" },
     ],
   },
 ];
@@ -468,12 +497,11 @@ const ColorSwatch: FC<Swatch> = ({ name, className }) => (
 );
 
 /*
-  The editor UI below renders in the shadow root alongside the swatches, so it
-  can't rely on the playground's Tailwind theme. Rather than depend on which
-  utilities the *library* stylesheet happens to emit, it styles itself with
-  inline styles that read the theme's own CSS custom properties (--color-*,
-  --radius-inner) — the same variables ProviderStack sets — so the popup tracks
-  light/dark and the edited palette automatically.
+  The editor UI below — the color popup, the transcript controls — renders in
+  the shadow root alongside the specimens, so it is styled with the library's
+  own theme tokens (`text-primary-60`, `bg-background`, `rounded-inner`, …).
+  That keeps it tracking light/dark and the edited palette automatically, and
+  makes the editors look like the components they configure.
 */
 
 /** A subtle text button used inside the color editor and its header. */
@@ -486,18 +514,12 @@ const EditorButton: FC<{
     type="button"
     onClick={onClick}
     disabled={disabled}
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 4,
-      padding: 0,
-      border: "none",
-      background: "none",
-      fontSize: 12,
-      whiteSpace: "nowrap",
-      cursor: disabled ? "default" : "pointer",
-      color: disabled ? "var(--color-primary-40)" : "var(--color-primary-80)",
-    }}
+    className={clsx(
+      "inline-flex items-center gap-1 whitespace-nowrap border-none bg-transparent p-0 text-xs",
+      disabled
+        ? "cursor-default text-primary-40"
+        : "cursor-pointer text-primary-80",
+    )}
   >
     {children}
   </button>
@@ -506,20 +528,35 @@ const EditorButton: FC<{
 /** Matches a `#rgb`/`#rrggbb` color the native picker can display. */
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-/** Popup with a color picker and a single CSS-color input for one color. */
-const ColorEditorPopup: FC<{
-  colorKey: EditableColorKey;
+/**
+ * Popup with a native color picker and a CSS-color input for one color value.
+ *
+ * Opening it focuses (and selects) the text input, so a value can be typed or
+ * pasted straight away; `Escape` or a click outside closes it. Both the Colors
+ * gallery and the transcript example's bubble colors use it, so editing a color
+ * feels the same everywhere.
+ */
+const ColorPopup: FC<{
+  /** Accessible name of the color being edited, e.g. `accent`. */
+  name: string;
+  /** Current CSS color, or `""` when nothing is set. */
+  value: string;
+  /** Hex seed for the native picker when `value` is not a hex color. */
+  pickerFallback: string;
+  /** Applies a new CSS color. */
+  onChange: (value: string) => void;
+  /** Clears the customization; omitted when there is nothing to clear. */
+  onReset?: () => void;
+  /** Closes the popup. */
   onClose: () => void;
-}> = ({ colorKey, onClose }) => {
-  const overrides = useCustomTheme();
-  const isEdited = colorKey in overrides;
-  const value = overrides[colorKey] ?? defaultTheme[colorKey];
-  // The native picker only understands hex; when the CSS color isn't one (e.g.
-  // `rebeccapurple`, `rgb(...)`, `light-dark(...)`) it falls back to the seed
-  // so it stays usable.
-  const pickerValue = HEX_RE.test(value.trim())
-    ? value.trim()
-    : defaultTheme[colorKey];
+}> = ({ name, value, pickerFallback, onChange, onReset, onClose }) => {
+  const input = useRef<HTMLInputElement>(null);
+
+  // The text field is the one that takes any CSS color, so it gets the focus.
+  useEffect(() => {
+    input.current?.focus();
+    input.current?.select();
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
@@ -533,85 +570,49 @@ const ColorEditorPopup: FC<{
     };
   }, [onClose]);
 
+  // The native picker only understands hex; when the CSS color isn't one (e.g.
+  // `rebeccapurple`, `rgb(...)`, `light-dark(...)`) it falls back to the seed
+  // so it stays usable.
+  const pickerValue = HEX_RE.test(value.trim()) ? value.trim() : pickerFallback;
+
   return (
     <>
       {/* Click-away backdrop; covers the viewport so a click anywhere closes. */}
-      <div
-        aria-hidden
-        onClick={onClose}
-        style={{ position: "fixed", inset: 0, zIndex: 40 }}
-      />
+      <div aria-hidden onClick={onClose} className="fixed inset-0 z-40" />
       <div
         role="dialog"
-        aria-label={`Edit ${colorKey} color`}
+        aria-label={`Edit ${name} color`}
         onClick={(event) => {
           event.stopPropagation();
         }}
-        style={{
-          position: "absolute",
-          top: "calc(100% + 8px)",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 50,
-          width: 208,
-          padding: 12,
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-          borderRadius: "var(--radius-inner)",
-          border: "1px solid var(--color-primary-20)",
-          background: "var(--color-background)",
-          backdropFilter: "blur(8px)",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
-        }}
+        className="absolute top-[calc(100%+8px)] left-1/2 z-50 flex w-52 -translate-x-1/2 flex-col gap-2.5 rounded-inner border border-solid border-primary-20 bg-background p-3 backdrop-blur-sm shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
       >
         <input
           type="color"
           value={pickerValue}
-          aria-label={`${colorKey} color picker`}
+          aria-label={`${name} color picker`}
           onChange={(event) => {
-            customThemeStore.setColor(colorKey, event.target.value);
+            onChange(event.target.value);
           }}
-          style={{
-            width: "100%",
-            height: 36,
-            padding: 0,
-            border: "none",
-            background: "none",
-            cursor: "pointer",
-          }}
+          className="h-9 w-full cursor-pointer border-none bg-transparent p-0"
         />
         <input
+          ref={input}
           type="text"
           value={value}
           spellCheck={false}
-          aria-label={`${colorKey} CSS color`}
+          aria-label={`${name} CSS color`}
           placeholder="e.g. #1c63da or rgb(28 99 218)"
           onChange={(event) => {
-            customThemeStore.setColor(colorKey, event.target.value);
+            onChange(event.target.value);
           }}
-          style={{
-            width: "100%",
-            padding: "6px 8px",
-            fontSize: 12,
-            fontFamily: "monospace",
-            borderRadius: 6,
-            border: "1px solid var(--color-primary-20)",
-            background: "transparent",
-            color: "var(--color-primary)",
-          }}
+          className="w-full rounded-[6px] border border-solid border-primary-20 bg-transparent px-2 py-1.5 font-mono text-xs text-primary focus:border-accent focus:outline-none"
         />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
+        <div className="flex items-center justify-between">
           <EditorButton
-            disabled={!isEdited}
+            disabled={onReset == null}
             onClick={() => {
-              customThemeStore.resetColor(colorKey);
+              onReset?.();
             }}
           >
             <Icons.Refresh size={12} className="text-primary-60" />
@@ -624,7 +625,70 @@ const ColorEditorPopup: FC<{
   );
 };
 
-/** A swatch that opens {@link ColorEditorPopup}, flagged editable and edited. */
+/**
+ * The button that opens a {@link ColorPopup}: a swatch of the current color,
+ * flagged as editable and, when it differs from the default, as edited.
+ */
+const ColorSwatchButton: FC<{
+  /** Accessible name of the color, e.g. `accent`. */
+  name: string;
+  /** Background utility for theme swatches, whose color comes from a token. */
+  className?: string;
+  /** Explicit CSS color, for swatches backed by a value rather than a token. */
+  color?: string;
+  /** Whether its popup is open. */
+  isOpen: boolean;
+  /** Whether the color differs from its default. */
+  isEdited: boolean;
+  /** Opens or closes the popup. */
+  onToggle: () => void;
+  /** `swatch` fills its column (the gallery); `chip` sits inline in a row. */
+  size: "swatch" | "chip";
+}> = ({ name, className, color, isOpen, isEdited, onToggle, size }) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    aria-label={`Edit ${name} color`}
+    aria-haspopup="dialog"
+    aria-expanded={isOpen}
+    // A conic checkerboard shows through where no color is set, so "inherit"
+    // is distinguishable from an opaque swatch.
+    style={
+      color != null
+        ? {
+            background:
+              color === ""
+                ? "repeating-conic-gradient(var(--color-primary-20) 0% 25%, transparent 0% 50%) 0 0 / 8px 8px"
+                : color,
+          }
+        : undefined
+    }
+    className={clsx(
+      "relative cursor-pointer rounded-[8px] border border-solid border-primary-20",
+      isOpen && "outline-2 outline-offset-2 outline-accent",
+      size === "swatch" ? "h-10 w-full" : "size-7 shrink-0",
+      className,
+    )}
+  >
+    {size === "swatch" && (
+      <>
+        {/* Edit affordance: a chip in the corner marks the swatch as clickable. */}
+        <span className="absolute top-0.5 right-0.5 grid size-[18px] place-items-center rounded-full bg-background">
+          <Icons.Edit size={12} className="text-primary-60" />
+        </span>
+        {isEdited && (
+          // Filled dot: this color has been changed from its default.
+          <span
+            aria-hidden
+            className="absolute top-0.5 left-0.5 size-2 rounded-full bg-accent"
+          />
+        )}
+      </>
+    )}
+  </button>
+);
+
+/** A gallery swatch that opens {@link ColorPopup} for a theme color. */
 const EditableColorSwatch: FC<{
   colorKey: EditableColorKey;
   className: string;
@@ -635,65 +699,37 @@ const EditableColorSwatch: FC<{
   const overrides = useCustomTheme();
   const isEdited = colorKey in overrides;
   return (
-    <div
-      className="flex flex-col items-center gap-2 text-center"
-      style={{ position: "relative" }}
-    >
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label={`Edit ${colorKey} color`}
-        aria-haspopup="dialog"
-        aria-expanded={isOpen}
-        className={clsx(
-          "h-10 w-full rounded-[8px] border border-solid border-primary-20",
-          className,
-        )}
-        style={{
-          position: "relative",
-          cursor: "pointer",
-          ...(isOpen
-            ? { outline: "2px solid var(--color-accent)", outlineOffset: 2 }
-            : {}),
-        }}
-      >
-        {/* Edit affordance: a chip in the corner marks the swatch as clickable. */}
-        <span
-          style={{
-            position: "absolute",
-            top: 2,
-            right: 2,
-            display: "grid",
-            placeItems: "center",
-            width: 18,
-            height: 18,
-            borderRadius: 9999,
-            background: "var(--color-background)",
-          }}
-        >
-          <Icons.Edit size={12} className="text-primary-60" />
-        </span>
-        {isEdited && (
-          // Filled dot: this color has been changed from its default.
-          <span
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: 2,
-              left: 2,
-              width: 8,
-              height: 8,
-              borderRadius: 9999,
-              background: "var(--color-accent)",
-            }}
-          />
-        )}
-      </button>
+    <div className="relative flex flex-col items-center gap-2 text-center">
+      <ColorSwatchButton
+        name={colorKey}
+        className={className}
+        size="swatch"
+        isOpen={isOpen}
+        isEdited={isEdited}
+        onToggle={onToggle}
+      />
       <span className="text-xs break-all text-primary-60">
         {colorKey}
         {isEdited ? " (edited)" : ""}
       </span>
-      {isOpen && <ColorEditorPopup colorKey={colorKey} onClose={onClose} />}
+      {isOpen && (
+        <ColorPopup
+          name={colorKey}
+          value={overrides[colorKey] ?? defaultTheme[colorKey]}
+          pickerFallback={defaultTheme[colorKey]}
+          onChange={(value) => {
+            customThemeStore.setField(colorKey, value);
+          }}
+          onReset={
+            isEdited
+              ? () => {
+                  customThemeStore.resetField(colorKey);
+                }
+              : undefined
+          }
+          onClose={onClose}
+        />
+      )}
     </div>
   );
 };
@@ -701,18 +737,12 @@ const EditableColorSwatch: FC<{
 const ColorGrid: FC = () => {
   const overrides = useCustomTheme();
   const [openKey, setOpenKey] = useState<EditableColorKey | null>(null);
-  const hasEdits = Object.keys(overrides).length > 0;
+  // Only the colors: the General entry resets its own fields.
+  const hasEdits = EDITABLE_COLOR_KEYS.some((key) => key in overrides);
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
+      <div className="flex items-center justify-between gap-3">
         <SmallText>
           Click accent, background, primary or secondary to edit. Opacity
           variants derive automatically.
@@ -720,7 +750,7 @@ const ColorGrid: FC = () => {
         {hasEdits && (
           <EditorButton
             onClick={() => {
-              customThemeStore.restoreDefaults();
+              customThemeStore.restoreDefaults(EDITABLE_COLOR_KEYS);
               setOpenKey(null);
             }}
           >
@@ -729,45 +759,658 @@ const ColorGrid: FC = () => {
           </EditorButton>
         )}
       </div>
-      {COLOR_GROUPS.map((group) => (
-        <div key={group.label} className="space-y-2">
-          <SmallText>{group.label}</SmallText>
-          <div
-            /* Fixed 120px tracks throughout, so every swatch is the same width —
-               a pair group is two of them per row, the rest wrap to fit. */
-            className={clsx(
-              "grid gap-x-2 gap-y-4",
-              group.pairs === true
-                ? "grid-cols-[repeat(2,120px)]"
-                : "grid-cols-[repeat(auto-fill,120px)]",
-            )}
-          >
-            {group.colors.map((color) => {
-              const key = color.name;
-              if (!isEditableColorKey(key)) {
-                return <ColorSwatch key={key} {...color} />;
-              }
-              return (
-                <EditableColorSwatch
-                  key={key}
-                  colorKey={key}
-                  className={color.className}
-                  isOpen={openKey === key}
-                  onToggle={() => {
-                    setOpenKey((prev) => (prev === key ? null : key));
-                  }}
-                  onClose={() => {
-                    setOpenKey(null);
-                  }}
-                />
-              );
-            })}
+      {/* One table: fixed 160px columns — wide enough for the headings to stay
+          on one line — so every swatch is the same width and the primary and
+          secondary steps line up row by row. */}
+      <div className="grid grid-cols-[repeat(4,160px)] items-start gap-x-8">
+        {COLOR_COLUMNS.map((group) => (
+          <div key={group.label} className="space-y-2">
+            <SmallText className="whitespace-nowrap">{group.label}</SmallText>
+            <div className="flex flex-col gap-4">
+              {group.colors.map((color) => {
+                const key = color.name;
+                if (!isEditableColorKey(key)) {
+                  return <ColorSwatch key={key} {...color} />;
+                }
+                return (
+                  <EditableColorSwatch
+                    key={key}
+                    colorKey={key}
+                    className={color.className}
+                    isOpen={openKey === key}
+                    onToggle={() => {
+                      setOpenKey((prev) => (prev === key ? null : key));
+                    }}
+                    onClose={() => {
+                      setOpenKey(null);
+                    }}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </>
   );
 };
+
+/** A labelled card grouping related transcript controls. */
+const ControlGroup: FC<{
+  /** What the controls inside configure. */
+  title: string;
+  /** The controls. */
+  children: ReactNode;
+}> = ({ title, children }) => (
+  <section className="space-y-2.5 rounded-inner border border-solid border-primary-10 bg-primary-1 p-3">
+    <h3 className="text-xs font-semibold uppercase tracking-wide text-primary-60">
+      {title}
+    </h3>
+    {children}
+  </section>
+);
+
+/**
+ * Controls that depend on a switch being on, indented and ruled so they read
+ * as belonging to the switch above them.
+ */
+const ControlGroupNested: FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="ml-1 space-y-2.5 border-l border-solid border-primary-10 pl-3">
+    {children}
+  </div>
+);
+
+/** A switch toggling one of the transcript's on/off customizations. */
+const Switch: FC<{
+  /** What the switch turns on, e.g. `User message bubble`. */
+  label: string;
+  /** Current state. */
+  value: Toggle;
+  /** Called with the new state. */
+  onChange: (value: Toggle) => void;
+}> = ({ label, value, onChange }) => {
+  const isOn = value === "on";
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isOn}
+      onClick={() => {
+        onChange(isOn ? "off" : "on");
+      }}
+      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    >
+      <span className="text-sm text-primary-80 transition-colors group-hover:text-primary">
+        {label}
+      </span>
+      <span
+        aria-hidden
+        className={clsx(
+          "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+          isOn
+            ? "bg-accent group-hover:bg-accent-50"
+            : "bg-primary-20 group-hover:bg-primary-40",
+        )}
+      >
+        {/* The knob reads against either track: the surface color is the
+            lightest token in light mode and the darkest in dark mode. */}
+        <span
+          className={clsx(
+            "absolute top-[3px] size-3.5 rounded-full bg-background shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition-all",
+            isOn ? "left-[19px]" : "left-[3px]",
+          )}
+        />
+      </span>
+    </button>
+  );
+};
+
+const MOCK_SCREEN_OPTIONS: SegmentedOption<MockScreen>[] = [
+  { value: "text", label: "Text" },
+  { value: "voice", label: "Voice" },
+  { value: "voiceMini", label: "Voice mini" },
+];
+
+const MOCK_WINDOW_SIZE_OPTIONS: SegmentedOption<MockWindowSize>[] = [
+  { value: "half", label: "Half" },
+  { value: "full", label: "Full" },
+  { value: "floating", label: "Floating" },
+];
+
+/** A labelled block of mock screen controls. */
+const MockControl: FC<{
+  /** What the control configures. */
+  label: string;
+  /** The control. */
+  children: ReactNode;
+}> = ({ label, children }) => (
+  <div className="space-y-2">
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+      {label}
+    </p>
+    {children}
+  </div>
+);
+
+/*
+  The mock screens example configures the widget shell preview — which
+  experience, how it is presented — and launches it. The mock itself renders in
+  its own root over the whole page (see `MockHost`), so the choices live in
+  `mockPreviewStore` rather than local state.
+
+  Unlike every other entry, this one is page chrome rather than a gallery: it
+  renders in the playground's own DOM (`surface: "page"`), so its toggles are
+  the playground's `Segmented` — the one toggle style the page uses. Only the
+  launch button is a library component, so it gets a `LibrarySurface` of its
+  own.
+*/
+const MockScreens: FC<SpecimenProps> = () => {
+  const preview = useMockPreview();
+  return (
+    <div className="max-w-[420px] space-y-5">
+      <MockControl label="Experience">
+        <Segmented
+          label="Experience"
+          value={preview.screen}
+          options={MOCK_SCREEN_OPTIONS}
+          onChange={(screen) => {
+            mockPreviewStore.patch({ screen });
+          }}
+        />
+      </MockControl>
+      {/* Voice mini is its own compact widget; it ignores the presentation. */}
+      {preview.screen !== "voiceMini" && (
+        <MockControl label="Presentation">
+          <Segmented
+            label="Presentation"
+            value={preview.windowSize}
+            options={MOCK_WINDOW_SIZE_OPTIONS}
+            onChange={(windowSize) => {
+              mockPreviewStore.patch({ windowSize });
+            }}
+          />
+        </MockControl>
+      )}
+      <div className="space-y-1">
+        <LaunchButton
+          label="Launch mock screen"
+          showLabel
+          onClick={() => {
+            mockPreviewStore.patch({ isOpen: true });
+          }}
+        />
+        <p className="text-xs text-muted">
+          Press Escape or the close button to dismiss the mock.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/** A labelled text field, for the free-text transcript customizations. */
+const TextControl: FC<{
+  /** What the field sets. */
+  label: string;
+  /** Current value. */
+  value: string;
+  /** Shown when the value is empty. */
+  placeholder?: string;
+  /** Called with the new value. */
+  onChange: (value: string) => void;
+}> = ({ label, value, placeholder, onChange }) => (
+  <label className="flex items-center justify-between gap-3">
+    <span className="text-sm text-primary-60">{label}</span>
+    <input
+      type="text"
+      value={value}
+      spellCheck={false}
+      placeholder={placeholder}
+      onChange={(event) => {
+        onChange(event.target.value);
+      }}
+      className="min-w-0 flex-1 rounded-[6px] border border-solid border-primary-20 bg-transparent px-2 py-1.5 font-mono text-xs text-primary placeholder:text-primary-40 focus:border-accent focus:outline-none"
+    />
+  </label>
+);
+
+/** A labelled color field: the same swatch and popup as the Colors gallery. */
+const ColorControl: FC<{
+  /** What the color applies to, e.g. `Background`. */
+  label: string;
+  /** Current CSS color, or `""` when the theme's own color shows through. */
+  value: string;
+  /** Whether this field's popup is open. */
+  isOpen: boolean;
+  /** Opens or closes this field's popup. */
+  onToggle: () => void;
+  /** Closes this field's popup. */
+  onClose: () => void;
+  /** Applies a new CSS color. */
+  onChange: (value: string) => void;
+  /** Clears the color, letting the theme's own show through again. */
+  onReset: () => void;
+}> = ({ label, value, isOpen, onToggle, onClose, onChange, onReset }) => (
+  <div className="relative flex items-center justify-between gap-3">
+    <span className="text-sm text-primary-60">{label}</span>
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="truncate font-mono text-xs text-primary-40">
+        {value === "" ? "inherit" : value}
+      </span>
+      <ColorSwatchButton
+        name={label.toLowerCase()}
+        color={value}
+        size="chip"
+        isOpen={isOpen}
+        isEdited={value !== ""}
+        onToggle={onToggle}
+      />
+    </span>
+    {isOpen && (
+      <ColorPopup
+        name={label.toLowerCase()}
+        value={value}
+        pickerFallback="#ffffff"
+        onChange={onChange}
+        onReset={value === "" ? undefined : onReset}
+        onClose={onClose}
+      />
+    )}
+  </div>
+);
+
+/**
+ * One overridable non-color theme field: a switch that turns the override on
+ * (seeding it with the library's default, so the field starts from a valid
+ * value) and off (dropping it, so the default applies again), plus the text
+ * field editing it while it is on. Mirrors the custom-style switches in the
+ * transcript example, but writes to `customThemeStore` — the same store the
+ * Colors gallery edits — so every override travels together into the theme.
+ */
+const GeneralField: FC<{
+  /** The `Theme` key this control overrides. */
+  fieldKey: EditableGeneralKey;
+  /** What the field sets, e.g. `Font family`. */
+  label: string;
+}> = ({ fieldKey, label }) => {
+  const overrides = useCustomTheme();
+  const value = overrides[fieldKey];
+  return (
+    <>
+      <Switch
+        label={label}
+        value={value == null ? "off" : "on"}
+        onChange={(next) => {
+          if (next === "on") {
+            customThemeStore.setField(fieldKey, defaultTheme[fieldKey]);
+          } else {
+            customThemeStore.resetField(fieldKey);
+          }
+        }}
+      />
+      {value != null && (
+        <ControlGroupNested>
+          <TextControl
+            label="Value"
+            value={value}
+            placeholder={defaultTheme[fieldKey]}
+            onChange={(next) => {
+              customThemeStore.setField(fieldKey, next);
+            }}
+          />
+        </ControlGroupNested>
+      )}
+    </>
+  );
+};
+
+/** The non-color theme fields, grouped the way they are presented. */
+const GENERAL_GROUPS: {
+  /** What the fields inside configure. */
+  title: string;
+  /** The fields, in display order. */
+  fields: { key: EditableGeneralKey; label: string }[];
+}[] = [
+  {
+    title: "Typography",
+    fields: [{ key: "fontFamily", label: "Font family" }],
+  },
+  {
+    title: "Corner radii",
+    fields: [
+      { key: "innerBorderRadius", label: "Inner radius" },
+      { key: "outerBorderRadius", label: "Outer radius" },
+    ],
+  },
+  {
+    title: "Stacking order",
+    fields: [
+      { key: "zIndexTouchpoint", label: "Touchpoint z-index" },
+      { key: "zIndexLaunchButton", label: "Launch button z-index" },
+    ],
+  },
+];
+
+/*
+  The General entry edits the theme's non-color fields. Like the Colors gallery,
+  it writes to `customThemeStore`, which is the single `Partial<Theme>` handed to
+  every surface that renders library components: this shadow root (see
+  `LibrarySurface`), the mock screen previews (see `DesignSystem`), the launched
+  widget (see `useTouchpoint`) and the generated `create()` snippet (see
+  `snippets.ts`). So an override here shows up everywhere the colors do.
+
+  The preview below is the surface in miniature — a `rounded-outer` container
+  with `BackgroundDecoration` behind it and a default card inside — so the font
+  and both radii are visible as they change. The two z-indexes have nothing to
+  stack against inside a specimen; they apply to the launched widget and the
+  mock screens.
+*/
+const GeneralConfiguration: FC<SpecimenProps> = () => {
+  const overrides = useCustomTheme();
+  const settings = useSettings();
+  const hasEdits = EDITABLE_GENERAL_KEYS.some((key) => key in overrides);
+  return (
+    <div className="flex flex-col items-start gap-6">
+      <div className="flex w-full items-center justify-between gap-3">
+        <SmallText>
+          Overrides apply to every specimen on this page, the chat frame
+          previews and the launched widget.
+        </SmallText>
+        {hasEdits && (
+          <EditorButton
+            onClick={() => {
+              customThemeStore.restoreDefaults(EDITABLE_GENERAL_KEYS);
+            }}
+          >
+            <Icons.Refresh size={12} className="text-primary-60" />
+            Restore defaults
+          </EditorButton>
+        )}
+      </div>
+      <div className="grid w-full grid-cols-2 gap-6">
+        {GENERAL_GROUPS.map((group) => (
+          <ControlGroup key={group.title} title={group.title}>
+            {group.fields.map((field) => (
+              <GeneralField
+                key={field.key}
+                fieldKey={field.key}
+                label={field.label}
+              />
+            ))}
+          </ControlGroup>
+        ))}
+      </div>
+      {/* `relative` + `isolate` match `Main`: they keep the decoration's `-z-10`
+          layers inside this box, above its translucent fill but below the
+          content. `rounded-outer` and the card's own `rounded-inner` are the
+          two radii, so both overrides are visible here. */}
+      <div className="relative isolate w-full overflow-hidden rounded-outer border border-solid border-primary-10 p-6">
+        <BackgroundDecoration
+          backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
+        />
+        <div className="max-w-[400px] space-y-3">
+          <BaseText>
+            Your flight to Seattle is confirmed. Here are the details.
+          </BaseText>
+          <CustomCard>
+            <CustomCardImageRow src={CARD_IMAGE} alt="" />
+            <CustomCardRow
+              left={<BaseText faded>Departure</BaseText>}
+              right={
+                <>
+                  <BaseText>8:15 AM</BaseText>
+                  <SmallText>Nonstop</SmallText>
+                </>
+              }
+              icon={Icons.ArrowForward}
+            />
+            <CustomCardRow
+              left={<BaseText>Blue Airlines 101</BaseText>}
+              right={<BaseText>$312</BaseText>}
+            />
+          </CustomCard>
+          <SmallText>
+            Stacking order applies where Touchpoint overlays a page — the
+            launched widget and the mock screens.
+          </SmallText>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * The pair of `Settings` fields making up one side of the transcript's bubbles:
+ * whether the bubble is drawn, and the inline style applied to it. Addressing
+ * them by key keeps the controls below identical for the user and the agent.
+ */
+const BUBBLE_FIELDS = {
+  user: { bubble: "userMessageBubble", style: "userMessageBubbleStyle" },
+  agent: { bubble: "agentMessageBubble", style: "agentMessageBubbleStyle" },
+} as const satisfies Record<string, Record<string, keyof Settings>>;
+
+/**
+ * One side's bubble controls: whether the bubble is drawn at all and — only
+ * when it is — whether its style is customized, with the fields for the three
+ * properties that make up the style object.
+ *
+ * The style object in `Settings` is the whole state: its presence *is* the
+ * "Custom style" switch, and the fields write its `backgroundColor`, `color`
+ * and `borderRadius` directly, so what they show is exactly what is handed to
+ * `Messages` (and to `create()` on launch).
+ */
+const BubbleControls: FC<{
+  /** Which side of the transcript these controls drive. */
+  side: keyof typeof BUBBLE_FIELDS;
+  /** Human-readable name of the side, e.g. `User`. */
+  label: string;
+  /** Identifier of the color popup currently open, if any. */
+  openColor: string | null;
+  /** Opens one of this side's color popups, or closes them all with `null`. */
+  onOpenColor: (id: string | null) => void;
+}> = ({ side, label, openColor, onOpenColor }) => {
+  const settings = useSettings();
+  const fields = BUBBLE_FIELDS[side];
+  const hasBubble = settings[fields.bubble] === "on";
+  const style = settings[fields.style];
+  const setProperty = (property: keyof BubbleStyle, value: string): void => {
+    // A cleared field drops the property rather than setting an empty value, so
+    // the object stays exactly what Touchpoint should apply.
+    const next: BubbleStyle = Object.fromEntries(
+      Object.entries({ ...style, [property]: value }).filter(
+        ([, entry]) => entry !== "",
+      ),
+    );
+    settingsStore.set(fields.style, next);
+  };
+  const color = (property: "backgroundColor" | "color", name: string) => {
+    const id = `${side}-${property}`;
+    return (
+      <ColorControl
+        label={name}
+        value={style?.[property] ?? ""}
+        isOpen={openColor === id}
+        onToggle={() => {
+          onOpenColor(openColor === id ? null : id);
+        }}
+        onClose={() => {
+          onOpenColor(null);
+        }}
+        onChange={(value) => {
+          setProperty(property, value);
+        }}
+        onReset={() => {
+          setProperty(property, "");
+        }}
+      />
+    );
+  };
+  return (
+    <ControlGroup title={`${label} messages`}>
+      <Switch
+        label="Message bubble"
+        value={settings[fields.bubble]}
+        onChange={(value) => {
+          settingsStore.set(fields.bubble, value);
+          onOpenColor(null);
+        }}
+      />
+      {hasBubble && (
+        <ControlGroupNested>
+          <Switch
+            label="Custom style"
+            value={style == null ? "off" : "on"}
+            onChange={(value) => {
+              settingsStore.set(
+                fields.style,
+                value === "on" ? { ...DEFAULT_BUBBLE_STYLE } : undefined,
+              );
+              onOpenColor(null);
+            }}
+          />
+          {style != null && (
+            <>
+              {color("backgroundColor", "Background")}
+              {color("color", "Text")}
+              <TextControl
+                label="Radius"
+                value={style.borderRadius ?? ""}
+                placeholder="20px"
+                onChange={(value) => {
+                  setProperty("borderRadius", value);
+                }}
+              />
+            </>
+          )}
+        </ControlGroupNested>
+      )}
+    </ControlGroup>
+  );
+};
+
+/*
+  The transcript example renders the real `Messages` component over the mock
+  conversation, inline (not fixed-position like `MockText`) in a 400px column,
+  with the controls that drive it alongside.
+
+  Every customization it offers lives in the playground's `Settings` (see
+  `settings.ts`), held in `settingsStore` rather than local state, so the mock
+  chat frames and the launched widget pick up the same choices. Colors come from
+  the shared custom theme, so the Colors gallery's edits apply here too.
+*/
+const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
+  const settings = useSettings();
+  // One color popup at a time, across every group of controls.
+  const [openColor, setOpenColor] = useState<string | null>(null);
+  return (
+    <div className="flex flex-col items-start gap-6">
+      <div className="flex w-full items-center justify-between gap-3">
+        <SmallText>
+          Customizations apply to the chat frame previews and to the launched
+          widget.
+        </SmallText>
+        {hasTranscriptEdits(settings) && (
+          <EditorButton
+            onClick={() => {
+              restoreTranscriptDefaults();
+              setOpenColor(null);
+            }}
+          >
+            <Icons.Refresh size={12} className="text-primary-60" />
+            Reset all
+          </EditorButton>
+        )}
+      </div>
+      <div className="w-full grid grid-cols-2 gap-6">
+        <BubbleControls
+          side="user"
+          label="User"
+          openColor={openColor}
+          onOpenColor={setOpenColor}
+        />
+        <BubbleControls
+          side="agent"
+          label="Agent"
+          openColor={openColor}
+          onOpenColor={setOpenColor}
+        />
+        <ControlGroup title="Participants">
+          <Switch
+            label="Show participant info"
+            value={settings.avatars}
+            onChange={(avatars) => {
+              settingsStore.patch({ avatars });
+            }}
+          />
+          {settings.avatars === "on" && (
+            <ControlGroupNested>
+              <TextControl
+                label="Name"
+                value={settings.assistantName}
+                placeholder="Assistant"
+                onChange={(assistantName) => {
+                  settingsStore.patch({ assistantName });
+                }}
+              />
+              <TextControl
+                label="Icon URL"
+                value={settings.assistantIcon}
+                placeholder="https://…/icon.png"
+                onChange={(assistantIcon) => {
+                  settingsStore.patch({ assistantIcon });
+                }}
+              />
+            </ControlGroupNested>
+          )}
+        </ControlGroup>
+        <ControlGroup title="Surface">
+          <Switch
+            label="Background depth layer"
+            value={settings.backgroundDepthLayer}
+            onChange={(backgroundDepthLayer) => {
+              settingsStore.patch({ backgroundDepthLayer });
+            }}
+          />
+        </ControlGroup>
+      </div>
+      {/* Inline, in a 400px column, so the bubbles wrap the way they do in the
+          widget's narrow layouts. `relative` + `isolate` match `Main`: they
+          keep the decoration's `-z-10` layers inside this box, above its
+          translucent fill but below the transcript. */}
+      <div className="relative isolate h-200 w-full overflow-hidden rounded-outer border border-solid border-primary-10">
+        <BackgroundDecoration
+          backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
+        />
+        <Messages
+          handler={mockConversationHandler}
+          responses={responses}
+          userMessageBubble={settings.userMessageBubble === "on"}
+          agentMessageBubble={settings.agentMessageBubble === "on"}
+          userMessageBubbleStyle={settings.userMessageBubbleStyle}
+          agentMessageBubbleStyle={settings.agentMessageBubbleStyle}
+          showParticipantInfo={settings.avatars === "on"}
+          assistantName={settings.assistantName}
+          {...(settings.assistantIcon !== ""
+            ? { assistantIcon: settings.assistantIcon }
+            : {})}
+          avatarShape={settings.avatarShape}
+          chatMode
+          colorMode={colorMode}
+          uploadedFiles={{}}
+          lastApplicationResponseIndex={3}
+          modalityComponents={defaultModalities}
+          enabled
+          className="h-full"
+        />
+      </div>
+    </div>
+  );
+};
+
+/** Props every specimen gallery receives. */
+export interface SpecimenProps {
+  /** Color mode the surface renders in. */
+  colorMode: ColorMode;
+}
 
 /** One entry in the design system's navigation. */
 export interface Specimen {
@@ -778,7 +1421,14 @@ export interface Specimen {
   /** One-line note about the component, shown under the heading. */
   description: string;
   /** The gallery of variants. */
-  Component: FC;
+  Component: FC<SpecimenProps>;
+  /**
+   * Where the entry renders: `library` (the default) in a shadow root with the
+   * library's stylesheet, so its components look exactly as they do in the
+   * widget; `page` in the playground's own DOM, for entries made of page
+   * chrome rather than library components.
+   */
+  surface?: "library" | "page";
   /**
    * `html`-tagged-template snippet reproducing this gallery in a custom
    * modality, shown only for components exported to that `html` instance
@@ -786,127 +1436,58 @@ export interface Specimen {
    * icons, or components not exposed to custom modalities.
    */
   code?: string;
+  /**
+   * The `create()` snippet reproducing this entry's customizations, for the
+   * configuration entries. A component rather than a string because the
+   * snippet tracks the live edits: it subscribes to the store the entry writes
+   * to and emits only the fields that are set. Renders in the playground's own
+   * DOM, below the gallery.
+   */
+  Snippet?: FC;
 }
 
-/** Every component gallery, in navigation order. */
-export const SPECIMENS: Specimen[] = [
+/** The `create()` snippet for the General entry's theme overrides. */
+const GeneralSnippet: FC = () => {
+  const overrides = useCustomTheme();
+  return (
+    <CodeBlock code={buildThemeSnippet(overrides, EDITABLE_GENERAL_KEYS)} />
+  );
+};
+
+/** The `create()` snippet for the Colors entry's theme overrides. */
+const ColorsSnippet: FC = () => {
+  const overrides = useCustomTheme();
+  return <CodeBlock code={buildThemeSnippet(overrides, EDITABLE_COLOR_KEYS)} />;
+};
+
+/** The `create()` snippet for the transcript entry's customizations. */
+const TranscriptSnippet: FC = () => {
+  const settings = useSettings();
+  return <CodeBlock code={buildTranscriptSnippet(settings)} />;
+};
+
+/** The theme configuration entries, in navigation order. */
+export const CONFIGURATION_SPECIMENS: Specimen[] = [
+  {
+    id: "general",
+    title: "General",
+    description:
+      "The theme's non-color fields — font stack, corner radii and stacking order — each overridable on its own. Overrides apply to every surface and to the launched widget.",
+    Component: GeneralConfiguration,
+    Snippet: GeneralSnippet,
+  },
   {
     id: "colors",
     title: "Colors",
     description:
       "Every color in the theme, by its `Theme` key. Swatches reflect the theme currently applied to this surface.",
     Component: ColorGrid,
+    Snippet: ColorsSnippet,
   },
-  {
-    id: "text-buttons",
-    title: "Text buttons",
-    description:
-      "Full-width buttons with a visible label. Omitting onClick disables the button.",
-    Component: TextButtons,
-    code: `import { html } from "@amazon-connect-touchpoint/web";
+];
 
-const MyModality = ({ conversationHandler }) => html\`
-  <div style="display: flex; gap: 8px;">
-    <TextButton
-      type="main"
-      label="Confirm"
-      Icon=\${Icons.ArrowForward}
-      onClick=\${() => conversationHandler.sendText("Confirm")}
-    />
-    <TextButton
-      type="error"
-      label="Cancel"
-      Icon=\${Icons.Close}
-      onClick=\${() => conversationHandler.sendText("Cancel")}
-    />
-  </div>
-\`;`,
-  },
-  {
-    id: "text-button-groups",
-    title: "Text button groups",
-    description:
-      "A bordered stack of `grouped` text buttons, for offering a short list of replies. Only `grouped` text buttons belong inside.",
-    Component: TextButtonGroups,
-  },
-  {
-    id: "icon-buttons",
-    title: "Icon buttons",
-    description:
-      "Round icon-only buttons; the label becomes the accessible name and the tooltip.",
-    Component: IconButtons,
-    code: `import { html } from "@amazon-connect-touchpoint/web";
-
-const MyModality = ({ conversationHandler }) => html\`
-  <div style="display: flex; gap: 8px;">
-    <IconButton
-      type="main"
-      label="Dismiss"
-      Icon=\${Icons.Close}
-      onClick=\${() => conversationHandler.sendText("Dismiss")}
-    />
-    <IconButton
-      type="ghost"
-      label="Dismiss"
-      Icon=\${Icons.Close}
-      onClick=\${() => conversationHandler.sendText("Dismiss")}
-    />
-  </div>
-\`;`,
-  },
-  {
-    id: "message-buttons",
-    title: "Message buttons",
-    description: "Compact icon buttons used within the message transcript.",
-    Component: MessageButtons,
-    code: `import { html } from "@amazon-connect-touchpoint/web";
-
-const MyModality = ({ data, conversationHandler }) => html\`
-  <div style="display: flex; gap: 8px;">
-    <MessageButton
-      type=\${data.liked ? "selected" : "default"}
-      label="Like"
-      Icon=\${Icons.ThumbUp}
-      onClick=\${() => conversationHandler.sendText("Like")}
-    />
-    <MessageButton
-      type=\${data.liked ? "unselected" : "default"}
-      label="Dislike"
-      Icon=\${Icons.ThumbDown}
-      onClick=\${() => conversationHandler.sendText("Dislike")}
-    />
-  </div>
-\`;`,
-  },
-  {
-    id: "message-status-row",
-    title: "Message status row",
-    description:
-      "Delivery status shown under the most recent user message: sending, sent, delivered, read, or failed.",
-    Component: MessageStatusRows,
-  },
-  {
-    id: "launch-button",
-    title: "Launch button",
-    description:
-      "Opens the widget when Touchpoint is not embedded. Accepts a custom icon or component.",
-    Component: LaunchButtons,
-  },
-  {
-    id: "typography",
-    title: "Typography",
-    description: "The two text primitives available to custom modalities.",
-    Component: Typography,
-    code: `import { html } from "@amazon-connect-touchpoint/web";
-
-const MyModality = () => html\`
-  <div>
-    <BaseText>This is some standard text.</BaseText>
-    <BaseText faded>This is some faded text.</BaseText>
-    <SmallText>This is some small text.</SmallText>
-  </div>
-\`;`,
-  },
+/** Every component gallery, in navigation order. */
+export const COMPONENT_SPECIMENS: Specimen[] = [
   {
     id: "cards",
     title: "Cards",
@@ -976,10 +1557,29 @@ const MyModality = ({ conversationHandler }) => html\`
 \`;`,
   },
   {
-    id: "loader",
-    title: "Loader",
-    description: "The thinking indicator, optionally with a caption.",
-    Component: Loaders,
+    id: "icon-buttons",
+    title: "Icon buttons",
+    description:
+      "Round icon-only buttons; the label becomes the accessible name and the tooltip.",
+    Component: IconButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <IconButton
+      type="main"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+    <IconButton
+      type="ghost"
+      label="Dismiss"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Dismiss")}
+    />
+  </div>
+\`;`,
   },
   {
     id: "icons",
@@ -998,4 +1598,134 @@ const MyModality = () => html\`
   </div>
 \`;`,
   },
+  {
+    id: "launch-button",
+    title: "Launch button",
+    description:
+      "Opens the widget when Touchpoint is not embedded. Accepts a custom icon or component.",
+    Component: LaunchButtons,
+  },
+  {
+    id: "loader",
+    title: "Loader",
+    description: "The thinking indicator, optionally with a caption.",
+    Component: Loaders,
+  },
+  {
+    id: "message-buttons",
+    title: "Message buttons",
+    description: "Compact icon buttons used within the message transcript.",
+    Component: MessageButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data, conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <MessageButton
+      type=\${data.liked ? "selected" : "default"}
+      label="Like"
+      Icon=\${Icons.ThumbUp}
+      onClick=\${() => conversationHandler.sendText("Like")}
+    />
+    <MessageButton
+      type=\${data.liked ? "unselected" : "default"}
+      label="Dislike"
+      Icon=\${Icons.ThumbDown}
+      onClick=\${() => conversationHandler.sendText("Dislike")}
+    />
+  </div>
+\`;`,
+  },
+  {
+    id: "message-status-row",
+    title: "Message status row",
+    description:
+      "Delivery status shown under the most recent user message: sending, sent, delivered, read, or failed.",
+    Component: MessageStatusRows,
+  },
+  {
+    id: "text-button-groups",
+    title: "Text button groups",
+    description:
+      "A bordered stack of `grouped` text buttons, for offering a short list of replies. Only `grouped` text buttons belong inside.",
+    Component: TextButtonGroups,
+  },
+  {
+    id: "text-buttons",
+    title: "Text buttons",
+    description:
+      "Full-width buttons with a visible label. Omitting onClick disables the button.",
+    Component: TextButtons,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ conversationHandler }) => html\`
+  <div style="display: flex; gap: 8px;">
+    <TextButton
+      type="main"
+      label="Confirm"
+      Icon=\${Icons.ArrowForward}
+      onClick=\${() => conversationHandler.sendText("Confirm")}
+    />
+    <TextButton
+      type="error"
+      label="Cancel"
+      Icon=\${Icons.Close}
+      onClick=\${() => conversationHandler.sendText("Cancel")}
+    />
+  </div>
+\`;`,
+  },
+  {
+    id: "typography",
+    title: "Typography",
+    description: "The two text primitives available to custom modalities.",
+    Component: Typography,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = () => html\`
+  <div>
+    <BaseText>This is some standard text.</BaseText>
+    <BaseText faded>This is some faded text.</BaseText>
+    <SmallText>This is some small text.</SmallText>
+  </div>
+\`;`,
+  },
 ];
+
+/** The end-to-end examples, in navigation order. */
+export const EXAMPLE_SPECIMENS: Specimen[] = [
+  {
+    id: "chat-transcript",
+    title: "Chat transcript",
+    description:
+      "The chat transcript over a mock conversation, with the bubble and participant-info customizations the playground supports. Choices made here apply to the mock screens and to the launched widget.",
+    Component: TranscriptExample,
+    Snippet: TranscriptSnippet,
+  },
+  {
+    id: "mock-screens",
+    title: "Mock screens",
+    description:
+      "The library's top-level widget shells over a mock conversation: chat, full-screen voice and voice mini, in each presentation. Launching one covers the page until it is closed.",
+    Component: MockScreens,
+  },
+];
+
+/** One group of entries in the design system's navigation. */
+export interface SpecimenSection {
+  /** Heading above the group in the sidebar. */
+  label: string;
+  /** The entries, in navigation order. */
+  specimens: Specimen[];
+}
+
+/** The navigation, in order. */
+export const SPECIMEN_SECTIONS: SpecimenSection[] = [
+  { label: "Configuration", specimens: CONFIGURATION_SPECIMENS },
+  { label: "Components", specimens: COMPONENT_SPECIMENS },
+  { label: "Examples", specimens: EXAMPLE_SPECIMENS },
+];
+
+/** Every entry, flattened, for resolving the address in the fragment. */
+export const SPECIMENS: Specimen[] = SPECIMEN_SECTIONS.flatMap(
+  (section) => section.specimens,
+);

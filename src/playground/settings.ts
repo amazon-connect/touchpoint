@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import type { Input, WindowSize } from "../interface";
 
 /**
@@ -23,6 +24,21 @@ export const TEXT_FIELDS = [
 /** Key of a free-text configuration field. */
 export type TextFieldKey = (typeof TEXT_FIELDS)[number];
 
+/**
+ * The message bubble style the playground edits: a narrow, statically typed
+ * subset of Touchpoint's `CustomStyle` with the three properties the editors
+ * offer, all plain strings. Being a valid `CustomStyle` is checked where it
+ * is handed to `create()` (see `useTouchpoint.ts`).
+ */
+export interface BubbleStyle {
+  /** Text color. */
+  color?: string;
+  /** Bubble fill. */
+  backgroundColor?: string;
+  /** Corner rounding. */
+  borderRadius?: string;
+}
+
 /** On/off segmented control value. */
 export type Toggle = "on" | "off";
 
@@ -41,7 +57,26 @@ export type Settings = Record<TextFieldKey, string> & {
   welcomeScreen: Toggle;
   /** Shape of participant avatars. */
   avatarShape: AvatarShape;
+  /** Whether the surface's decorative depth layers are drawn. */
+  backgroundDepthLayer: Toggle;
+  /** Whether user messages are wrapped in a bubble. */
+  userMessageBubble: Toggle;
+  /** Whether assistant/agent messages are wrapped in a bubble. */
+  agentMessageBubble: Toggle;
+  /**
+   * Inline style for the user message bubble, passed straight to Touchpoint.
+   * `undefined` leaves the bubble with the library's own styling.
+   */
+  userMessageBubbleStyle?: BubbleStyle;
+  /** Inline style for the assistant/agent message bubble, as above. */
+  agentMessageBubbleStyle?: BubbleStyle;
 };
+
+/**
+ * Seed for a bubble style, applied when its customization is switched on.
+ * Colors are left out so the bubble keeps the theme's own until one is picked.
+ */
+export const DEFAULT_BUBBLE_STYLE: BubbleStyle = { borderRadius: "20px" };
 
 const INPUT_MODES: Input[] = ["text", "voice", "voiceMini", "external"];
 
@@ -59,7 +94,7 @@ export const DEFAULT_SETTINGS: Settings = {
   displayName: "Customer",
   deploymentKey: "",
   apiKey: "",
-  assistantName: "",
+  assistantName: "Assistant",
   assistantIcon: "",
   brandIcon: "",
   inputMode: "voiceMini",
@@ -67,6 +102,9 @@ export const DEFAULT_SETTINGS: Settings = {
   avatars: "on",
   welcomeScreen: "on",
   avatarShape: "round",
+  backgroundDepthLayer: "on",
+  userMessageBubble: "on",
+  agentMessageBubble: "off",
 };
 
 const pick = <T extends string>(
@@ -107,6 +145,21 @@ export const settingsFromParams = (params: URLSearchParams): Settings => {
     params.get("avatarShape"),
     ["round", "square"],
     "round",
+  );
+  settings.backgroundDepthLayer = pick(
+    params.get("backgroundDepthLayer"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.backgroundDepthLayer,
+  );
+  settings.userMessageBubble = pick(
+    params.get("userMessageBubble"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.userMessageBubble,
+  );
+  settings.agentMessageBubble = pick(
+    params.get("agentMessageBubble"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.agentMessageBubble,
   );
   return settings;
 };
@@ -157,7 +210,60 @@ export const writeSettingsToUrl = (settings: Settings): void => {
     settings.avatarShape,
     DEFAULT_SETTINGS.avatarShape,
   );
+  setOrDelete(
+    "backgroundDepthLayer",
+    settings.backgroundDepthLayer,
+    DEFAULT_SETTINGS.backgroundDepthLayer,
+  );
+  setOrDelete(
+    "userMessageBubble",
+    settings.userMessageBubble,
+    DEFAULT_SETTINGS.userMessageBubble,
+  );
+  setOrDelete(
+    "agentMessageBubble",
+    settings.agentMessageBubble,
+    DEFAULT_SETTINGS.agentMessageBubble,
+  );
   history.replaceState(null, "", url);
+};
+
+/**
+ * The customizations the design system's transcript example drives, pulled out
+ * of a configuration so they can be compared against the defaults and restored
+ * in one go.
+ */
+const transcriptCustomizations = (
+  settings: Settings,
+): Pick<
+  Settings,
+  | "userMessageBubble"
+  | "agentMessageBubble"
+  | "userMessageBubbleStyle"
+  | "agentMessageBubbleStyle"
+  | "avatars"
+  | "assistantName"
+  | "assistantIcon"
+  | "backgroundDepthLayer"
+> => ({
+  userMessageBubble: settings.userMessageBubble,
+  agentMessageBubble: settings.agentMessageBubble,
+  userMessageBubbleStyle: settings.userMessageBubbleStyle,
+  agentMessageBubbleStyle: settings.agentMessageBubbleStyle,
+  avatars: settings.avatars,
+  assistantName: settings.assistantName,
+  assistantIcon: settings.assistantIcon,
+  backgroundDepthLayer: settings.backgroundDepthLayer,
+});
+
+/** Whether any transcript customization differs from its default. */
+export const hasTranscriptEdits = (settings: Settings): boolean =>
+  JSON.stringify(transcriptCustomizations(settings)) !==
+  JSON.stringify(transcriptCustomizations(DEFAULT_SETTINGS));
+
+/** Puts every transcript customization back to its default. */
+export const restoreTranscriptDefaults = (): void => {
+  settingsStore.patch(transcriptCustomizations(DEFAULT_SETTINGS));
 };
 
 /** Whether the selected input mode places a voice call (voice or voice mini). */
@@ -192,3 +298,56 @@ export const validateSettings = (settings: Settings): string | null => {
 /** Amazon Connect contact IDs are UUIDs. */
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+let current: Settings = settingsFromParams(
+  new URLSearchParams(window.location.search),
+);
+
+const listeners = new Set<() => void>();
+
+/**
+ * Module-level store holding the single copy of the playground's
+ * configuration. It lives outside React (rather than in a context) because the
+ * design-system specimens render in their own React root inside a shadow DOM —
+ * a context cannot cross that boundary, but a singleton subscribed to via
+ * `useSyncExternalStore` can. That is what lets the transcript customizations
+ * edited in the design system drive the mock chat frames and the launched
+ * widget alike. Mirrors `customThemeStore` in `customTheme.ts`.
+ */
+export const settingsStore = {
+  subscribe: (listener: () => void): (() => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  },
+  getSnapshot: (): Settings => current,
+  /** Applies a partial update, as the launch form's fields do. */
+  patch: (changes: Partial<Settings>): void => {
+    current = { ...current, ...changes };
+    for (const listener of listeners) {
+      listener();
+    }
+  },
+  /**
+   * Updates one field, for callers that hold the field's key rather than a
+   * literal patch (the design system's editors address fields by key).
+   */
+  set: <K extends keyof Settings>(key: K, value: Settings[K]): void => {
+    current = { ...current, [key]: value };
+    for (const listener of listeners) {
+      listener();
+    }
+  },
+  /** Replaces the whole configuration, e.g. with the trimmed settings. */
+  replace: (next: Settings): void => {
+    current = next;
+    for (const listener of listeners) {
+      listener();
+    }
+  },
+};
+
+/** Subscribes to the playground configuration. Safe across React roots. */
+export const useSettings = (): Settings =>
+  useSyncExternalStore(settingsStore.subscribe, settingsStore.getSnapshot);

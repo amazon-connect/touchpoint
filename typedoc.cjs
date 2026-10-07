@@ -21,7 +21,7 @@ module.exports = {
     "Bidirectional Voice+",
     "*",
   ],
-  // `ContainerStyle` is derived from the allowlist of CSS properties that backs
+  // `CustomStyle` is derived from the allowlist of CSS properties that backs
   // the runtime check, which is deliberately internal.
   intentionallyNotExported: ["allowedProperties"],
   treatValidationWarningsAsErrors: false,
