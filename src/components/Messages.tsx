@@ -109,7 +109,7 @@ export const MessageChoices: FC<{
         choice.choiceId === message.selectedChoiceId ? (
           <TextButton
             key={key}
-            type="ghost"
+            type="grouped"
             Icon={Send}
             onClick={
               message.selectedChoiceId == null
