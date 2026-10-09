@@ -113,8 +113,6 @@ export const FullscreenVoice: FC<Props> = ({
   modalityComponents,
   onVoiceSessionEnded,
 }) => {
-  const [micEnabled, setMicEnabled] = useState<boolean>(true);
-
   const [voice, setVoice] = useWidgetVoiceState();
 
   const setSpeakers = useMemo(() => {
@@ -242,6 +240,8 @@ export const FullscreenVoice: FC<Props> = ({
     );
   }
 
+  const micEnabled = voice.state?.isMicEnabled ?? true;
+
   return (
     // `overflow-hidden` clips the continuously-scaling ripple animations so they can't push
     // a scrollbar in/out each cycle (which visibly shakes the widget).
@@ -278,7 +278,7 @@ export const FullscreenVoice: FC<Props> = ({
             label="Voice"
             type={micEnabled ? "subtle" : "ghost"}
             onClick={() => {
-              setMicEnabled((prev) => !prev);
+              void voice.handler.setMicrophone(!micEnabled);
             }}
           />
         </div>
