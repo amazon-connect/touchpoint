@@ -878,7 +878,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               />
             ) : null}
             {welcomeMessages.length > 0 ? (
-              <div className="markdown text-center text-lg text-primary-80 space-y-4">
+              <div className="markdown text-center text-lg text-primary space-y-4">
                 {welcomeMessages.map((message, index) => (
                   <SafeMarkdown key={index} contents={message.text} />
                 ))}
@@ -1002,7 +1002,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           ? "grid grid-cols-2 xl:grid-cols-[1fr_632px] w-full h-full"
           : isFloating
             ? // Detached rounded card hovering over the page (page stays interactive).
-              "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl border border-solid border-primary-10"
+              "fixed z-touchpoint inset-0 w-full sm:w-[420px] sm:left-auto sm:top-auto sm:right-2 sm:bottom-2 sm:h-[calc(100%-1rem)] sm:max-h-[1080px] sm:rounded-outer overflow-hidden sm:shadow-2xl sm:border sm:border-solid sm:border-primary-10"
             : isSideBySide
               ? // Docked to the right edge for the full height; the page reflows beside it.
                 "fixed z-touchpoint top-0 bottom-0 right-0 w-full md:w-[440px]"

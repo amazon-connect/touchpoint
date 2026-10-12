@@ -50,7 +50,7 @@ const defaultClass =
   "text-primary-60 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-20";
 
 const selectedClass =
-  "text-primary-90 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-40";
+  "text-primary enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-40";
 
 const unselectedClass =
   "text-primary-40 enabled:hover:bg-primary-5 enabled:active:bg-primary-10 disabled:text-primary-10";

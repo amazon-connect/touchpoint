@@ -200,7 +200,7 @@ export const VoiceMini: FC<{
     // (embedded), this ended state is shown instead.
     return (
       <VoiceMiniPanel>
-        <p className="text-primary-80 text-base px-3 py-2">
+        <p className="text-primary text-base px-3 py-2">
           The conversation has ended.
         </p>
       </VoiceMiniPanel>

@@ -79,9 +79,7 @@ export const DateInput: FC<DateInputProps> = ({ onSubmit, className }) => {
           disabled={isDisabled}
           className={clsx(
             "flex-none text-primary-60",
-            isDisabled
-              ? "cursor-default"
-              : "cursor-pointer hover:text-primary-80",
+            isDisabled ? "cursor-default" : "cursor-pointer hover:text-primary",
           )}
           aria-label="Open date picker"
         >
@@ -99,7 +97,7 @@ export const DateInput: FC<DateInputProps> = ({ onSubmit, className }) => {
           ref={maskedInputRef}
           value={maskedValue}
           className={clsx(
-            "bg-transparent text-primary-80 outline-0 ml-2 py-2.5",
+            "bg-transparent text-primary outline-0 ml-2 py-2.5 caret-accent selection:bg-accent-20",
             isDisabled
               ? "placeholder-primary-20 pointer-events-none"
               : "placeholder-primary-40",

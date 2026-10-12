@@ -48,7 +48,7 @@ export const Authentication: FC<{
 
   return (
     <div className="space-y-2">
-      <p className="text-primary-80 text-base">{copy.heading}</p>
+      <p className="text-primary text-base">{copy.heading}</p>
       <div className="rounded-outer border border-solid border-primary-20 p-2 space-y-2">
         {status === "prompt" ? (
           <>

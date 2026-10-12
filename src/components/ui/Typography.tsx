@@ -15,7 +15,7 @@ import { type FC, type ReactNode } from "react";
  */
 export const BaseText: FC<{
   children: ReactNode;
-  /** Show in a slightly dimmer style (primary-60 instead of primary-80). */
+  /** Show in a slightly dimmer style (primary-60 instead of primary). */
   faded?: boolean;
   /** Custom CSS class name */
   className?: string;
@@ -23,7 +23,7 @@ export const BaseText: FC<{
   <p
     className={clsx(
       "text-base",
-      faded ? "text-primary-60" : "text-primary-80",
+      faded ? "text-primary-60" : "text-primary",
       className,
     )}
   >

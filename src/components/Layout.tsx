@@ -18,7 +18,7 @@ export const Main: FC<{
         "@container/main",
         // `isolate` keeps the `-z-10` decoration layered above the translucent
         // background fill but below content, without escaping this surface.
-        "w-full bg-background text-primary-80 flex relative flex-col h-full backdrop-blur-overlay isolate",
+        "w-full bg-background text-primary flex relative flex-col h-full backdrop-blur-overlay isolate",
         {
           "col-span-2 md:col-span-1": windowSize === "half",
           "col-span-2": windowSize === "full",
@@ -85,7 +85,7 @@ export const VoiceMiniControls: FC<{
 );
 
 export const voiceMiniPanelClass =
-  "bg-background backdrop-blur-overlay text-primary-80 rounded-outer p-2 w-[calc(100vw-16px)] max-w-[360px] space-y-4 border border-solid border-primary-10";
+  "bg-background backdrop-blur-overlay text-primary rounded-outer p-2 w-[calc(100vw-16px)] max-w-[360px] space-y-4 border border-solid border-primary-10";
 
 export const VoiceMiniPanel: FC<{
   children: ReactNode;

@@ -62,13 +62,13 @@ export const TextButton: FC<TextButtonProps> = ({
         type === "grouped" ? null : "rounded-outer",
         "relative z-10 w-full px-5 py-4 transition-colors flex justify-between items-center focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
         {
-          "bg-primary-90 text-secondary-90 enabled:hover:before:bg-primary-90 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-secondary-40":
+          "bg-primary text-secondary enabled:hover:before:bg-primary enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "main",
-          "bg-primary-10 text-primary-90 enabled:hover:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-primary-20":
+          "bg-primary-10 text-primary enabled:hover:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-primary-20":
             type === "ghost",
-          "bg-error-primary text-secondary-90 enabled:hover:before:bg-primary-5 disabled:bg-primary-5 disabled:text-secondary-40":
+          "bg-error-primary text-secondary enabled:hover:before:bg-primary-5 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "error",
-          "text-primary-90 enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-10 disabled:text-primary-40 first:rounded-t-outer last:rounded-b-outer not-first:after:content-[''] not-first:after:absolute not-first:after:inset-x-5 not-first:after:top-0 not-first:after:h-px not-first:after:bg-primary-10":
+          "text-primary enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-10 disabled:text-primary-40 first:rounded-t-outer last:rounded-b-outer not-first:after:content-[''] not-first:after:absolute not-first:after:inset-x-5 not-first:after:top-0 not-first:after:h-px not-first:after:bg-primary-10":
             type === "grouped",
         },
         className,
