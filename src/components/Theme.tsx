@@ -12,8 +12,6 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
     "--radius-outer": theme.outerBorderRadius,
 
     "--color-primary": theme.primary,
-    "--color-primary-90": theme.primary90,
-    "--color-primary-80": theme.primary80,
     "--color-primary-60": theme.primary60,
     "--color-primary-40": theme.primary40,
     "--color-primary-20": theme.primary20,
@@ -22,8 +20,6 @@ export const toCustomProperties = (theme: Theme): CSSProperties => {
     "--color-primary-1": theme.primary1,
 
     "--color-secondary": theme.secondary,
-    "--color-secondary-90": theme.secondary90,
-    "--color-secondary-80": theme.secondary80,
     "--color-secondary-60": theme.secondary60,
     "--color-secondary-40": theme.secondary40,
     "--color-secondary-20": theme.secondary20,
@@ -59,9 +55,7 @@ export const defaultTheme: Theme = {
   zIndexTouchpoint: "1000",
   zIndexLaunchButton: "100",
 
-  primary: "light-dark(rgb(0, 2, 9), rgb(255, 255, 255))",
-  primary90: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",
-  primary80: "light-dark(rgba(0, 2, 9, 0.8), rgba(255, 255, 255, 0.85))",
+  primary: "light-dark(rgb(0, 0, 0, 0.9), rgb(255, 255, 255, 0.95))",
   primary60: "light-dark(rgba(0, 0, 0, 0.6), rgba(255, 255, 255, 0.65))",
   primary40: "light-dark(rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.45))",
   primary20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
@@ -69,9 +63,7 @@ export const defaultTheme: Theme = {
   primary5: "light-dark(rgba(0, 0, 0, 0.03), rgba(255, 255, 255, 0.03))",
   primary1: "light-dark(rgba(0, 0, 0, 0.01), rgba(255, 255, 255, 0.01))",
 
-  secondary: "light-dark(rgb(255, 255, 255), rgb(0, 2, 9))",
-  secondary90: "light-dark(rgba(255, 255, 255, 0.95), rgba(0, 0, 0, 0.9))",
-  secondary80: "light-dark(rgba(255, 255, 255, 0.85), rgba(0, 2, 9, 0.8))",
+  secondary: "light-dark(rgb(255, 255, 255, 0.95), rgb(0, 0, 0, 0.9))",
   secondary60: "light-dark(rgba(255, 255, 255, 0.65), rgba(0, 0, 0, 0.6))",
   secondary40: "light-dark(rgba(255, 255, 255, 0.45), rgba(0, 0, 0, 0.4))",
   secondary20: "light-dark(rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.2))",
@@ -81,7 +73,7 @@ export const defaultTheme: Theme = {
 
   // Accent defaults to black/white (matching primary) so that it stays
   // understated out of the box, and setting a brand accent is clearly visible.
-  accent: "light-dark(rgba(0, 0, 0, 1), rgba(255, 255, 255, 1))",
+  accent: "light-dark(rgba(0, 0, 0, 0.9), rgba(255, 255, 255, 0.95))",
   accent50: "light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.55))",
   accent20: "light-dark(rgba(0, 0, 0, 0.2), rgba(255, 255, 255, 0.25))",
   // Base surface fill (per Figma): light #F2F2F2 @ 90%, dark #1B1B21 @ 95%.
@@ -108,11 +100,6 @@ export const intelligentMerge = (theme: Partial<Theme>): Theme => {
   }
 
   if (theme.primary != null) {
-    if (theme.primary90 == null)
-      computed.primary90 = `rgb(from ${theme.primary} r g b / 0.9)`;
-    if (theme.primary80 == null)
-      computed.primary80 = `rgb(from ${theme.primary} r g b / 0.8)`;
-
     if (theme.primary60 == null)
       computed.primary60 = `rgb(from ${theme.primary} r g b / 0.6)`;
     if (theme.primary40 == null)
@@ -128,10 +115,6 @@ export const intelligentMerge = (theme: Partial<Theme>): Theme => {
   }
 
   if (theme.secondary != null) {
-    if (theme.secondary90 == null)
-      computed.secondary90 = `rgb(from ${theme.secondary} r g b / 0.9)`;
-    if (theme.secondary80 == null)
-      computed.secondary80 = `rgb(from ${theme.secondary} r g b / 0.8)`;
     if (theme.secondary60 == null)
       computed.secondary60 = `rgb(from ${theme.secondary} r g b / 0.6)`;
     if (theme.secondary40 == null)

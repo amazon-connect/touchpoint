@@ -279,7 +279,7 @@ export const Input: FC<InputProps> = ({
               <label
                 htmlFor="file-upload"
                 aria-label="Upload file"
-                className="p-3 w-10 h-10 flex-none block transition-colors rounded-full bg-primary-80 hover:bg-primary-80 text-secondary-80 cursor-pointer"
+                className="p-3 w-10 h-10 flex-none block transition-colors rounded-full bg-primary hover:bg-primary text-secondary cursor-pointer"
               >
                 <Attachment />
               </label>
@@ -305,7 +305,7 @@ export const Input: FC<InputProps> = ({
             disabled={isWaiting || !enabled}
             className={clsx(
               "h-10 w-full resize-none mr-2 px-2 py-2 outline-hidden scrollbar-none",
-              "bg-transparent text-primary-80 placeholder:text-primary-40 caret-accent",
+              "bg-transparent text-primary placeholder:text-primary-40 caret-accent selection:bg-accent-20",
               "disabled:text-primary-40",
             )}
             placeholder="Type something"
@@ -344,7 +344,7 @@ export const Input: FC<InputProps> = ({
                     submit();
                   }
             }
-            type="subtle"
+            type="main"
             Icon={Send}
           />
         </div>

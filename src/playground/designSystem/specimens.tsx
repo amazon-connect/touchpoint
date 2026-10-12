@@ -55,6 +55,8 @@ import {
   mockPreviewStore,
   useMockPreview,
 } from "./mockPreview";
+import { InputContainer } from "../../components/Layout";
+import { Input } from "../../components/Input";
 
 /*
   Everything in this file renders inside the library's shadow root (see
@@ -435,8 +437,6 @@ const COLOR_COLUMNS: ColorGroup[] = [
     label: "Primary",
     colors: [
       { name: "primary", className: "bg-primary" },
-      { name: "primary90", className: "bg-primary-90" },
-      { name: "primary80", className: "bg-primary-80" },
       { name: "primary60", className: "bg-primary-60" },
       { name: "primary40", className: "bg-primary-40" },
       { name: "primary20", className: "bg-primary-20" },
@@ -449,8 +449,6 @@ const COLOR_COLUMNS: ColorGroup[] = [
     label: "Secondary",
     colors: [
       { name: "secondary", className: "bg-secondary" },
-      { name: "secondary90", className: "bg-secondary-90" },
-      { name: "secondary80", className: "bg-secondary-80" },
       { name: "secondary60", className: "bg-secondary-60" },
       { name: "secondary40", className: "bg-secondary-40" },
       { name: "secondary20", className: "bg-secondary-20" },
@@ -840,7 +838,7 @@ const Switch: FC<{
       }}
       className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
-      <span className="text-sm text-primary-80 transition-colors group-hover:text-primary">
+      <span className="text-sm text-primary transition-colors group-hover:text-primary">
         {label}
       </span>
       <span
@@ -1376,7 +1374,7 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           widget's narrow layouts. `relative` + `isolate` match `Main`: they
           keep the decoration's `-z-10` layers inside this box, above its
           translucent fill but below the transcript. */}
-      <div className="relative isolate h-200 w-full overflow-hidden rounded-outer border border-solid border-primary-10">
+      <div className="relative isolate h-200 flex flex-col w-full overflow-hidden rounded-outer border border-solid border-primary-10">
         <BackgroundDecoration
           backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
         />
@@ -1399,8 +1397,15 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           lastApplicationResponseIndex={3}
           modalityComponents={defaultModalities}
           enabled
-          className="h-full"
+          className="flex-grow"
         />
+        <InputContainer windowSize="half">
+          <Input
+            enabled
+            handler={mockConversationHandler}
+            onFileUpload={() => {}}
+          />
+        </InputContainer>
       </div>
     </div>
   );

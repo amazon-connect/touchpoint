@@ -83,7 +83,7 @@ export const Settings: FC<SettingsProps> = ({
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-secondary60 p-4">
           <div className="w-full max-w-sm rounded-outer bg-background backdrop-blur-overlay p-4 space-y-6 border border-solid border-primary-10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-primary-80">
+              <div className="flex items-center gap-2 text-primary">
                 <Warning className="size-5 flex-none" />
                 <span className="text-xl">
                   {copy.endConversationConfirm.title}
@@ -98,7 +98,7 @@ export const Settings: FC<SettingsProps> = ({
                 }}
               />
             </div>
-            <p className="text-sm text-primary-90">
+            <p className="text-sm text-primary">
               {copy.endConversationConfirm.body}
             </p>
             <div className="space-y-2">

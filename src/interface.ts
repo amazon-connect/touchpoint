@@ -605,15 +605,6 @@ export interface Theme {
   primary: string;
 
   /**
-   * Primary color with 90% opacity
-   */
-  primary90: string;
-
-  /**
-   * Primary color with 80% opacity
-   */
-  primary80: string;
-  /**
    * Primary color with 60% opacity
    */
   primary60: string;
@@ -642,16 +633,6 @@ export interface Theme {
    * Secondary color
    */
   secondary: string;
-
-  /**
-   * Secondary color with 90% opacity
-   */
-  secondary90: string;
-
-  /**
-   * Secondary color with 80% opacity
-   */
-  secondary80: string;
   /**
    * Secondary color with 60% opacity
    */

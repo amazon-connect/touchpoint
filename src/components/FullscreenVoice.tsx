@@ -227,7 +227,7 @@ export const FullscreenVoice: FC<Props> = ({
     return (
       <div
         className={clsx(
-          "flex flex-col items-center justify-center gap-6 text-primary-80",
+          "flex flex-col items-center justify-center gap-6 text-primary",
           className,
         )}
       >

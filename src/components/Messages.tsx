@@ -201,7 +201,7 @@ const AttachmentPill: FC<{
       disabled={onClick == null}
       onClick={onClick}
       className={clsx(
-        "flex items-center gap-2 w-fit max-w-full px-3 py-2 rounded-inner bg-primary-5 text-primary-80 text-base",
+        "flex items-center gap-2 w-fit max-w-full px-3 py-2 rounded-inner bg-primary-5 text-primary text-base",
         onClick != null ? "hover:bg-primary-10 cursor-pointer" : "",
       )}
     >
@@ -357,7 +357,7 @@ const Sources: FC<{ sources: KnowledgeBaseResponseSource[] }> = ({
         setOpen(ev.currentTarget.open);
       }}
     >
-      <summary className="flex cursor-pointer items-center gap-2 rounded-inner hover:bg-primary-5 text-primary-80">
+      <summary className="flex cursor-pointer items-center gap-2 rounded-inner hover:bg-primary-5 text-primary">
         <UnsemanticIconButton
           type="ghost"
           Icon={open ? ArrowDown : ArrowRight}
@@ -368,7 +368,7 @@ const Sources: FC<{ sources: KnowledgeBaseResponseSource[] }> = ({
         {consolidatedSources.map(({ source, indices }, sourceIndex) => {
           const displayName = source.fileName ?? source.content ?? "Source";
           const sharedClassName =
-            "p-3 bg-primary-5 rounded-inner w-full flex items-center justify-between text-primary-80";
+            "p-3 bg-primary-5 rounded-inner w-full flex items-center justify-between text-primary";
           const indicesDisplay = indices
             .map((index) => String(index + 1))
             .join(", ");
