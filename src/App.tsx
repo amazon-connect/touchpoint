@@ -157,6 +157,10 @@ const normalizeConfiguration = (
       configuration.agentMessageBubbleStyle == null
         ? undefined
         : sanitizeCustomStyle(configuration.agentMessageBubbleStyle),
+    headerStyle:
+      configuration.headerStyle == null
+        ? undefined
+        : sanitizeCustomStyle(configuration.headerStyle),
     // Amazon Connect drives the greeting from the contact flow when the
     // participant connects, so there is nothing to send client-side. (NLX's
     // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
@@ -870,7 +874,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       return (
         <div className="flex flex-col grow overflow-hidden">
           <div className="grow flex flex-col items-center justify-center gap-6 overflow-auto p-2 md:p-3 w-full md:max-w-content md:mx-auto">
-            {showWelcomeLogo ? (
+            {showWelcomeLogo && typeof configuration.brandIcon === "string" ? (
               <img
                 src={configuration.brandIcon}
                 role="presentation"
@@ -1034,6 +1038,9 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             />
           ) : null}
           <Header
+            style={configuration.headerStyle}
+            brandIcon={configuration.brandIcon}
+            isBrandIconSquare={!isFloating}
             errorThemedCloseButton={input === "voice"}
             speakerControls={
               input === "voice"

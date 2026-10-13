@@ -6,6 +6,7 @@ import { IconButton } from "./ui/IconButton";
 import { Close, Reorder } from "./ui/Icons";
 import { BackgroundDecoration } from "./BackgroundDecoration";
 import { type DragHandleProps } from "../utils/useDraggable";
+import { type CustomStyle } from "../utils/customStyle";
 
 export const Main: FC<{
   windowSize: WindowSize;
@@ -33,9 +34,13 @@ export const Main: FC<{
 
 export const HeaderContainer: FC<{
   children: ReactNode;
-}> = ({ children }) => {
+  style?: CustomStyle;
+}> = ({ children, style }) => {
   return (
-    <div className="flex p-2 md:p-3 items-center justify-between gap-2 @3xl/main:absolute @3xl/main:left-0 @3xl/main:right-0 @3xl/main:top-0">
+    <div
+      className="flex p-2 md:p-3 items-center justify-between gap-2 @3xl/main:absolute @3xl/main:left-0 @3xl/main:right-0 @3xl/main:top-0"
+      style={style}
+    >
       {children}
     </div>
   );

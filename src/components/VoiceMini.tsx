@@ -2,22 +2,17 @@
 import { type Context, type Response } from "@nlxai/core";
 
 import { type ConnectConversationHandler } from "../connect";
-import {
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type FC,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, type FC } from "react";
 import { clsx } from "clsx";
 
-import type { CustomModalityComponent } from "../interface";
+import type { BrandIconSource, CustomModalityComponent } from "../interface";
 import { initiateVoice } from "../voice";
 import { LoaderAnimation } from "./ui/Loader";
 import { Ripple } from "./Ripple";
 import { IconButton } from "./ui/IconButton";
 import { Close, Mic, MicOff, Volume, VolumeOff, Restart } from "./ui/Icons";
 import { TextButton } from "./ui/TextButton";
+import { BrandIcon } from "./ui/BrandIcon";
 import { useWidgetVoiceState } from "./FullscreenVoice";
 import { VoiceModalities } from "./VoiceModalities";
 import { ErrorMessage } from "./ErrorMessage";
@@ -29,12 +24,12 @@ import {
 import { type DragHandleProps } from "../utils/useDraggable";
 
 const VoiceMiniLoader: FC<{
-  brandIconView: ReactNode;
+  brandIcon?: BrandIconSource;
   dragHandleProps?: DragHandleProps;
-}> = ({ brandIconView, dragHandleProps }) => {
+}> = ({ brandIcon, dragHandleProps }) => {
   return (
     <VoiceMiniControls className="relative" dragHandleProps={dragHandleProps}>
-      {brandIconView}
+      {brandIcon != null ? <BrandIcon icon={brandIcon} square={true} /> : null}
       <IconButton
         Icon={Volume}
         label="Speakers"
@@ -65,7 +60,7 @@ export const VoiceMini: FC<{
   showTranscript: boolean;
   responses: Response[];
   handler: ConnectConversationHandler;
-  brandIcon?: string;
+  brandIcon?: BrandIconSource;
   renderCollapse: boolean;
   onClose: (event: Event) => void;
   /** Called when the voice session ends (call disconnected / agent hung up). */
@@ -88,16 +83,6 @@ export const VoiceMini: FC<{
   const onCloseHandler = (): void => {
     onClose(new Event("close"));
   };
-
-  const brandIconView =
-    brandIcon != null ? (
-      <img
-        className="w-10 h-10 block flex-none object-contain object-center"
-        src={brandIcon}
-        alt=""
-        role="presentation"
-      />
-    ) : null;
 
   const [voice, setVoice] = useWidgetVoiceState();
 
@@ -172,7 +157,7 @@ export const VoiceMini: FC<{
   if (voice == null || voice === "loading") {
     return (
       <VoiceMiniLoader
-        brandIconView={brandIconView}
+        brandIcon={brandIcon}
         dragHandleProps={dragHandleProps}
       />
     );
@@ -212,7 +197,7 @@ export const VoiceMini: FC<{
 
   return (
     <VoiceMiniControls dragHandleProps={dragHandleProps}>
-      {brandIconView}
+      {brandIcon != null ? <BrandIcon icon={brandIcon} square={true} /> : null}
       <div className="w-fit relative">
         {voice.state?.isApplicationSpeaking ? (
           <Ripple className="rounded-full" />

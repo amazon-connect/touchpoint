@@ -350,6 +350,14 @@ export type LiveSyncConfig = LiveSyncConnection &
   );
 
 /**
+ * Source of the brand icon: either an image URL or a component. A component
+ * receives `square`, which says whether the icon is held to a 40px square
+ * (`true`) or is 40px tall and as wide as its content (`false`).
+ * @inline @hidden
+ */
+export type BrandIconSource = string | ComponentType<{ square: boolean }>;
+
+/**
  * Main Touchpoint creation properties object
  * @category Basics
  */
@@ -412,7 +420,7 @@ export interface TouchpointConfiguration {
   /**
    * URL of icon used to display the brand in the chat header
    */
-  brandIcon?: string;
+  brandIcon?: BrandIconSource;
   /**
    * Include border animation. Currently only supported in Voice Mini.
    */
@@ -531,6 +539,10 @@ export interface TouchpointConfiguration {
    * @category Theming
    */
   containerStyle?: CustomStyle;
+  /**
+   * Custom style for the header - only available in floating mode
+   */
+  headerStyle?: CustomStyle;
   /**
    * Optional {@link CustomModalityComponent | custom modality components} to render in Touchpoint
    */

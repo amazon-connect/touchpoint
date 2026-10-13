@@ -2,6 +2,7 @@ import type { ColorMode } from "../interface";
 import type { EditableThemeKey, ThemeOverrides } from "./customTheme";
 import {
   type BubbleStyle,
+  type HeaderStyle,
   isLiveSyncConfigured,
   isVoiceMode,
   type Settings,
@@ -11,7 +12,7 @@ import {
 /** Renders a bubble style object as the lines of a `create()` option. */
 const styleLines = (
   option: string,
-  style: BubbleStyle | undefined,
+  style: BubbleStyle | HeaderStyle | undefined,
 ): string[] =>
   style == null
     ? []
@@ -112,6 +113,7 @@ export const buildCreateSnippet = ({
     ...(isText
       ? styleLines("agentMessageBubbleStyle", settings.agentMessageBubbleStyle)
       : []),
+    ...(isText ? styleLines("headerStyle", settings.headerStyle) : []),
     ...(themeEntries.length > 0
       ? [
           "  theme: {",
@@ -210,6 +212,7 @@ export const buildTranscriptSnippet = (settings: Settings): string => {
         "agentMessageBubbleStyle",
         settings.agentMessageBubbleStyle,
       ),
+      ...styleLines("headerStyle", settings.headerStyle),
       // Participant info is off by default; its fields only apply when it is on.
       withAvatars ? "  showParticipantInfo: true," : null,
       withAvatars && settings.assistantName !== ""

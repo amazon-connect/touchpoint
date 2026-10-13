@@ -39,6 +39,20 @@ export interface BubbleStyle {
   borderRadius?: string;
 }
 
+/**
+ * The header style the playground edits: the properties the editor offers,
+ * all plain strings. Like {@link BubbleStyle}, it is checked against
+ * Touchpoint's `CustomStyle` where it is handed to `create()`.
+ */
+export interface HeaderStyle {
+  /** Header fill. */
+  backgroundColor?: string;
+  /** Text color. */
+  color?: string;
+  /** CSS `color-scheme`: `light`, `dark` or `light dark`. */
+  colorScheme?: string;
+}
+
 /** On/off segmented control value. */
 export type Toggle = "on" | "off";
 
@@ -70,6 +84,11 @@ export type Settings = Record<TextFieldKey, string> & {
   userMessageBubbleStyle?: BubbleStyle;
   /** Inline style for the assistant/agent message bubble, as above. */
   agentMessageBubbleStyle?: BubbleStyle;
+  /**
+   * Inline style for the header, passed straight to Touchpoint. `undefined`
+   * leaves the header with the library's own styling.
+   */
+  headerStyle?: HeaderStyle;
 };
 
 /**
@@ -241,6 +260,7 @@ const transcriptCustomizations = (
   | "agentMessageBubble"
   | "userMessageBubbleStyle"
   | "agentMessageBubbleStyle"
+  | "headerStyle"
   | "avatars"
   | "assistantName"
   | "assistantIcon"
@@ -250,6 +270,7 @@ const transcriptCustomizations = (
   agentMessageBubble: settings.agentMessageBubble,
   userMessageBubbleStyle: settings.userMessageBubbleStyle,
   agentMessageBubbleStyle: settings.agentMessageBubbleStyle,
+  headerStyle: settings.headerStyle,
   avatars: settings.avatars,
   assistantName: settings.assistantName,
   assistantIcon: settings.assistantIcon,

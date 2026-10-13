@@ -12,7 +12,11 @@ import {
   type IconButtonType,
 } from "../../components/ui/IconButton";
 import * as Icons from "../../components/ui/Icons";
-import { type ColorMode, type MessageStatus } from "../../interface";
+import {
+  BrandIconSource,
+  type ColorMode,
+  type MessageStatus,
+} from "../../interface";
 import { BackgroundDecoration } from "../../components/BackgroundDecoration";
 import { Messages } from "../../components/Messages";
 import { defaultModalities } from "../../components/defaultModalities";
@@ -20,6 +24,7 @@ import { mockConversationHandler, responses } from "../../mocks/shared";
 import {
   type BubbleStyle,
   DEFAULT_BUBBLE_STYLE,
+  type HeaderStyle,
   hasTranscriptEdits,
   restoreTranscriptDefaults,
   type Settings,
@@ -57,6 +62,7 @@ import {
 } from "./mockPreview";
 import { InputContainer } from "../../components/Layout";
 import { Input } from "../../components/Input";
+import { Header } from "../../components/Header";
 
 /*
   Everything in this file renders inside the library's shadow root (see
@@ -1285,6 +1291,100 @@ const BubbleControls: FC<{
   );
 };
 
+/** The `color-scheme` values the header editor offers: CSS value and label. */
+const COLOR_SCHEME_OPTIONS = [
+  { value: "light", label: "light" },
+  { value: "dark", label: "dark" },
+  { value: "light dark", label: "light-dark" },
+] as const;
+
+/**
+ * The header's style controls. As with the bubbles, the style object in
+ * `Settings` is the whole state: its presence is the "Custom style" switch, and
+ * the fields write `backgroundColor`, `color` and `colorScheme` directly.
+ */
+const HeaderControls: FC<{
+  /** Identifier of the color popup currently open, if any. */
+  openColor: string | null;
+  /** Opens one of the header's color popups, or closes them all with `null`. */
+  onOpenColor: (id: string | null) => void;
+}> = ({ openColor, onOpenColor }) => {
+  const style = useSettings().headerStyle;
+  const setProperty = (property: keyof HeaderStyle, value: string): void => {
+    // A cleared field drops the property rather than setting an empty value.
+    const next: HeaderStyle = Object.fromEntries(
+      Object.entries({ ...style, [property]: value }).filter(
+        ([, entry]) => entry !== "",
+      ),
+    );
+    settingsStore.set("headerStyle", next);
+  };
+  const color = (property: "backgroundColor" | "color", name: string) => {
+    const id = `header-${property}`;
+    return (
+      <ColorControl
+        label={name}
+        value={style?.[property] ?? ""}
+        isOpen={openColor === id}
+        onToggle={() => {
+          onOpenColor(openColor === id ? null : id);
+        }}
+        onClose={() => {
+          onOpenColor(null);
+        }}
+        onChange={(value) => {
+          setProperty(property, value);
+        }}
+        onReset={() => {
+          setProperty(property, "");
+        }}
+      />
+    );
+  };
+  return (
+    <ControlGroup title="Header">
+      <Switch
+        label="Custom style"
+        value={style == null ? "off" : "on"}
+        onChange={(value) => {
+          settingsStore.set("headerStyle", value === "on" ? {} : undefined);
+          onOpenColor(null);
+        }}
+      />
+      {style != null && (
+        <ControlGroupNested>
+          {color("backgroundColor", "Background")}
+          {color("color", "Text")}
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm text-primary-60">Color scheme</span>
+            <select
+              value={style.colorScheme ?? ""}
+              aria-label="Header color scheme"
+              onChange={(event) => {
+                setProperty("colorScheme", event.target.value);
+              }}
+              className="min-w-0 flex-1 rounded-[6px] border border-solid border-primary-20 bg-transparent px-2 py-1.5 font-mono text-xs text-primary focus:border-accent focus:outline-none"
+            >
+              <option value="">inherit</option>
+              {COLOR_SCHEME_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </ControlGroupNested>
+      )}
+    </ControlGroup>
+  );
+};
+
+const brandIconExample: BrandIconSource = () => (
+  <svg viewBox="0 0 400 100" className="h-full block">
+    <circle cx={200} cy={50} r={25} fill="red" />
+  </svg>
+);
+
 /*
   The transcript example renders the real `Messages` component over the mock
   conversation, inline (not fixed-position like `MockText`) in a 400px column,
@@ -1331,6 +1431,7 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           openColor={openColor}
           onOpenColor={setOpenColor}
         />
+        <HeaderControls openColor={openColor} onOpenColor={setOpenColor} />
         <ControlGroup title="Participants">
           <Switch
             label="Show participant info"
@@ -1377,6 +1478,18 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
       <div className="relative isolate h-200 flex flex-col w-full overflow-hidden rounded-outer border border-solid border-primary-10">
         <BackgroundDecoration
           backgroundDepthLayer={settings.backgroundDepthLayer === "on"}
+        />
+        <Header
+          style={settings.headerStyle}
+          brandIcon={brandIconExample}
+          isBrandIconSquare={false}
+          colorMode={colorMode}
+          isSettingsOpen={false}
+          enabled
+          toggleSettings={noop}
+          renderCollapse
+          collapse={noop}
+          reset={noop}
         />
         <Messages
           handler={mockConversationHandler}
