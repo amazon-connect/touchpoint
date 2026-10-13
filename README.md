@@ -78,6 +78,53 @@ const touchpoint = await create({
 });
 ```
 
+### Custom chat client (advanced)
+
+By default, Touchpoint talks to the Amazon Connect Participant Service directly
+from the browser using the participant token. To route every Participant Service
+call through your own backend instead (so the token never reaches the browser),
+extend `ChatClient` and pass an instance as `customChatClient`. `ChatClient` is
+re-exported from [amazon-connect-chatjs](https://github.com/amazon-connect/amazon-connect-chatjs#connectchatsessionchatclient);
+see its documentation for the methods to implement.
+
+```js
+import { create, ChatClient } from "@amazon-connect-touchpoint/web";
+
+class MyChatClient extends ChatClient {
+  createParticipantConnection(participantToken, type, acknowledgeConnection) {
+    /* TODO: call your backend */
+  }
+  disconnectParticipant(connectionToken) {
+    /* TODO: disconnect participant */
+  }
+  sendMessage(connectionToken, content, contentType, clientToken) {
+    /* TODO: send message */
+  }
+  sendEvent(connectionToken, contentType, content, clientToken) {
+    /* TODO: send event */
+  }
+  getTranscript(connectionToken, args) {
+    /* TODO: get transcript */
+  }
+  // Other optional properties
+}
+
+const touchpoint = await create({
+  config: {
+    customChatClient: new MyChatClient(),
+    chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT", // The chat endpoint does not need to return a `participantToken`
+    instanceId: "REPLACE_WITH_INSTANCE_ID",
+    participantDisplayName: "REPLACE_WITH_PARTICIPANT_DISPLAY_NAME",
+    contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
+    region: "us-east-1",
+  },
+  input: "text",
+});
+```
+
+When no `customChatClient` is provided and the chat details have no
+`participantToken`, a warning is logged to the console.
+
 ### Voice mini
 
 A compact, floating voice widget. Voice modes connect through your
@@ -363,16 +410,16 @@ const touchpoint = await create({
             type="main"
             label="Yes"
             onClick=${() => {
-            conversationHandler.sendText("yes");
-          }}
+              conversationHandler.sendText("yes");
+            }}
             icon="{Check}"
           />
           <IconButton
             type="ghost"
             label="No"
             onClick=${() => {
-            conversationHandler.sendText("no");
-          }}
+              conversationHandler.sendText("no");
+            }}
             icon="{Close}"
           />
         </div>

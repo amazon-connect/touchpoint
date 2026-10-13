@@ -1,6 +1,7 @@
 import type { LiveSyncConnection } from "../interface";
 import {
   createConnectChatConversation,
+  type ChatClient,
   fetchChatDetails,
   fetchWebRtcConnectionData,
   type ChatDetails,
@@ -16,7 +17,7 @@ export type {
   ResolvedView,
   WebRtcConnectionData,
 } from "./conversation";
-export { CONNECTING_INTERIM_MESSAGE } from "./conversation";
+export { CONNECTING_INTERIM_MESSAGE, ChatClient } from "./conversation";
 export { loadViewRenderer, viewRendererScriptUrl } from "./viewRenderer";
 
 /**
@@ -65,6 +66,12 @@ export interface ConnectConfig extends DetailsRequestParams {
    * from the browser). Required to complete authentication.
    */
   authenticationEndpoint?: string;
+  /**
+   * Advanced: a custom chat client (an instance of a class extending {@link ChatClient})
+   * that replaces the bundled AWS transport, so participant tokens need not reach the
+   * browser. When provided, `details.participantToken` is optional.
+   */
+  customChatClient?: ChatClient;
   /** @hidden */
   stage?: string;
   /**
@@ -149,6 +156,9 @@ export const buildConnectHandler = (
       ? { authenticationEndpoint: config.authenticationEndpoint }
       : {}),
     languageCode,
+    ...(config.customChatClient != null
+      ? { customChatClient: config.customChatClient }
+      : {}),
     globalConfig,
     ...(liveSync != null
       ? {
