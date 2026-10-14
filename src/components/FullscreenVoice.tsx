@@ -14,7 +14,11 @@ import { type Context, type Response } from "@nlxai/core";
 
 import { type ConnectConversationHandler } from "../connect";
 
-import type { ColorMode, CustomModalityComponent } from "../interface";
+import type {
+  BrandIconSource,
+  ColorMode,
+  CustomModalityComponent,
+} from "../interface";
 import { FullscreenError } from "./FullscreenError";
 import { Ripple } from "./Ripple";
 import { Loader } from "./ui/Loader";
@@ -30,7 +34,7 @@ interface Props {
   responses: Response[];
   speakersEnabled: boolean;
   showTranscript: boolean;
-  brandIcon?: string;
+  brandIcon?: BrandIconSource;
   className?: string;
   context?: Context;
   modalityComponents: Record<string, CustomModalityComponent<unknown>>;
@@ -251,7 +255,7 @@ export const FullscreenVoice: FC<Props> = ({
           <VoiceIcon
             colorMode={colorMode}
             addRipple={voice.state?.isApplicationSpeaking ?? false}
-            brandIcon={brandIcon}
+            brandIcon={typeof brandIcon === "string" ? brandIcon : undefined}
             className="relative"
           />
         </div>

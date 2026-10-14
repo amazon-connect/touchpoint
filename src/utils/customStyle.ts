@@ -68,6 +68,7 @@ const allowedProperties = [
   // Surface. `color` is included for the message bubbles, whose text the style
   // wraps; on the container it simply sets the inherited text color.
   "color",
+  "colorScheme",
   "backgroundColor",
   "opacity",
   "backdropFilter",

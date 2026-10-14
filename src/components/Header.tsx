@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton, type IconButtonType } from "./ui/IconButton";
-import { type ColorMode } from "../interface";
+import { type BrandIconSource, type ColorMode } from "../interface";
 import {
   Close,
   Settings,
@@ -14,10 +14,19 @@ import {
   ArrowLeft,
 } from "./ui/Icons";
 import { HeaderContainer } from "./Layout";
+import { BrandIcon } from "./ui/BrandIcon";
+import { type CustomStyle } from "../utils/customStyle";
 
 interface HeaderProps {
   colorMode: ColorMode;
   errorThemedCloseButton?: boolean;
+  style?: CustomStyle;
+  /**
+   * Brand shown on the left (floating mode only). When present, the reset
+   * button moves to the right, next to the other controls.
+   */
+  brandIcon?: BrandIconSource;
+  isBrandIconSquare?: boolean;
   speakerControls?: {
     enabled: boolean;
     setEnabled: Dispatch<SetStateAction<boolean>>;
@@ -32,6 +41,9 @@ interface HeaderProps {
 
 export const Header: FC<HeaderProps> = ({
   renderCollapse,
+  style,
+  brandIcon,
+  isBrandIconSquare,
   errorThemedCloseButton,
   speakerControls,
   collapse,
@@ -43,13 +55,19 @@ export const Header: FC<HeaderProps> = ({
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();
+  const hasBrand = brandIcon != null;
   return (
-    <HeaderContainer>
-      {/* Reset lives in the top-left; when settings is open it is replaced in
-          place by a back button that returns to the conversation. */}
+    <HeaderContainer style={style}>
+      {brandIcon != null ? (
+        <BrandIcon icon={brandIcon} square={isBrandIconSquare ?? true} />
+      ) : null}
+      {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
+          controls); when settings is open it is replaced in place by a back
+          button that returns to the conversation. */}
       {isSettingsOpen && toggleSettings != null ? (
         <IconButton
           label="Back"
+          className={hasBrand ? "ml-auto" : undefined}
           type={iconButtonType}
           onClick={enabled ? toggleSettings : undefined}
           Icon={ArrowLeft}
@@ -57,6 +75,7 @@ export const Header: FC<HeaderProps> = ({
       ) : (
         <IconButton
           label={copy.restartConversationButtonLabel}
+          className={hasBrand ? "ml-auto" : undefined}
           type={iconButtonType}
           onClick={
             enabled
@@ -70,7 +89,7 @@ export const Header: FC<HeaderProps> = ({
       )}
       {toggleSettings != null ? (
         <IconButton
-          className="ml-auto"
+          className={hasBrand ? undefined : "ml-auto"}
           Icon={Settings}
           label="Settings"
           type={isSettingsOpen ? "subtle" : iconButtonType}
@@ -92,7 +111,7 @@ export const Header: FC<HeaderProps> = ({
         <IconButton
           label="Collapse"
           type={(errorThemedCloseButton ?? false) ? "error" : iconButtonType}
-          className={clsx(toggleSettings == null ? "ml-auto" : "")}
+          className={clsx(toggleSettings == null && !hasBrand ? "ml-auto" : "")}
           onClick={
             enabled
               ? () => {

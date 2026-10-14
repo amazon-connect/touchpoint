@@ -102,6 +102,9 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
       ...(settings.agentMessageBubbleStyle != null
         ? { agentMessageBubbleStyle: settings.agentMessageBubbleStyle }
         : {}),
+      ...(settings.headerStyle != null
+        ? { headerStyle: settings.headerStyle }
+        : {}),
       ...(liveSyncEnabled
         ? {
             liveSync: {
