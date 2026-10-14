@@ -1,4 +1,4 @@
-import type { ApplicationMessage, Context } from "@nlxai/core";
+import type { ApplicationMessage, Context } from "./core";
 import { type ComponentType } from "react";
 import type { InteractiveElementInfo } from "./liveSync/analyzePageForms";
 import type {

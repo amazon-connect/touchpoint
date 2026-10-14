@@ -13,12 +13,13 @@ import {
   type ApplicationMessage,
   type KnowledgeBaseResponseSource,
   ResponseType,
-} from "@nlxai/core";
+} from "../core";
 import { clsx } from "clsx";
 
 import {
   type AuthenticationStatus,
   type ConnectConversationHandler,
+  type ResolvedView,
 } from "../connect";
 import { Authentication } from "./Authentication";
 
@@ -52,7 +53,6 @@ import {
   type GuideReference,
   type OpenGuide,
 } from "./ui/GuideCard";
-import { type ResolvedView } from "../connect";
 import { type CustomStyle } from "../utils/customStyle";
 
 export interface MessagesProps {

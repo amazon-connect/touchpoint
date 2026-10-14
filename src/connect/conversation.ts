@@ -1,20 +1,20 @@
-import type {
-  ConversationHandler,
-  Response,
-  Subscriber,
-  Context,
-  SlotsRecordOrArray,
-  SlotValue,
-  StructuredRequest,
-  NormalizedStructuredRequest,
-  ChoiceRequestMetadata,
-  RequestOverride,
-  ConversationHandlerEvent,
-  EventHandlers,
-  VoicePlusContext,
-  LanguageCode,
-} from "@nlxai/core";
-import { ResponseType } from "@nlxai/core";
+import {
+  type ConversationHandler,
+  type Response,
+  type Subscriber,
+  type Context,
+  type SlotsRecordOrArray,
+  type SlotValue,
+  type StructuredRequest,
+  type NormalizedStructuredRequest,
+  type ChoiceRequestMetadata,
+  type RequestOverride,
+  type ConversationHandlerEvent,
+  type EventHandlers,
+  type VoicePlusContext,
+  type LanguageCode,
+  ResponseType,
+} from "../core";
 import "amazon-connect-chatjs";
 import { openLiveSyncSocket } from "./liveSync";
 import type { MessageStatus } from "../interface";
@@ -368,7 +368,7 @@ export interface ResolvedView {
 }
 
 /**
- * Members of `@nlxai/core`'s {@link ConversationHandler} that the Amazon Connect
+ * Members of `core`'s {@link ConversationHandler} that the Amazon Connect
  * Chat integration does not support and therefore does not implement:
  * `submitFeedback`, `getVoiceCredentials`, `sendIntent` (a deprecated alias of
  * `sendFlow`), and `sendWelcomeIntent` (a deprecated alias of `sendWelcomeFlow`).
@@ -377,7 +377,7 @@ type UnsupportedConnectHandlerMethods =
   "submitFeedback" | "getVoiceCredentials" | "sendIntent" | "sendWelcomeIntent";
 
 /**
- * The subset of `@nlxai/core`'s {@link ConversationHandler} implemented by the
+ * The subset of `core`'s {@link ConversationHandler} implemented by the
  * Amazon Connect Chat integration.
  */
 export type ConnectConversationHandler = Omit<
@@ -438,7 +438,7 @@ const authInitiatedContentType =
  * });
  * ```
  * @param config {ConnectChatConfig} - configuration
- * @returns conversationHandler {ConnectConversationHandler} - `@nlxai/core`-compatible conversation handler (minus the methods Connect Chat does not support), directly passable to Touchpoint UI.
+ * @returns conversationHandler {ConnectConversationHandler} - `core`-compatible conversation handler (minus the methods Connect Chat does not support), directly passable to Touchpoint UI.
  */
 export const createConnectChatConversation = (
   config: ConnectChatConfig,

@@ -1,8 +1,4 @@
-import {
-  ResponseType,
-  type Response,
-  type ConversationHandler,
-} from "@nlxai/core";
+import { ResponseType, type Response, type ConversationHandler } from "../core";
 
 import { type Theme } from "../interface";
 

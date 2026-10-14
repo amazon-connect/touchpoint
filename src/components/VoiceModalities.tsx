@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import { type CustomModalityComponent } from "../interface";
-import { type Response, ResponseType } from "@nlxai/core";
+import { type Response, ResponseType } from "../core";
 
 import { type ConnectConversationHandler } from "../connect";
 import { SafeMarkdown } from "./SafeMarkdown";

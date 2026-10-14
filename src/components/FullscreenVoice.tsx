@@ -10,7 +10,7 @@ import {
   type SetStateAction,
 } from "react";
 import { clsx } from "clsx";
-import { type Context, type Response } from "@nlxai/core";
+import { type Context, type Response } from "../core";
 
 import { type ConnectConversationHandler } from "../connect";
 

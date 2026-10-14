@@ -97,7 +97,7 @@ const participantEndpointForRegion = (region: string, stage?: string): string =>
  * @param liveSync - optional Live Sync connection; when present, opens the action socket
  * @param options - additional handler options
  * @param options.chatEnabled - whether to open a chat session; `false` for voice-only inputs
- * @returns a `@nlxai/core`-compatible conversation handler
+ * @returns a `core`-compatible conversation handler
  */
 export const buildConnectHandler = (
   config: ConnectConfig,

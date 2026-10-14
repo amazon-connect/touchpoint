@@ -2,7 +2,7 @@
 import { type FC } from "react";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { ResponseType, type Response } from "@nlxai/core";
+import { ResponseType, type Response } from "../core";
 
 import { type AuthenticationStatus } from "../connect";
 import { type Copy } from "../interface";

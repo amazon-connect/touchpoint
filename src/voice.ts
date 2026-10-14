@@ -8,11 +8,11 @@ import {
   MeetingSessionConfiguration,
   MeetingSessionStatusCode,
 } from "amazon-chime-sdk-js";
-import { type Context } from "@nlxai/core";
-
-import { type ConnectConversationHandler } from "./connect";
-
-import { type WebRtcConnectionData } from "./connect";
+import { type Context } from "./core";
+import {
+  type ConnectConversationHandler,
+  type WebRtcConnectionData,
+} from "./connect";
 
 /**
  * How to handle voice connections.
