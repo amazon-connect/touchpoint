@@ -89,7 +89,7 @@ const Row: FC<{
     <div
       className={clsx(
         columns
-          ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
+          ? "grid grid-cols-1 gap-2 md:grid-cols-2"
           : "flex flex-wrap items-center gap-3",
       )}
     >
