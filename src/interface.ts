@@ -781,10 +781,56 @@ export interface LiveSyncCustomAction {
 }
 
 /**
+ * The subset of {@link TouchpointConfiguration} that can be changed after
+ * Touchpoint is created via {@link TouchpointInstance.update}: purely visual and
+ * copy settings. Anything that affects the conversation itself (`config`,
+ * `input`, `languageCode`, `liveSync`, `initializeConversation`,
+ * `initialContext`, `modalityComponents`, `escalationPhrase`,
+ * `onContactEnded`) is deliberately excluded.
+ * @category Basics
+ */
+export type TouchpointVisualConfiguration = Partial<
+  Pick<
+    TouchpointConfiguration,
+    | "showParticipantInfo"
+    | "assistantName"
+    | "assistantIcon"
+    | "avatarShape"
+    | "windowSize"
+    | "colorMode"
+    | "brandIcon"
+    | "animate"
+    | "backgroundDepthLayer"
+    | "launchIcon"
+    | "userMessageBubble"
+    | "agentMessageBubble"
+    | "userMessageBubbleStyle"
+    | "agentMessageBubbleStyle"
+    | "chatMode"
+    | "welcomeScreen"
+    | "welcomeScreenLogo"
+    | "theme"
+    | "containerStyle"
+    | "headerStyle"
+    | "showVoiceTranscript"
+    | "copy"
+  >
+>;
+
+/**
  * Instance of a Touchpoint UI component
  * @category Basics
  */
 export interface TouchpointInstance {
+  /**
+   * Updates visual and copy settings of a running Touchpoint without touching the
+   * conversation: it is not re-initialized, reset or reconnected. Provided
+   * properties replace their previous values (nested objects such as `theme` are
+   * replaced, not merged); omitted properties keep their current value. Properties
+   * outside {@link TouchpointVisualConfiguration} are ignored.
+   * @param changes - the visual settings to change
+   */
+  update: (changes: TouchpointVisualConfiguration) => void;
   /**
    * Controls whether the Touchpoint UI is expanded or collapsed
    */
