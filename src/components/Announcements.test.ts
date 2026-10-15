@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResponseType, type Response } from "@nlxai/core";
+import { ResponseType, type Response } from "../core";
 
 import { conversationAnnouncement, spokenText } from "./Announcements";
 import { defaultCopy } from "../utils/useCopy";

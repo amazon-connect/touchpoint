@@ -8,7 +8,7 @@ import {
   useEffect,
 } from "react";
 import TextareaAutosize from "react-textarea-autosize";
-import { type UploadUrl, type Subscriber, ResponseType } from "@nlxai/core";
+import { type UploadUrl, type Subscriber, ResponseType } from "../core";
 import { clsx } from "clsx";
 
 import { type ConnectConversationHandler } from "../connect";

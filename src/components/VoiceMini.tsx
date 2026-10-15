@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { type Context, type Response } from "@nlxai/core";
+import { type Context, type Response } from "../core";
 
 import { type ConnectConversationHandler } from "../connect";
 import { useEffect, useLayoutEffect, useRef, type FC } from "react";
