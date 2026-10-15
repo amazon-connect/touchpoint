@@ -36,7 +36,7 @@ export const MockVoice: FC<{
           ? "grid grid-cols-2 xl:grid-cols-[1fr_632px] w-full h-full"
           : windowSize === "floating"
             ? // Detached rounded card hovering over the page, as in `App`.
-              "fixed z-touchpoint top-2 bottom-2 right-2 w-[calc(100vw-1rem)] sm:w-[420px] rounded-outer overflow-hidden shadow-2xl border border-solid border-primary-10"
+              "fixed z-touchpoint inset-0 w-full md:w-[420px] md:left-auto md:top-auto md:right-2 md:bottom-2 md:h-[calc(100%-1rem)] md:max-h-[1080px] md:rounded-outer overflow-hidden md:shadow-2xl md:border md:border-solid md:border-primary-10"
             : "grid grid-cols-2 xl:grid-cols-[1fr_632px] fixed inset-0 z-touchpoint",
       )}
       theme={theme}

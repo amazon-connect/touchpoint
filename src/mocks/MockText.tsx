@@ -49,7 +49,7 @@ export const MockText: FC<{
           ? "grid grid-cols-2 xl:grid-cols-[1fr_632px] w-full h-full"
           : windowSize === "floating"
             ? // Detached rounded card hovering over the page, as in `App`.
-              "fixed z-touchpoint inset-0 w-full sm:w-[420px] sm:left-auto sm:top-auto sm:right-2 sm:bottom-2 sm:h-[calc(100%-1rem)] sm:max-h-[1080px] sm:rounded-outer overflow-hidden sm:shadow-2xl sm:border sm:border-solid sm:border-primary-10"
+              "fixed z-touchpoint inset-0 w-full md:w-[420px] md:left-auto md:top-auto md:right-2 md:bottom-2 md:h-[calc(100%-1rem)] md:max-h-[1080px] md:rounded-outer overflow-hidden md:shadow-2xl md:border md:border-solid md:border-primary-10"
             : "grid grid-cols-2 xl:grid-cols-[1fr_632px] fixed inset-0 z-touchpoint",
       )}
       theme={theme}
