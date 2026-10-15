@@ -20,6 +20,16 @@ import { openLiveSyncSocket } from "./liveSync";
 import type { MessageStatus } from "../interface";
 
 /**
+ * Base class for custom chat clients, re-exported from amazon-connect-chatjs
+ * (`connect.ChatSession.ChatClient`). Extend it and pass an instance as `customChatClient`
+ * to route Participant Service calls through your own backend.
+ * See https://github.com/amazon-connect/amazon-connect-chatjs#connectchatsessionchatclient
+ */
+export const ChatClient = connect.ChatSession.ChatClient;
+/** Instance type of {@link ChatClient}. */
+export type ChatClient = InstanceType<typeof connect.ChatSession.ChatClient>;
+
+/**
  * Configuration for the Amazon Connect Chat adapter.
  *
  * No AWS access keys or secret keys are required client-side. Authentication
@@ -60,6 +70,11 @@ export interface ConnectChatConfig {
   /** Language code for the conversation */
   languageCode?: LanguageCode;
   /**
+   * Optional custom chat client that replaces the bundled AWS transport. When provided,
+   * `details.participantToken` is not required.
+   */
+  customChatClient?: ChatClient;
+  /**
    * Optional global config to pass to `connect.ChatSession.setGlobalConfig()`.
    * See the AmazonConnectChatJS documentation for available options.
    */
@@ -85,8 +100,11 @@ export interface ChatDetails {
   contactId: string;
   /** The participant ID */
   participantId: string;
-  /** The participant token used for authentication */
-  participantToken: string;
+  /**
+   * The participant token used for authentication. Optional when a
+   * `customChatClient` is provided.
+   */
+  participantToken?: string;
 }
 
 /**
@@ -795,8 +813,18 @@ export const createConnectChatConversation = (
       ...(config.globalConfig ?? {}),
     });
 
+    if (config.customChatClient == null && details.participantToken == null) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[touchpoint] No participant token in the chat details and no `customChatClient` provided; the chat session will not be able to authenticate.",
+      );
+    }
+
     chatSession = connect.ChatSession.create({
       chatDetails: details,
+      ...(config.customChatClient != null
+        ? { options: { customChatClient: config.customChatClient } }
+        : {}),
       type: connect.ChatSession.SessionTypes.CUSTOMER,
     }) as Record<string, any>;
 

@@ -118,6 +118,7 @@ export type {
   ChatDetails,
   DetailsRequestParams,
 } from "./interface";
+export { ChatClient } from "./connect";
 export { type CustomStyle } from "./utils/customStyle";
 
 export {
