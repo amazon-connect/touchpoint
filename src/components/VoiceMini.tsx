@@ -61,8 +61,8 @@ export const VoiceMini: FC<{
   responses: Response[];
   handler: ConnectConversationHandler;
   brandIcon?: BrandIconSource;
-  renderCollapse: boolean;
-  onClose: (event: Event) => void;
+  /** When undefined, the panel is not closable. */
+  onClose: ((event: Event) => void) | undefined;
   /** Called when the voice session ends (call disconnected / agent hung up). */
   onVoiceSessionEnded: () => void;
   context?: Context;
@@ -75,13 +75,12 @@ export const VoiceMini: FC<{
   onClose,
   onVoiceSessionEnded,
   modalityComponents,
-  renderCollapse,
   responses,
   brandIcon,
   dragHandleProps,
 }) => {
   const onCloseHandler = (): void => {
-    onClose(new Event("close"));
+    onClose?.(new Event("close"));
   };
 
   const [voice, setVoice] = useWidgetVoiceState();
@@ -165,7 +164,7 @@ export const VoiceMini: FC<{
 
   if (voice.type === "error") {
     return (
-      <VoiceMiniPanel onClose={renderCollapse ? onCloseHandler : undefined}>
+      <VoiceMiniPanel onClose={onClose != null ? onCloseHandler : undefined}>
         <ErrorMessage message="I couldn’t connect" />
         <TextButton
           type="ghost"

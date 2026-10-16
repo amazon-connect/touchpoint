@@ -1487,7 +1487,7 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           isSettingsOpen={false}
           enabled
           toggleSettings={noop}
-          renderCollapse
+          isVoice={false}
           collapse={noop}
           reset={noop}
         />

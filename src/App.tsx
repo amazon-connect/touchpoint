@@ -373,16 +373,17 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     }
   }, [handler, input]);
   const _onClose = props.onClose;
-  const onClose = useCallback(
-    (event: Event) => {
-      if (_onClose != null) {
-        _onClose(event);
-        hangUp();
-        if (!event.defaultPrevented) {
-          setIsExpanded(false);
-        }
-      }
-    },
+  const onClose = useMemo(
+    () =>
+      _onClose == null
+        ? undefined
+        : (event: Event): void => {
+            _onClose(event);
+            hangUp();
+            if (!event.defaultPrevented) {
+              setIsExpanded(false);
+            }
+          },
     [_onClose, setIsExpanded, hangUp],
   );
 
@@ -800,11 +801,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             showTranscript={configuration.showVoiceTranscript}
             context={configuration.initialContext}
             brandIcon={configuration.brandIcon}
-            onClose={() => {
-              onClose(new Event("close"));
-            }}
+            onClose={onClose}
             onVoiceSessionEnded={handleVoiceEnded}
-            renderCollapse={props.onClose != null}
             modalityComponents={modalityComponents}
             dragHandleProps={
               props.embedded ? undefined : voiceMiniDrag.handleProps
@@ -1054,7 +1052,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             style={configuration.headerStyle}
             brandIcon={configuration.brandIcon}
             isBrandIconSquare={!isFloating}
-            errorThemedCloseButton={input === "voice"}
+            isVoice={input === "voice"}
             speakerControls={
               input === "voice"
                 ? {
@@ -1073,7 +1071,6 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
                   }
                 : undefined
             }
-            renderCollapse={props.onClose != null}
             collapse={onClose}
             reset={reset}
           />
