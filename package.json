@@ -20,9 +20,21 @@
   "module": "lib/index.js",
   "browser": "lib/index.umd.js",
   "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.umd.js"
+    },
+    "./core": {
+      "types": "./lib/core.d.ts",
+      "default": "./lib/core.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && vite build --mode umd",
     "build:pages": "vite build --mode pages",
     "lint:check": "eslint src/",
     "prepublishOnly": "npm run build",
