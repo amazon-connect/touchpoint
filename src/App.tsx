@@ -106,6 +106,9 @@ const StartNewConversationButton: FC<{ onClick: () => void }> = ({
   );
 };
 
+// Module-level so the default keeps a stable identity across normalizations.
+const defaultInitializeConversation = (): void => {};
+
 /**
  * Resolves every defaulted setting and sanitizes all custom style objects, so
  * that no component downstream has to apply a default or re-sanitize.
@@ -165,7 +168,8 @@ const normalizeConfiguration = (
     // participant connects, so there is nothing to send client-side. (NLX's
     // `sendWelcomeFlow`/`sendWelcomeIntent` are not supported by the Connect
     // Chat Interface integration.)
-    initializeConversation: configuration.initializeConversation ?? (() => {}),
+    initializeConversation:
+      configuration.initializeConversation ?? defaultInitializeConversation,
   };
 };
 
@@ -369,16 +373,17 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     }
   }, [handler, input]);
   const _onClose = props.onClose;
-  const onClose = useCallback(
-    (event: Event) => {
-      if (_onClose != null) {
-        _onClose(event);
-        hangUp();
-        if (!event.defaultPrevented) {
-          setIsExpanded(false);
-        }
-      }
-    },
+  const onClose = useMemo(
+    () =>
+      _onClose == null
+        ? undefined
+        : (event: Event): void => {
+            _onClose(event);
+            hangUp();
+            if (!event.defaultPrevented) {
+              setIsExpanded(false);
+            }
+          },
     [_onClose, setIsExpanded, hangUp],
   );
 
@@ -512,6 +517,11 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
 
   const conversationInitialized = useRef<boolean>(restoredConversation);
 
+  // Destructured so the effect below depends on these alone: a visual
+  // configuration update produces a new `configuration` object but leaves both
+  // references untouched, so it never re-runs the initialization.
+  const { initializeConversation, initialContext } = configuration;
+
   useEffect(() => {
     if (!isExpanded || conversationInitialized.current) {
       return;
@@ -519,10 +529,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     conversationInitialized.current = true;
 
     if (input !== "text" || responseData == null || responseData.length === 0) {
-      configuration.initializeConversation(
-        handler,
-        configuration.initialContext,
-      );
+      initializeConversation(handler, initialContext);
     }
     const newConversationId = handler.currentConversationId();
     if (newConversationId != null)
@@ -530,7 +537,14 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         "touchpointActiveVoiceConversationId",
         newConversationId,
       );
-  }, [handler, isExpanded, hangUp, input, configuration, responseData]);
+  }, [
+    handler,
+    isExpanded,
+    input,
+    responseData,
+    initializeConversation,
+    initialContext,
+  ]);
 
   useEffect(() => {
     if (configuration.liveSync != null) {
@@ -787,11 +801,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             showTranscript={configuration.showVoiceTranscript}
             context={configuration.initialContext}
             brandIcon={configuration.brandIcon}
-            onClose={() => {
-              onClose(new Event("close"));
-            }}
+            onClose={onClose}
             onVoiceSessionEnded={handleVoiceEnded}
-            renderCollapse={props.onClose != null}
             modalityComponents={modalityComponents}
             dragHandleProps={
               props.embedded ? undefined : voiceMiniDrag.handleProps
@@ -1041,7 +1052,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             style={configuration.headerStyle}
             brandIcon={configuration.brandIcon}
             isBrandIconSquare={!isFloating}
-            errorThemedCloseButton={input === "voice"}
+            isVoice={input === "voice"}
             speakerControls={
               input === "voice"
                 ? {
@@ -1060,7 +1071,6 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
                   }
                 : undefined
             }
-            renderCollapse={props.onClose != null}
             collapse={onClose}
             reset={reset}
           />

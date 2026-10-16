@@ -18,7 +18,11 @@ import {
 } from "./components/ui/CustomCard";
 import { Carousel } from "./components/ui/Carousel";
 import { DateInput } from "./components/ui/DateInput";
-import type { TouchpointConfiguration, TouchpointInstance } from "./interface";
+import type {
+  TouchpointConfiguration,
+  TouchpointInstance,
+  TouchpointVisualConfiguration,
+} from "./interface";
 
 /**
  * If you wish to build custom modalities using JSX, you will want to
@@ -114,6 +118,7 @@ export type {
   LiveSyncCustomAction,
   SendStepParams,
   TouchpointInstance,
+  TouchpointVisualConfiguration,
   ConnectConfig,
   ChatDetails,
   DetailsRequestParams,
@@ -281,6 +286,31 @@ const customElementsDefine: typeof customElements.define = (
 
 customElementsDefine("connect-touchpoint", NlxTouchpointElement);
 
+const visualConfigurationKeys: Array<keyof TouchpointVisualConfiguration> = [
+  "showParticipantInfo",
+  "assistantName",
+  "assistantIcon",
+  "avatarShape",
+  "windowSize",
+  "colorMode",
+  "brandIcon",
+  "animate",
+  "backgroundDepthLayer",
+  "launchIcon",
+  "userMessageBubble",
+  "agentMessageBubble",
+  "userMessageBubbleStyle",
+  "agentMessageBubbleStyle",
+  "chatMode",
+  "welcomeScreen",
+  "welcomeScreenLogo",
+  "theme",
+  "containerStyle",
+  "headerStyle",
+  "showVoiceTranscript",
+  "copy",
+];
+
 /**
  * Creates a new Touchpoint UI instance and appends it to the document body
  * @param props - Configuration props for Touchpoint
@@ -292,9 +322,21 @@ export const create = (
 ): Promise<TouchpointInstance> => {
   return new Promise((resolve) => {
     const element: any = document.createElement("connect-touchpoint");
+    let current = props;
     element.embedded = false;
     element.onRef = (ref: AppRef) => {
       resolve({
+        update(changes) {
+          const allowed = Object.fromEntries(
+            Object.entries(changes).filter(([key]) =>
+              visualConfigurationKeys.includes(
+                key as keyof TouchpointVisualConfiguration,
+              ),
+            ),
+          );
+          current = { ...current, ...allowed };
+          element.touchpointConfiguration = current;
+        },
         set expanded(val) {
           ref.setExpanded(val);
         },

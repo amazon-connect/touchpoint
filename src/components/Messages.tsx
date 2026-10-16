@@ -170,7 +170,7 @@ const ParticipantAvatar: FC<{
         role="img"
         aria-label={name}
         title={name}
-        className={clsx("flex-none w-6 h-6 object-cover object-center", radius)}
+        className={clsx("flex-none size-4 object-cover object-center", radius)}
       />
     );
   }
@@ -181,12 +181,12 @@ const ParticipantAvatar: FC<{
       aria-label={name}
       title={name}
       className={clsx(
-        "flex-none flex items-center justify-center w-6 h-6",
+        "flex-none flex items-center justify-center size-5",
         radius,
-        role === "you" ? "text-primary-40" : "bg-primary text-secondary",
+        "text-primary-60 bg-primary-10",
       )}
     >
-      <Icon className="w-3.5 h-3.5" />
+      <Icon className="size-3.5" />
     </span>
   );
 };

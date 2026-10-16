@@ -12,6 +12,7 @@ import {
   Volume,
   VolumeOff,
   ArrowLeft,
+  Minimize,
 } from "./ui/Icons";
 import { HeaderContainer } from "./Layout";
 import { BrandIcon } from "./ui/BrandIcon";
@@ -19,7 +20,7 @@ import { type CustomStyle } from "../utils/customStyle";
 
 interface HeaderProps {
   colorMode: ColorMode;
-  errorThemedCloseButton?: boolean;
+  isVoice: boolean;
   style?: CustomStyle;
   /**
    * Brand shown on the left (floating mode only). When present, the reset
@@ -31,8 +32,8 @@ interface HeaderProps {
     enabled: boolean;
     setEnabled: Dispatch<SetStateAction<boolean>>;
   };
-  renderCollapse: boolean;
-  collapse: (event: Event) => void;
+  /** When undefined, no close/collapse button is rendered. */
+  collapse?: (event: Event) => void;
   reset: () => void;
   toggleSettings?: () => void;
   isSettingsOpen: boolean;
@@ -40,11 +41,10 @@ interface HeaderProps {
 }
 
 export const Header: FC<HeaderProps> = ({
-  renderCollapse,
   style,
   brandIcon,
   isBrandIconSquare,
-  errorThemedCloseButton,
+  isVoice,
   speakerControls,
   collapse,
   toggleSettings,
@@ -107,10 +107,10 @@ export const Header: FC<HeaderProps> = ({
           }}
         />
       ) : null}
-      {renderCollapse ? (
+      {collapse != null ? (
         <IconButton
-          label="Collapse"
-          type={(errorThemedCloseButton ?? false) ? "error" : iconButtonType}
+          label={isVoice ? "Close" : "Collapse"}
+          type={isVoice ? "error" : iconButtonType}
           className={clsx(toggleSettings == null && !hasBrand ? "ml-auto" : "")}
           onClick={
             enabled
@@ -119,7 +119,7 @@ export const Header: FC<HeaderProps> = ({
                 }
               : undefined
           }
-          Icon={Close}
+          Icon={isVoice ? Close : Minimize}
         />
       ) : null}
     </HeaderContainer>
