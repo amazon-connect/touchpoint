@@ -14,8 +14,18 @@ import { clsx } from "clsx";
 import { type ConnectConversationHandler } from "../connect";
 
 import { useCopy } from "../utils/useCopy";
-import { IconButton } from "./ui/IconButton";
-import { Send, Attachment, Delete, Check, Error } from "./ui/Icons";
+import { Menu } from "@base-ui/react/menu";
+import { IconButton, baseClass, ghostClass } from "./ui/IconButton";
+import {
+  Send,
+  Add,
+  Attachment,
+  ScreenShare,
+  Delete,
+  Check,
+  Error,
+} from "./ui/Icons";
+import { useAppRoot } from "../utils/useAppRoot";
 import { useTailwindMediaQuery } from "../utils/useTailwindMediaQuery";
 
 interface InputProps {
@@ -29,6 +39,12 @@ interface InputProps {
    * supported while chatting with a human agent, so this is gated on agent presence.
    */
   attachmentsEnabled?: boolean;
+  /** Whether screen sharing is offered (only after escalation to a human agent). */
+  screenshareEnabled?: boolean;
+  /** Whether the screen is currently being shared. */
+  isScreenSharing?: boolean;
+  /** Called when the user picks "Share screen" / "Stop sharing" from the menu. */
+  onScreenShareToggle?: () => void;
 }
 
 interface FileInfo {
@@ -39,6 +55,9 @@ interface FileInfo {
 
 const MAX_INPUT_FILE_SIZE_IN_MB = 8;
 
+const menuItemClass =
+  "flex text-base items-center justify-between gap-4 px-3 py-3 cursor-pointer text-primary select-none outline-hidden data-[highlighted]:bg-primary-10 data-[disabled]:text-primary-20 data-[disabled]:cursor-default data-[disabled]:data-[highlighted]:bg-transparent";
+
 export const Input: FC<InputProps> = ({
   className,
   handler,
@@ -46,8 +65,12 @@ export const Input: FC<InputProps> = ({
   onFileUpload,
   enabled,
   attachmentsEnabled = false,
+  screenshareEnabled = false,
+  isScreenSharing = false,
+  onScreenShareToggle,
 }) => {
   const copy = useCopy();
+  const appRoot = useAppRoot();
 
   // Text state
   const [isTextAreaInFocus, setIsTextAreaInFocus] = useState(false);
@@ -74,9 +97,6 @@ export const Input: FC<InputProps> = ({
   const isConnect = connectHandler.sendAttachment != null;
   // Amazon Connect only supports attachments while a human agent is in the chat.
   const canSendAttachment = isConnect && enabled && attachmentsEnabled;
-  // For Connect, hide the attachment control entirely until an agent joins (rather than
-  // showing it disabled). Non-Connect deployments keep their existing behavior.
-  const hideAttachmentButton = isConnect && !attachmentsEnabled;
 
   const textInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -273,34 +293,75 @@ export const Input: FC<InputProps> = ({
           </>
         )}
         <div className={clsx("flex items-end gap-1")}>
-          {hideAttachmentButton ? null : isUploadEnabled &&
-            uploadedFileInfo == null ? (
-            <>
-              <label
-                htmlFor="file-upload"
-                aria-label="Upload file"
-                className="p-3 w-10 h-10 flex-none block transition-colors rounded-full bg-primary hover:bg-primary text-secondary cursor-pointer"
+          <input
+            type="file"
+            id="file-upload"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
+            accept=".jpg, .jpeg, .png, .webp, .mp4, .mpeg4, .avi, .mov, .pdf"
+            onChange={uploadFile}
+            ref={fileInputRef}
+          />
+          {attachmentsEnabled || screenshareEnabled ? (
+            /* Base UI Menu provides role=menu semantics, arrow-key navigation,
+              Escape to close and focus return to the trigger. */
+            <Menu.Root>
+              <Menu.Trigger
+                aria-label="Add attachment or share screen"
+                className={clsx(
+                  baseClass,
+                  ghostClass,
+                  "flex-none data-[popup-open]:before:bg-secondary-10",
+                )}
               >
-                <Attachment />
-              </label>
-              <input
-                type="file"
-                id="file-upload"
-                className="sr-only"
-                accept=".jpg, .jpeg, .png, .webp, .mp4, .mpeg4, .avi, .mov, .pdf"
-                onChange={uploadFile}
-                ref={fileInputRef}
-              />
-            </>
-          ) : (
-            /* Disabled attachment button */
+                <Add />
+              </Menu.Trigger>
+              <Menu.Portal
+                container={appRoot}
+                className="z-touchpoint relative"
+              >
+                <Menu.Positioner side="top" align="start" sideOffset={8}>
+                  <Menu.Popup className="min-w-52 overflow-hidden bg-background border border-solid border-primary-10 rounded-outer shadow-lg outline-hidden">
+                    {screenshareEnabled ? (
+                      <Menu.Item
+                        className={menuItemClass}
+                        onClick={() => {
+                          onScreenShareToggle?.();
+                        }}
+                      >
+                        <span>
+                          {isScreenSharing ? "Stop sharing" : "Share screen"}
+                        </span>
+                        <ScreenShare size={16} className="flex-none" />
+                      </Menu.Item>
+                    ) : null}
+                    {attachmentsEnabled ? (
+                      <Menu.Item
+                        className={menuItemClass}
+                        disabled={!isUploadEnabled || uploadedFileInfo != null}
+                        onClick={() => {
+                          fileInputRef.current?.click();
+                        }}
+                      >
+                        <span>Attach file</span>
+                        <Attachment size={16} className="flex-none" />
+                      </Menu.Item>
+                    ) : null}
+                  </Menu.Popup>
+                </Menu.Positioner>
+              </Menu.Portal>
+            </Menu.Root>
+          ) : null}
+          {isScreenSharing ? (
             <IconButton
               className="flex-none"
-              Icon={Attachment}
-              label="Upload file"
-              type="ghost"
+              Icon={ScreenShare}
+              label="Stop sharing screen"
+              onClick={onScreenShareToggle}
+              type="error"
             />
-          )}
+          ) : null}
           <TextareaAutosize
             disabled={isWaiting || !enabled}
             className={clsx(
