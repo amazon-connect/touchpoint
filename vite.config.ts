@@ -19,7 +19,20 @@ const sharedPlugins = (
           "process.env.NODE_ENV": JSON.stringify("production"),
         },
   ),
-  ...(options.declarations ? [dts()] : []),
+  ...(options.declarations
+    ? [
+        dts({
+          // amazon-connect-chatjs declares a global `connect` namespace. Our
+          // emitted .d.ts files reference it, so consumers must load its types.
+          beforeWriteFile: (filePath, content) => ({
+            filePath,
+            content: /\bconnect\.Chat/.test(content)
+              ? `/// <reference types="amazon-connect-chatjs" />\n${content}`
+              : content,
+          }),
+        }),
+      ]
+    : []),
 ];
 
 // https://vitejs.dev/config/
