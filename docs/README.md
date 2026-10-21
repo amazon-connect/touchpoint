@@ -144,6 +144,16 @@ signs in and is redirected back with `code`/`state`, Touchpoint POSTs
 `connect:UpdateParticipantAuthentication` (an admin API that can't be called
 from the browser). Required to complete authentication.
 
+##### customChatClient?
+
+```ts
+optional customChatClient?: ChatClient;
+```
+
+Advanced: a custom chat client (an instance of a class extending [ChatClient](#chatclient-1))
+that replaces the bundled AWS transport, so participant tokens need not reach the
+browser. When provided, `details.participantToken` is optional.
+
 ##### globalConfig?
 
 ```ts
@@ -367,7 +377,14 @@ Optional color mode for the chat window, defaults to `dark`. Setting `light dark
 ##### brandIcon?
 
 ```ts
-optional brandIcon?: string;
+optional brandIcon?:
+  | string
+  | ComponentClass<{
+  square: boolean;
+}, any>
+  | FunctionComponent<{
+  square: boolean;
+}>;
 ```
 
 URL of icon used to display the brand in the chat header
@@ -426,6 +443,28 @@ optional agentMessageBubble?: boolean;
 
 Specifies whether the agent message has bubbles or not
 
+##### userMessageTimestamp?
+
+```ts
+optional userMessageTimestamp?: boolean;
+```
+
+Shows a timestamp below each user message, next to the delivery status
+(Sending, Sent, etc.), aligned to the right. Messages from today show only
+the hour and minute; older ones also show the date. Formatted using the
+browser locale. Defaults to `false`.
+
+##### agentMessageTimestamp?
+
+```ts
+optional agentMessageTimestamp?: boolean;
+```
+
+Shows a timestamp below each agent message, whether from the automated
+assistant or an escalated human agent, aligned to the right. Messages from
+today show only the hour and minute; older ones also show the date.
+Formatted using the browser locale. Defaults to `false`.
+
 ##### chatMode?
 
 ```ts
@@ -465,6 +504,14 @@ optional theme?: Partial<Theme>;
 ```
 
 Optional theme object to override default theme values
+
+##### headerStyle?
+
+```ts
+optional headerStyle?: CustomStyle;
+```
+
+Custom style for the header - only available in floating mode
 
 ##### modalityComponents?
 
@@ -570,11 +617,78 @@ Copy
 
 ---
 
+### TouchpointVisualConfiguration
+
+```ts
+type TouchpointVisualConfiguration = Partial<
+  Pick<
+    TouchpointConfiguration,
+    | "showParticipantInfo"
+    | "assistantName"
+    | "assistantIcon"
+    | "avatarShape"
+    | "windowSize"
+    | "colorMode"
+    | "brandIcon"
+    | "animate"
+    | "backgroundDepthLayer"
+    | "launchIcon"
+    | "userMessageBubble"
+    | "agentMessageBubble"
+    | "userMessageTimestamp"
+    | "agentMessageTimestamp"
+    | "userMessageBubbleStyle"
+    | "agentMessageBubbleStyle"
+    | "chatMode"
+    | "welcomeScreen"
+    | "welcomeScreenLogo"
+    | "theme"
+    | "containerStyle"
+    | "headerStyle"
+    | "showVoiceTranscript"
+    | "copy"
+  >
+>;
+```
+
+The subset of [TouchpointConfiguration](#touchpointconfiguration) that can be changed after
+Touchpoint is created via [TouchpointInstance.update](#update): purely visual and
+copy settings. Anything that affects the conversation itself (`config`,
+`input`, `languageCode`, `liveSync`, `initializeConversation`,
+`initialContext`, `modalityComponents`, `escalationPhrase`,
+`onContactEnded`) is deliberately excluded.
+
+---
+
 ### TouchpointInstance
 
 Instance of a Touchpoint UI component
 
 #### Properties
+
+##### update
+
+```ts
+update: (changes) => void;
+```
+
+Updates visual and copy settings of a running Touchpoint without touching the
+conversation: it is not re-initialized, reset or reconnected. Provided
+properties replace their previous values (nested objects such as `theme` are
+replaced, not merged); omitted properties keep their current value. Properties
+outside [TouchpointVisualConfiguration](#touchpointvisualconfiguration) are ignored.
+
+###### Parameters
+
+###### changes
+
+[`TouchpointVisualConfiguration`](#touchpointvisualconfiguration)
+
+the visual settings to change
+
+###### Returns
+
+`void`
 
 ##### expanded
 
@@ -784,22 +898,6 @@ primary: string;
 
 Primary color
 
-##### primary90
-
-```ts
-primary90: string;
-```
-
-Primary color with 90% opacity
-
-##### primary80
-
-```ts
-primary80: string;
-```
-
-Primary color with 80% opacity
-
 ##### primary60
 
 ```ts
@@ -855,22 +953,6 @@ secondary: string;
 ```
 
 Secondary color
-
-##### secondary90
-
-```ts
-secondary90: string;
-```
-
-Secondary color with 90% opacity
-
-##### secondary80
-
-```ts
-secondary80: string;
-```
-
-Secondary color with 80% opacity
 
 ##### secondary60
 
@@ -1808,6 +1890,29 @@ Context and state about all the form elements detected on the page using accessi
 
 ## Other
 
+### ChatClient
+
+```ts
+type ChatClient = InstanceType<typeof connect.ChatSession.ChatClient>;
+```
+
+Instance type of [ChatClient](#chatclient-1).
+
+---
+
+### ChatClient
+
+```ts
+const ChatClient: typeof ChatClient = connect.ChatSession.ChatClient;
+```
+
+Base class for custom chat clients, re-exported from amazon-connect-chatjs
+(`connect.ChatSession.ChatClient`). Extend it and pass an instance as `customChatClient`
+to route Participant Service calls through your own backend.
+See https://github.com/amazon-connect/amazon-connect-chatjs#connectchatsessionchatclient
+
+---
+
 ### ChatDetails
 
 Chat details
@@ -1830,13 +1935,14 @@ participantId: string;
 
 The participant ID
 
-##### participantToken
+##### participantToken?
 
 ```ts
-participantToken: string;
+optional participantToken?: string;
 ```
 
-The participant token used for authentication
+The participant token used for authentication. Optional when a
+`customChatClient` is provided.
 
 ---
 
