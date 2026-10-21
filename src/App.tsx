@@ -143,6 +143,8 @@ const normalizeConfiguration = (
     launchIcon: configuration.launchIcon ?? true,
     userMessageBubble: configuration.userMessageBubble ?? true,
     agentMessageBubble: configuration.agentMessageBubble ?? false,
+    userMessageTimestamp: configuration.userMessageTimestamp ?? false,
+    agentMessageTimestamp: configuration.agentMessageTimestamp ?? false,
     chatMode: configuration.chatMode ?? true,
     welcomeScreen: configuration.welcomeScreen ?? true,
     welcomeScreenLogo: configuration.welcomeScreenLogo ?? true,
@@ -923,6 +925,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           enabled={props.enabled}
           userMessageBubble={configuration.userMessageBubble}
           agentMessageBubble={configuration.agentMessageBubble}
+          userMessageTimestamp={configuration.userMessageTimestamp}
+          agentMessageTimestamp={configuration.agentMessageTimestamp}
           userMessageBubbleStyle={configuration.userMessageBubbleStyle}
           agentMessageBubbleStyle={configuration.agentMessageBubbleStyle}
           showParticipantInfo={configuration.showParticipantInfo}

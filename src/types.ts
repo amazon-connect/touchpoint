@@ -14,6 +14,8 @@ type NormalizedField =
   | "launchIcon"
   | "userMessageBubble"
   | "agentMessageBubble"
+  | "userMessageTimestamp"
+  | "agentMessageTimestamp"
   | "chatMode"
   | "welcomeScreen"
   | "welcomeScreenLogo"
