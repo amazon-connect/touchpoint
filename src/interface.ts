@@ -445,6 +445,20 @@ export interface TouchpointConfiguration {
    */
   agentMessageBubble?: boolean;
   /**
+   * Shows a timestamp below each user message, next to the delivery status
+   * (Sending, Sent, etc.), aligned to the right. Messages from today show only
+   * the hour and minute; older ones also show the date. Formatted using the
+   * browser locale. Defaults to `false`.
+   */
+  userMessageTimestamp?: boolean;
+  /**
+   * Shows a timestamp below each agent message, whether from the automated
+   * assistant or an escalated human agent, aligned to the right. Messages from
+   * today show only the hour and minute; older ones also show the date.
+   * Formatted using the browser locale. Defaults to `false`.
+   */
+  agentMessageTimestamp?: boolean;
+  /**
    * Inline style overrides for the user message bubble. Only applied when
    * {@link TouchpointConfiguration.userMessageBubble} is enabled.
    *
@@ -804,6 +818,8 @@ export type TouchpointVisualConfiguration = Partial<
     | "launchIcon"
     | "userMessageBubble"
     | "agentMessageBubble"
+    | "userMessageTimestamp"
+    | "agentMessageTimestamp"
     | "userMessageBubbleStyle"
     | "agentMessageBubbleStyle"
     | "chatMode"

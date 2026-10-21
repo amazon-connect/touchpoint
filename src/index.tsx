@@ -299,6 +299,8 @@ const visualConfigurationKeys: Array<keyof TouchpointVisualConfiguration> = [
   "launchIcon",
   "userMessageBubble",
   "agentMessageBubble",
+  "userMessageTimestamp",
+  "agentMessageTimestamp",
   "userMessageBubbleStyle",
   "agentMessageBubbleStyle",
   "chatMode",

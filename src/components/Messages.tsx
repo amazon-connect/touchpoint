@@ -40,6 +40,8 @@ import {
 } from "./ui/Icons";
 import { UnsemanticIconButton } from "./ui/IconButton";
 import { MessageStatusRow } from "./ui/MessageStatusRow";
+import { MessageTimestamp } from "./ui/MessageTimestamp";
+import { formatTimestamp } from "../utils/formatTimestamp";
 import {
   type CustomModalityComponent,
   type ColorMode,
@@ -61,6 +63,10 @@ export interface MessagesProps {
   responses: Response[];
   userMessageBubble: boolean;
   agentMessageBubble: boolean;
+  /** Show the time below user messages. */
+  userMessageTimestamp?: boolean;
+  /** Show the time below agent (automated or human) messages. */
+  agentMessageTimestamp?: boolean;
   /** Already sanitized by the configuration normalization in `App`. */
   userMessageBubbleStyle?: CustomStyle;
   /** Already sanitized by the configuration normalization in `App`. */
@@ -170,7 +176,10 @@ const ParticipantAvatar: FC<{
         role="img"
         aria-label={name}
         title={name}
-        className={clsx("flex-none size-4 object-cover object-center", radius)}
+        className={clsx(
+          "flex-none mt-0.5 size-4 object-cover object-center",
+          radius,
+        )}
       />
     );
   }
@@ -181,7 +190,7 @@ const ParticipantAvatar: FC<{
       aria-label={name}
       title={name}
       className={clsx(
-        "flex-none flex items-center justify-center size-5",
+        "flex-none flex items-center justify-center size-5 mt-0.5",
         radius,
         "text-primary-60 bg-primary-10",
       )}
@@ -232,8 +241,18 @@ export const UserMessage: FC<{
   bubble: boolean;
   bubbleStyle?: CustomStyle;
   status?: MessageStatus;
+  /** When set, the time is shown after the status below the message. */
+  timestamp?: number;
   align?: "left" | "right";
-}> = ({ text, bubble, bubbleStyle, files, status, align = "right" }) => {
+}> = ({
+  text,
+  bubble,
+  bubbleStyle,
+  files,
+  status,
+  timestamp,
+  align = "right",
+}) => {
   const alignRight = align === "right";
   return (
     <div className="space-y-2">
@@ -253,7 +272,17 @@ export const UserMessage: FC<{
           {text}
         </div>
       </div>
-      {status != null ? (
+      {timestamp != null ? (
+        <div
+          className={clsx(
+            "flex items-center gap-3",
+            alignRight ? "justify-end pr-1" : "justify-start pl-1",
+          )}
+        >
+          {status != null ? <MessageStatusRow status={status} /> : null}
+          <MessageTimestamp time={timestamp} />
+        </div>
+      ) : status != null ? (
         <MessageStatusRow
           status={status}
           className={
@@ -402,6 +431,8 @@ export const Messages: FC<MessagesProps> = ({
   uploadedFiles,
   userMessageBubble,
   agentMessageBubble,
+  userMessageTimestamp = false,
+  agentMessageTimestamp = false,
   userMessageBubbleStyle,
   agentMessageBubbleStyle,
   showParticipantInfo,
@@ -603,6 +634,9 @@ export const Messages: FC<MessagesProps> = ({
                       bubble={userMessageBubble}
                       bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
+                      timestamp={
+                        userMessageTimestamp ? response.receivedAt : undefined
+                      }
                       status={
                         responseIndex === lastUserResponseIndex
                           ? (response as Response & { status?: MessageStatus })
@@ -626,6 +660,9 @@ export const Messages: FC<MessagesProps> = ({
                       bubbleStyle={userMessageBubbleStyle}
                       align={showParticipantInfo ? "left" : "right"}
                       text={response.payload.utterance}
+                      timestamp={
+                        userMessageTimestamp ? response.receivedAt : undefined
+                      }
                       files={response.payload.uploadIds
                         .map((uploadId) => uploadedFiles[uploadId])
                         .filter((file) => file != null)}
@@ -679,6 +716,18 @@ export const Messages: FC<MessagesProps> = ({
           }
 
           // Application response
+          // Within a run of messages from the same sender, a timestamp identical
+          // to the one on the message below is omitted.
+          const nextResponse = responses[responseIndex + 1];
+          const showTimestamp =
+            agentMessageTimestamp &&
+            !(
+              nextResponse != null &&
+              senderKeyOf(nextResponse) === senderKey &&
+              nextResponse.type === ResponseType.Application &&
+              formatTimestamp(nextResponse.receivedAt) ===
+                formatTimestamp(response.receivedAt)
+            );
           const isLast =
             lastApplicationResponseIndex != null &&
             responseIndex === lastApplicationResponseIndex;
@@ -772,6 +821,9 @@ export const Messages: FC<MessagesProps> = ({
                       },
                     )}
                   </ErrorBoundary>
+                  {showTimestamp ? (
+                    <MessageTimestamp time={response.receivedAt} block />
+                  ) : null}
                 </div>,
               )}
               {/* Render the selected choice text as a user message */}
