@@ -30,6 +30,7 @@ import { SafeMarkdown } from "./components/SafeMarkdown";
 import { Loader } from "./components/ui/Loader";
 import { FullscreenError } from "./components/FullscreenError";
 import { Input } from "./components/Input";
+import { HiddenElement } from "./interface";
 import type {
   ChoiceMessage,
   CustomModalityComponent,
@@ -148,7 +149,13 @@ const normalizeConfiguration = (
     agentMessageTimestamp: configuration.agentMessageTimestamp ?? false,
     chatMode: configuration.chatMode ?? true,
     welcomeScreen: configuration.welcomeScreen ?? true,
-    welcomeScreenLogo: configuration.welcomeScreenLogo ?? true,
+    // `welcomeScreenLogo: false` is the legacy spelling of hiding `welcomescreen.logo`.
+    hiddenElements: [
+      ...(configuration.hiddenElements ?? []),
+      ...(configuration.welcomeScreenLogo === false
+        ? [HiddenElement.WelcomeScreenLogo]
+        : []),
+    ],
     showParticipantInfo: configuration.showParticipantInfo ?? false,
     showVoiceTranscript: configuration.showVoiceTranscript ?? false,
     escalationPhrase:
@@ -693,7 +700,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   // suppressed so there's a single logo; it returns once the conversation starts.
   const welcomeLogoActive =
     welcomeResponses != null &&
-    configuration.welcomeScreenLogo &&
+    !configuration.hiddenElements.includes(HiddenElement.WelcomeScreenLogo) &&
     configuration.brandIcon != null;
 
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
@@ -1081,6 +1088,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             }
             collapse={onClose}
             reset={reset}
+            hiddenElements={configuration.hiddenElements}
           />
           {input === "text" ? textContent() : voiceContent}
         </>

@@ -4,7 +4,11 @@ import { clsx } from "clsx";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton, type IconButtonType } from "./ui/IconButton";
-import { type BrandIconSource, type ColorMode } from "../interface";
+import {
+  type BrandIconSource,
+  type ColorMode,
+  HiddenElement,
+} from "../interface";
 import { useIcons } from "../utils/useIcons";
 import { HeaderContainer } from "./Layout";
 import { BrandIcon } from "./ui/BrandIcon";
@@ -30,6 +34,7 @@ interface HeaderProps {
   toggleSettings?: () => void;
   isSettingsOpen: boolean;
   enabled: boolean;
+  hiddenElements?: HiddenElement[];
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -43,6 +48,7 @@ export const Header: FC<HeaderProps> = ({
   isSettingsOpen,
   reset,
   enabled,
+  hiddenElements = [],
 }) => {
   const { Close, Minimize, Restart, Settings, Volume, VolumeOff, Undo } =
     useIcons();
@@ -50,29 +56,47 @@ export const Header: FC<HeaderProps> = ({
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();
   const hasBrand = brandIcon != null;
+  const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
+  // With a brand icon, the first right-hand control carries `ml-auto`; when
+  // reset is hidden, the next visible control takes over that job.
+  const firstRight =
+    hasBrand && !showRestart
+      ? toggleSettings != null
+        ? "settings"
+        : speakerControls != null
+          ? "speaker"
+          : collapse != null
+            ? "collapse"
+            : null
+      : null;
   return (
     <HeaderContainer style={style}>
       {brandIcon != null ? (
         <BrandIcon icon={brandIcon} square={isBrandIconSquare ?? true} />
       ) : null}
       {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
+<<<<<<< HEAD
           controls). */}
-      <IconButton
-        label={copy.restartConversationButtonLabel}
-        className={hasBrand ? "ml-auto" : undefined}
-        type={iconButtonType}
-        onClick={
-          enabled
-            ? () => {
-                reset();
-              }
-            : undefined
-        }
-        Icon={Restart}
-      />
+      {showRestart ? (
+        <IconButton
+          label={copy.restartConversationButtonLabel}
+          className={hasBrand ? "ml-auto" : undefined}
+          type={iconButtonType}
+          onClick={
+            enabled
+              ? () => {
+                  reset();
+                }
+              : undefined
+          }
+          Icon={Restart}
+        />
+      ) : null}
       {toggleSettings != null ? (
         <IconButton
-          className={hasBrand ? undefined : "ml-auto"}
+          className={
+            firstRight === "settings" || !hasBrand ? "ml-auto" : undefined
+          }
           Icon={isSettingsOpen ? Undo : Settings}
           label={isSettingsOpen ? "Close settings" : "Settings"}
           type={iconButtonType}
@@ -81,6 +105,7 @@ export const Header: FC<HeaderProps> = ({
       ) : null}
       {speakerControls != null ? (
         <IconButton
+          className={firstRight === "speaker" ? "ml-auto" : undefined}
           Icon={speakerControls.enabled ? Volume : VolumeOff}
           label="Speakers"
           // Neutral in both states; the icon (Volume vs VolumeOff) conveys state.
@@ -94,7 +119,11 @@ export const Header: FC<HeaderProps> = ({
         <IconButton
           label={isVoice ? "Close" : "Collapse"}
           type={isVoice ? "error" : iconButtonType}
-          className={clsx(toggleSettings == null && !hasBrand ? "ml-auto" : "")}
+          className={clsx(
+            (toggleSettings == null && !hasBrand) || firstRight === "collapse"
+              ? "ml-auto"
+              : "",
+          )}
           onClick={
             enabled
               ? () => {
