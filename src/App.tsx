@@ -195,6 +195,9 @@ export interface AppRef {
 }
 
 const App = forwardRef<AppRef, Props>((props, ref) => {
+  // Simulated for now: no stream is captured, only the UI state is toggled.
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+
   // Defaults and style sanitization are applied here, once per configuration
   // change, so the rest of the tree only ever sees resolved values.
   const configuration = useMemo(
@@ -845,6 +848,11 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
           enabled={props.enabled && !authPending}
           handler={handler}
           attachmentsEnabled={agentActive}
+          screenshareEnabled={agentActive}
+          isScreenSharing={isScreenSharing}
+          onScreenShareToggle={() => {
+            setIsScreenSharing((prev) => !prev);
+          }}
           uploadUrl={
             lastApplicationResponse?.response.payload.metadata?.uploadUrls?.[0]
           }
@@ -1034,6 +1042,12 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       languageCode={configuration.languageCode}
       copy={configuration.copy}
     >
+      {isScreenSharing ? (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-touchpoint pointer-events-none border-2 border-solid border-[#88D64F]"
+        />
+      ) : null}
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}
