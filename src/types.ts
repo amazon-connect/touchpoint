@@ -18,7 +18,7 @@ type NormalizedField =
   | "agentMessageTimestamp"
   | "chatMode"
   | "welcomeScreen"
-  | "welcomeScreenLogo"
+  | "hiddenElements"
   | "showParticipantInfo"
   | "showVoiceTranscript"
   | "escalationPhrase"

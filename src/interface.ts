@@ -518,8 +518,18 @@ export interface TouchpointConfiguration {
    * Whether to show the brand logo ({@link TouchpointConfiguration.brandIcon}) at
    * the top of the welcome screen. Defaults to `true`; has no effect when no
    * `brandIcon` is set or the welcome screen is disabled.
+   * @deprecated Use `hiddenElements: [HiddenElement.WelcomeLogo]` instead.
    */
   welcomeScreenLogo?: boolean;
+  /**
+   * Built-in UI elements to omit, identified by {@link HiddenElement}. Unknown
+   * values are ignored.
+   * @example
+   * ```ts
+   * const hiddenElements: HiddenElement[] = [HiddenElement.HeaderRestart];
+   * ```
+   */
+  hiddenElements?: HiddenElement[];
   /**
    * Optional theme object to override default theme values
    */
@@ -795,6 +805,18 @@ export interface LiveSyncCustomAction {
 }
 
 /**
+ * Identifier of a built-in UI element that can be omitted through
+ * {@link TouchpointConfiguration.hiddenElements}.
+ * @category Basics
+ */
+export enum HiddenElement {
+  /** The restart conversation button in the header. */
+  HeaderRestart = "header.restart",
+  /** The brand logo on the welcome screen. */
+  WelcomeScreenLogo = "welcomescreen.logo",
+}
+
+/**
  * The subset of {@link TouchpointConfiguration} that can be changed after
  * Touchpoint is created via {@link TouchpointInstance.update}: purely visual and
  * copy settings. Anything that affects the conversation itself (`config`,
@@ -825,6 +847,7 @@ export type TouchpointVisualConfiguration = Partial<
     | "chatMode"
     | "welcomeScreen"
     | "welcomeScreenLogo"
+    | "hiddenElements"
     | "theme"
     | "containerStyle"
     | "headerStyle"

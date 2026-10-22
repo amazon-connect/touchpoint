@@ -123,6 +123,7 @@ export type {
   ChatDetails,
   DetailsRequestParams,
 } from "./interface";
+export { HiddenElement } from "./interface";
 export { ChatClient } from "./connect";
 export { type CustomStyle } from "./utils/customStyle";
 
@@ -306,6 +307,7 @@ const visualConfigurationKeys: Array<keyof TouchpointVisualConfiguration> = [
   "chatMode",
   "welcomeScreen",
   "welcomeScreenLogo",
+  "hiddenElements",
   "theme",
   "containerStyle",
   "headerStyle",
