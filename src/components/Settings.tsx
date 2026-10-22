@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC, useState } from "react";
 
-import { Undo, Download, LogOut, Close, Warning } from "./ui/Icons";
+import { Restart, Download, LogOut, Close, Warning } from "./ui/Icons";
 import { useCopy } from "../utils/useCopy";
 import { TextButton } from "./ui/TextButton";
 import { clsx } from "clsx";
@@ -44,7 +44,7 @@ export const Settings: FC<SettingsProps> = ({
       <div className={clsx("flex flex-col gap-2", className)}>
         <TextButton
           label={copy.restartConversationButtonLabel}
-          Icon={Undo}
+          Icon={Restart}
           type="ghost"
           onClick={
             agentActive && !ended
