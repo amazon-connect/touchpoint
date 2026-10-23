@@ -11,7 +11,7 @@ import {
   Restart,
   Volume,
   VolumeOff,
-  ArrowLeft,
+  Undo,
   Minimize,
 } from "./ui/Icons";
 import { HeaderContainer } from "./Layout";
@@ -62,37 +62,26 @@ export const Header: FC<HeaderProps> = ({
         <BrandIcon icon={brandIcon} square={isBrandIconSquare ?? true} />
       ) : null}
       {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
-          controls); when settings is open it is replaced in place by a back
-          button that returns to the conversation. */}
-      {isSettingsOpen && toggleSettings != null ? (
-        <IconButton
-          label="Back"
-          className={hasBrand ? "ml-auto" : undefined}
-          type={iconButtonType}
-          onClick={enabled ? toggleSettings : undefined}
-          Icon={ArrowLeft}
-        />
-      ) : (
-        <IconButton
-          label={copy.restartConversationButtonLabel}
-          className={hasBrand ? "ml-auto" : undefined}
-          type={iconButtonType}
-          onClick={
-            enabled
-              ? () => {
-                  reset();
-                }
-              : undefined
-          }
-          Icon={Restart}
-        />
-      )}
+          controls). */}
+      <IconButton
+        label={copy.restartConversationButtonLabel}
+        className={hasBrand ? "ml-auto" : undefined}
+        type={iconButtonType}
+        onClick={
+          enabled
+            ? () => {
+                reset();
+              }
+            : undefined
+        }
+        Icon={Restart}
+      />
       {toggleSettings != null ? (
         <IconButton
           className={hasBrand ? undefined : "ml-auto"}
-          Icon={Settings}
-          label="Settings"
-          type={isSettingsOpen ? "subtle" : iconButtonType}
+          Icon={isSettingsOpen ? Undo : Settings}
+          label={isSettingsOpen ? "Close settings" : "Settings"}
+          type={iconButtonType}
           onClick={enabled ? toggleSettings : undefined}
         />
       ) : null}
