@@ -43,6 +43,10 @@ import type { NormalizedTouchpointConfiguration } from "./types";
 import { defaultModalities } from "./components/defaultModalities";
 import { sanitizeCustomStyle } from "./utils/customStyle";
 import { VoiceMini } from "./components/VoiceMini";
+import {
+  ScreenShareOverlay,
+  type ScreenShareControl,
+} from "./components/ScreenShare";
 import { actionHandler } from "./liveSync/actionHandler";
 import { RiveAnimation } from "./components/RiveAnimation";
 import { Main, InputContainer } from "./components/Layout";
@@ -203,6 +207,11 @@ export interface AppRef {
 }
 
 const App = forwardRef<AppRef, Props>((props, ref) => {
+  // Screen share control reported by the voice components' live session.
+  const [screenShare, setScreenShare] = useState<ScreenShareControl | null>(
+    null,
+  );
+
   // Defaults and style sanitization are applied here, once per configuration
   // change, so the rest of the tree only ever sees resolved values.
   const configuration = useMemo(
@@ -789,6 +798,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         copy={configuration.copy}
         icons={configuration.icons}
       >
+        <ScreenShareOverlay control={screenShare} />
         <div
           ref={voiceMiniDrag.ref}
           className={clsx(
@@ -815,6 +825,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             brandIcon={configuration.brandIcon}
             onClose={onClose}
             onVoiceSessionEnded={handleVoiceEnded}
+            onScreenShareChange={setScreenShare}
             modalityComponents={modalityComponents}
             dragHandleProps={
               props.embedded ? undefined : voiceMiniDrag.handleProps
@@ -1020,6 +1031,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         context={configuration.initialContext}
         modalityComponents={modalityComponents}
         onVoiceSessionEnded={handleVoiceEnded}
+        onScreenShareChange={setScreenShare}
       />
     </>
   );
@@ -1045,6 +1057,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       copy={configuration.copy}
       icons={configuration.icons}
     >
+      <ScreenShareOverlay control={screenShare} />
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />
       ) : null}

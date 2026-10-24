@@ -67,6 +67,8 @@ export type Settings = Record<TextFieldKey, string> & {
   windowSize: WindowSize;
   /** Whether the chat transcript shows participant avatars and names. */
   avatars: Toggle;
+  /** Whether an Amazon Connect agent may see the customer's screen. */
+  screenShare: Toggle;
   /** Whether the immersive welcome screen is shown for chat. */
   welcomeScreen: Toggle;
   /** Shape of participant avatars. */
@@ -119,6 +121,7 @@ export const DEFAULT_SETTINGS: Settings = {
   inputMode: "voiceMini",
   windowSize: "half",
   avatars: "on",
+  screenShare: "off",
   welcomeScreen: "on",
   avatarShape: "round",
   backgroundDepthLayer: "on",
@@ -155,6 +158,11 @@ export const settingsFromParams = (params: URLSearchParams): Settings => {
     DEFAULT_SETTINGS.windowSize,
   );
   settings.avatars = pick(params.get("avatars"), ["on", "off"], "on");
+  settings.screenShare = pick(
+    params.get("screenShare"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.screenShare,
+  );
   settings.welcomeScreen = pick(
     params.get("welcomeScreen"),
     ["on", "off"],
@@ -219,6 +227,11 @@ export const writeSettingsToUrl = (settings: Settings): void => {
   setOrDelete("input", settings.inputMode, DEFAULT_SETTINGS.inputMode);
   setOrDelete("windowSize", settings.windowSize, DEFAULT_SETTINGS.windowSize);
   setOrDelete("avatars", settings.avatars, DEFAULT_SETTINGS.avatars);
+  setOrDelete(
+    "screenShare",
+    settings.screenShare,
+    DEFAULT_SETTINGS.screenShare,
+  );
   setOrDelete(
     "welcomeScreen",
     settings.welcomeScreen,

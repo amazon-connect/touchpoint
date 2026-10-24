@@ -1,6 +1,7 @@
 import {
   type AudioVideoFacade,
   type AudioVideoObserver,
+  type ContentShareObserver,
   ConsoleLogger,
   DefaultDeviceController,
   DefaultMeetingSession,
@@ -24,9 +25,27 @@ export interface VoiceHandler {
   setSpeakers: (speakersEnabled: boolean) => Promise<void>;
   /** Retry connecting to the voice service. */
   retry: () => Promise<void>;
+  /**
+   * Start sharing the screen with the agent. Prompts the browser's capture picker, so call
+   * it from a user gesture. Only valid while `screenShare` is `"available"`.
+   */
+  startScreenShare: () => Promise<void>;
+  /** Stop sharing the screen. */
+  stopScreenShare: () => Promise<void>;
   /** Disconnect from the voice service. Must be called at the end of the session. */
   disconnect: () => Promise<void>;
 }
+
+/**
+ * Where screen sharing stands. The agent opens a screen-sharing session from their
+ * workspace (Connect signals the call), and only then may the customer start sharing.
+ * - `unavailable`: no session from the agent, or screen sharing is not enabled
+ * - `available`: the agent opened a session; the customer may start sharing
+ * - `starting`: the browser's capture picker is open, or the share is connecting
+ * - `sharing`: the agent can see the screen
+ */
+export type ScreenShareState =
+  "unavailable" | "available" | "starting" | "sharing";
 
 /**
  * The state of the voice connection.
@@ -44,6 +63,10 @@ export interface VoiceState {
   isMicEnabled: boolean;
   /** Interim message */
   interimMessage?: string;
+  /** Screen sharing with the agent. */
+  screenShare: ScreenShareState;
+  /** Set when the last attempt to share failed; cleared on the next attempt. */
+  screenShareError?: "denied" | "failed";
 }
 
 /** Thrown when we detect missing audio permissions */
@@ -54,6 +77,21 @@ export class MissingAudioPermissionsError extends Error {
     this.name = "MissingAudioPermissionsError";
   }
 }
+
+/**
+ * Whether this browser can capture the screen. `getDisplayMedia` is desktop-only, so this is
+ * `false` on mobile browsers, where screen sharing is not offered.
+ * @returns whether screen capture is available
+ */
+export const isScreenCaptureSupported = (): boolean =>
+  typeof navigator !== "undefined" &&
+  typeof navigator.mediaDevices?.getDisplayMedia === "function";
+
+/** Chime realtime data message topic on which Connect signals screen sharing. */
+const SCREEN_SHARE_TOPIC = "AMAZON_CONNECT_SCREEN_SHARING";
+
+/** Suffix of the Chime attendee id that carries a content (screen) share. */
+const CONTENT_ATTENDEE_SUFFIX = "#content";
 
 /** Volume above which an attendee is considered to be speaking. */
 const SPEAKING_VOLUME_THRESHOLD = 0.05;
@@ -120,6 +158,7 @@ export const initiateVoice = async (
     isApplicationSpeaking: false,
     isSpeakersEnabled: true,
     isMicEnabled: true,
+    screenShare: "unavailable",
   };
 
   const setState = (newState: Partial<VoiceState>): void => {
@@ -145,6 +184,9 @@ export const initiateVoice = async (
       startWebRtcContact?: () => Promise<WebRtcConnectionData>;
     }
   ).startWebRtcContact;
+  const screenShareEnabled =
+    (handler as unknown as { screenShareEnabled?: boolean })
+      .screenShareEnabled === true && isScreenCaptureSupported();
   if (startWebRtcContact == null) {
     throw new Error("Voice is not supported by this conversation handler.");
   }
@@ -154,10 +196,61 @@ export const initiateVoice = async (
   let localAttendeeId: string | undefined;
   const volumeSubscriptions = new Set<string>();
 
+  const stopScreenShare = async (): Promise<void> => {
+    const av = meetingSession?.audioVideo;
+    if (state.screenShare === "starting" || state.screenShare === "sharing") {
+      setState({ screenShare: "available" });
+    }
+    try {
+      av?.stopContentShare();
+    } catch {
+      /* best effort */
+    }
+  };
+
+  // Read through a function: the state is mutated from observers across awaits.
+  const screenShareNow = (): ScreenShareState => state.screenShare;
+
+  const startScreenShare = async (): Promise<void> => {
+    const av = meetingSession?.audioVideo;
+    if (av == null || state.screenShare !== "available") {
+      throw new Error("Screen sharing is not available");
+    }
+    setState({ screenShare: "starting", screenShareError: undefined });
+    try {
+      await av.startContentShareFromScreenCapture();
+      // A stop (or the agent ending the session) may have landed while the picker was up.
+      if (screenShareNow() !== "starting" && screenShareNow() !== "sharing") {
+        av.stopContentShare();
+      }
+    } catch (err) {
+      // Includes the customer cancelling the picker or denying permission.
+      if (screenShareNow() === "starting") {
+        setState({
+          screenShare: "available",
+          screenShareError:
+            err instanceof DOMException && err.name === "NotAllowedError"
+              ? "denied"
+              : "failed",
+        });
+      }
+    }
+  };
+
   const disconnect = async (): Promise<void> => {
     userSpeaking.cancel();
     applicationSpeaking.cancel();
-    setState({ isUserSpeaking: false, isApplicationSpeaking: false });
+    // Leaving the meeting does not stop the capture stream; end it explicitly.
+    try {
+      meetingSession?.audioVideo.stopContentShare();
+    } catch {
+      /* best effort */
+    }
+    setState({
+      isUserSpeaking: false,
+      isApplicationSpeaking: false,
+      screenShare: "unavailable",
+    });
     const av = meetingSession?.audioVideo;
     if (av != null) {
       try {
@@ -237,9 +330,62 @@ export const initiateVoice = async (
     };
     av.addObserver(observer);
 
+    if (screenShareEnabled) {
+      // Connect signals the agent opening or closing a screen-sharing session.
+      av.realtimeSubscribeToReceiveDataMessage(
+        SCREEN_SHARE_TOPIC,
+        (dataMessage) => {
+          let message: unknown;
+          try {
+            message = (dataMessage.json() as { message?: unknown } | null)
+              ?.message;
+          } catch {
+            return;
+          }
+          if (message === "ScreenSharingStarted") {
+            if (state.screenShare === "unavailable") {
+              setState({ screenShare: "available" });
+            }
+          } else if (
+            message === "ScreenSharingStartedViewOnly" ||
+            message === "ScreenSharingStopped"
+          ) {
+            // View-only means this customer may not send; stopped means the agent ended it.
+            void stopScreenShare().then(() => {
+              setState({ screenShare: "unavailable" });
+            });
+          }
+        },
+      );
+      const contentShareObserver: ContentShareObserver = {
+        contentShareDidStart: () => {
+          if (state.screenShare === "starting") {
+            setState({ screenShare: "sharing" });
+          } else {
+            // Stopped while connecting.
+            av.stopContentShare();
+          }
+        },
+        // Also fires when the customer uses the browser's own "Stop sharing" button.
+        contentShareDidStop: () => {
+          if (
+            state.screenShare === "starting" ||
+            state.screenShare === "sharing"
+          ) {
+            setState({ screenShare: "available" });
+          }
+        },
+      };
+      av.addContentShareObserver(contentShareObserver);
+    }
+
     // Speaking indicators, derived from each attendee's volume. The local attendee drives
     // `isUserSpeaking`; any remote attendee (the agent) drives `isApplicationSpeaking`.
     av.realtimeSubscribeToAttendeeIdPresence((attendeeId, present) => {
+      // The content share joins as its own attendee; it is not the agent speaking.
+      if (attendeeId.endsWith(CONTENT_ATTENDEE_SUFFIX)) {
+        return;
+      }
       if (present) {
         if (!volumeSubscriptions.has(attendeeId)) {
           volumeSubscriptions.add(attendeeId);
@@ -299,6 +445,8 @@ export const initiateVoice = async (
       await disconnect();
       await connect();
     },
+    startScreenShare,
+    stopScreenShare,
     disconnect,
   };
 };

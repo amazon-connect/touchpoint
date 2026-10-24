@@ -8,7 +8,7 @@ import type {
 } from "../interface";
 import type { ConnectConfig } from "../connect";
 import { customThemeStore } from "./customTheme";
-import { isLiveSyncConfigured, type Settings } from "./settings";
+import { isLiveSyncConfigured, isVoiceMode, type Settings } from "./settings";
 
 const ignore = (): void => {
   /* the widget surfaces its own connection errors */
@@ -18,6 +18,9 @@ const buildConnectConfig = (settings: Settings): ConnectConfig => ({
   ...(settings.endpoint !== "" ? { chatEndpoint: settings.endpoint } : {}),
   ...(settings.voiceEndpoint !== ""
     ? { voiceEndpoint: settings.voiceEndpoint }
+    : {}),
+  ...(settings.screenShare === "on" && isVoiceMode(settings.inputMode)
+    ? { screenShare: true }
     : {}),
   ...(settings.authEndpoint !== ""
     ? { authenticationEndpoint: settings.authEndpoint }

@@ -16,6 +16,7 @@ import { BrandIcon } from "./ui/BrandIcon";
 import { useWidgetVoiceState } from "./FullscreenVoice";
 import { VoiceModalities } from "./VoiceModalities";
 import { Banner } from "./ui/Banner";
+import { type ScreenShareControl, toScreenShareControl } from "./ScreenShare";
 import {
   VoiceMiniControls,
   VoiceMiniPanel,
@@ -66,6 +67,8 @@ export const VoiceMini: FC<{
   onClose: ((event: Event) => void) | undefined;
   /** Called when the voice session ends (call disconnected / agent hung up). */
   onVoiceSessionEnded: () => void;
+  /** Reports the screen share control of the live session (`null` when there is none). */
+  onScreenShareChange?: (control: ScreenShareControl | null) => void;
   context?: Context;
   /** When provided, renders a drag handle to reposition the widget. */
   dragHandleProps?: DragHandleProps;
@@ -75,6 +78,7 @@ export const VoiceMini: FC<{
   showTranscript,
   onClose,
   onVoiceSessionEnded,
+  onScreenShareChange,
   modalityComponents,
   responses,
   brandIcon,
@@ -129,6 +133,18 @@ export const VoiceMini: FC<{
       onVoiceSessionEnded();
     }
   }, [terminated, onVoiceSessionEnded]);
+
+  // Surface screen sharing (offered by the agent during the call) to the app.
+  useEffect(() => {
+    onScreenShareChange?.(
+      voice != null && voice !== "loading" && voice.type === "success"
+        ? toScreenShareControl(voice.handler, voice.state)
+        : null,
+    );
+    return () => {
+      onScreenShareChange?.(null);
+    };
+  }, [voice, onScreenShareChange]);
 
   const retry = async (): Promise<void> => {
     try {

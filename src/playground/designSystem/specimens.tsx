@@ -21,6 +21,14 @@ import {
 import { BackgroundDecoration } from "../../components/BackgroundDecoration";
 import { Messages } from "../../components/Messages";
 import { defaultModalities } from "../../components/defaultModalities";
+import { DefaultCard } from "../../components/defaultModalities/DefaultCard";
+import { DefaultCarousel } from "../../components/defaultModalities/DefaultCarousel";
+import { DefaultDateInput } from "../../components/defaultModalities/DefaultDateInput";
+import { DefaultVideo } from "../../components/defaultModalities/DefaultVideo";
+import {
+  ScreenShareConsent,
+  type ScreenShareControl,
+} from "../../components/ScreenShare";
 import { mockConversationHandler, responses } from "../../mocks/shared";
 import {
   type BubbleStyle,
@@ -371,6 +379,142 @@ const DateInputs: FC = () => {
     </>
   );
 };
+
+const DefaultCards: FC = () => (
+  <>
+    <Row label="rows only">
+      <div className="w-full max-w-content">
+        <DefaultCard
+          conversationHandler={mockConversationHandler}
+          enabled
+          data={{
+            rows: [
+              { label: "Departure", value: "Seattle (SEA), 8:15 AM" },
+              { label: "Arrival", value: "Austin (AUS), 2:05 PM" },
+              { label: "Fare", value: "$312" },
+            ],
+          }}
+        />
+      </div>
+    </Row>
+    <Row label="thumbnail and rows">
+      <div className="w-full max-w-content">
+        <DefaultCard
+          conversationHandler={mockConversationHandler}
+          enabled
+          data={{
+            thumbnail: CARD_IMAGE,
+            thumbnailAlt: "Skyline of Austin at dusk",
+            rows: [
+              { label: "Hotel", value: "Lakeside Austin" },
+              { label: "Stay", value: "2 nights, from $189" },
+            ],
+          }}
+        />
+      </div>
+    </Row>
+  </>
+);
+
+const DefaultCarousels: FC = () => (
+  <Row label="selectable cards, saved as a choice">
+    <DefaultCarousel
+      conversationHandler={mockConversationHandler}
+      enabled
+      data={{
+        $saveAs: { type: "choiceId", id: "destination" },
+        cards: [
+          ["seattle", "Seattle", "from $189"],
+          ["portland", "Portland", "from $179"],
+          ["vancouver", "Vancouver", "from $205"],
+          ["austin", "Austin", "from $198"],
+        ].map(([id, city, price]) => ({
+          id,
+          thumbnail: CARD_IMAGE,
+          thumbnailAlt: `${city} skyline`,
+          rows: [
+            { label: "City", value: city },
+            { label: "Flights", value: price },
+          ],
+        })),
+      }}
+    />
+  </Row>
+);
+
+const DefaultDateInputs: FC = () => (
+  <Row label="saved as a slot">
+    <div className="w-full max-w-content">
+      <DefaultDateInput
+        conversationHandler={mockConversationHandler}
+        enabled
+        data={{ $saveAs: { type: "slot", id: "departureDate" } }}
+      />
+    </div>
+  </Row>
+);
+
+const DefaultVideos: FC = () => (
+  <Row label="product walkthrough, first frame as poster">
+    <div className="w-full max-w-content">
+      <DefaultVideo
+        conversationHandler={mockConversationHandler}
+        enabled
+        data={{
+          url: "https://videos.pexels.com/video-files/3255275/3255275-hd_1280_720_25fps.mp4",
+        }}
+      />
+    </div>
+  </Row>
+);
+
+const DefaultModalitiesGallery: FC = () => (
+  <>
+    <DefaultCards />
+    <DefaultCarousels />
+    <DefaultDateInputs />
+    <DefaultVideos />
+  </>
+);
+
+const noScreenShare = { start: noop, stop: noop };
+const SCREEN_SHARE_CONSENT_STATES: {
+  label: string;
+  control: ScreenShareControl;
+}[] = [
+  {
+    label: "agent requested a share",
+    control: { state: "available", ...noScreenShare },
+  },
+  {
+    label: "starting",
+    control: { state: "starting", ...noScreenShare },
+  },
+  {
+    label: "sharing",
+    control: { state: "sharing", ...noScreenShare },
+  },
+  {
+    label: "blocked by the browser",
+    control: { state: "available", error: "denied", ...noScreenShare },
+  },
+  {
+    label: "failed",
+    control: { state: "available", error: "failed", ...noScreenShare },
+  },
+];
+
+/* The consent pill is rendered without the overlay's fixed positioning, so each
+   state sits in the page flow; live, `ScreenShareOverlay` pins it to the viewport. */
+const ScreenShareConsents: FC = () => (
+  <>
+    {SCREEN_SHARE_CONSENT_STATES.map(({ label, control }) => (
+      <Row key={label} label={label}>
+        <ScreenShareConsent control={control} />
+      </Row>
+    ))}
+  </>
+);
 
 const Loaders: FC = () => (
   <>
@@ -1674,6 +1818,13 @@ const MyModality = ({ conversationHandler }) => html\`
 \`;`,
   },
   {
+    id: "default-modalities",
+    title: "Default modalities",
+    description:
+      "The modalities Touchpoint renders on its own when a message carries the matching payload: card, carousel, date input and video.",
+    Component: DefaultModalitiesGallery,
+  },
+  {
     id: "icon-buttons",
     title: "Icon buttons",
     description:
@@ -1734,6 +1885,13 @@ const MyModality = () => html\`
     description:
       "Delivery status shown under the most recent user message: sending, sent, delivered, read, or failed.",
     Component: MessageStatusRows,
+  },
+  {
+    id: "screen-share-consent",
+    title: "Screen share consent",
+    description:
+      "The prompt shown when an agent asks to see the customer's screen, and its progress states. Pinned to the bottom of the viewport when it appears live; shown in the page flow here.",
+    Component: ScreenShareConsents,
   },
   {
     id: "text-button-groups",
