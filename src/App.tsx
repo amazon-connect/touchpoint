@@ -31,6 +31,7 @@ import { Loader } from "./components/ui/Loader";
 import { FullscreenError } from "./components/FullscreenError";
 import { Input } from "./components/Input";
 import { HiddenElement } from "./interface";
+import { EndConversationConfirm } from "./components/EndConversationConfirm";
 import type {
   ChoiceMessage,
   CustomModalityComponent,
@@ -155,6 +156,7 @@ const normalizeConfiguration = (
         ? [HiddenElement.WelcomeScreenLogo]
         : []),
     ],
+    addedElements: configuration.addedElements ?? [],
     showParticipantInfo: configuration.showParticipantInfo ?? false,
     showVoiceTranscript: configuration.showVoiceTranscript ?? false,
     escalationPhrase:
@@ -364,6 +366,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
   }, [handler, configuration.escalationPhrase]);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [confirmEnd, setConfirmEnd] = useState<boolean>(false);
 
   const isExpandedRef = useRef<boolean>(
     props.embedded ||
@@ -1085,8 +1088,24 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             collapse={onClose}
             reset={reset}
             hiddenElements={configuration.hiddenElements}
+            addedElements={configuration.addedElements}
+            ended={conversationEnded}
+            endConversation={() => {
+              setConfirmEnd(true);
+            }}
           />
           {input === "text" ? textContent() : voiceContent}
+          {confirmEnd ? (
+            <EndConversationConfirm
+              onCancel={() => {
+                setConfirmEnd(false);
+              }}
+              onConfirm={() => {
+                setConfirmEnd(false);
+                connectActions.endConversation();
+              }}
+            />
+          ) : null}
         </>
       </Main>
     </ProviderStack>

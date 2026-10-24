@@ -19,6 +19,7 @@ type NormalizedField =
   | "chatMode"
   | "welcomeScreen"
   | "hiddenElements"
+  | "addedElements"
   | "showParticipantInfo"
   | "showVoiceTranscript"
   | "escalationPhrase"

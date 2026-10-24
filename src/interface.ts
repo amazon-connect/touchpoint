@@ -531,6 +531,15 @@ export interface TouchpointConfiguration {
    */
   hiddenElements?: HiddenElement[];
   /**
+   * Optional UI elements to add, identified by {@link AddedElement}. Unknown
+   * values are ignored.
+   * @example
+   * ```ts
+   * const addedElements: AddedElement[] = [AddedElement.HeaderClose];
+   * ```
+   */
+  addedElements?: AddedElement[];
+  /**
    * Optional theme object to override default theme values
    */
   theme?: Partial<Theme>;
@@ -817,6 +826,19 @@ export enum HiddenElement {
 }
 
 /**
+ * Identifier of an optional UI element that can be added through
+ * {@link TouchpointConfiguration.addedElements}.
+ * @category Basics
+ */
+export enum AddedElement {
+  /**
+   * A button in the header, right of the minimize button, that ends the
+   * conversation after a confirmation.
+   */
+  HeaderClose = "header.close",
+}
+
+/**
  * The subset of {@link TouchpointConfiguration} that can be changed after
  * Touchpoint is created via {@link TouchpointInstance.update}: purely visual and
  * copy settings. Anything that affects the conversation itself (`config`,
@@ -848,6 +870,7 @@ export type TouchpointVisualConfiguration = Partial<
     | "welcomeScreen"
     | "welcomeScreenLogo"
     | "hiddenElements"
+    | "addedElements"
     | "theme"
     | "containerStyle"
     | "headerStyle"

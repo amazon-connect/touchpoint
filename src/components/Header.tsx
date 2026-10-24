@@ -8,9 +8,11 @@ import {
   type BrandIconSource,
   type ColorMode,
   HiddenElement,
+  AddedElement,
 } from "../interface";
 import {
   Close,
+  LogOut,
   Settings,
   Restart,
   Volume,
@@ -43,6 +45,11 @@ interface HeaderProps {
   isSettingsOpen: boolean;
   enabled: boolean;
   hiddenElements?: HiddenElement[];
+  addedElements?: AddedElement[];
+  /** Whether the conversation has ended (disables the close button). */
+  ended?: boolean;
+  /** Requests ending the conversation (the caller asks for confirmation). */
+  endConversation?: () => void;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -57,6 +64,9 @@ export const Header: FC<HeaderProps> = ({
   reset,
   enabled,
   hiddenElements = [],
+  addedElements = [],
+  ended = false,
+  endConversation,
 }) => {
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
@@ -64,18 +74,22 @@ export const Header: FC<HeaderProps> = ({
   const hasBrand = brandIcon != null;
   const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
   const showBack = isSettingsOpen && toggleSettings != null;
-  // With a brand icon, the first right-hand control carries `ml-auto`; when
-  // reset is hidden, the next visible control takes over that job.
-  const firstRight =
-    hasBrand && !showRestart && !showBack
-      ? toggleSettings != null
+  const showClose =
+    addedElements.includes(AddedElement.HeaderClose) && endConversation != null;
+  // The first right-hand control carries `ml-auto` to push the group right.
+  // With a brand icon, a visible reset/back button leads the group instead.
+  const firstRight: "settings" | "speaker" | "collapse" | "close" | null =
+    hasBrand && (showRestart || showBack)
+      ? null
+      : toggleSettings != null
         ? "settings"
         : speakerControls != null
           ? "speaker"
           : collapse != null
             ? "collapse"
-            : null
-      : null;
+            : showClose
+              ? "close"
+              : null;
   return (
     <HeaderContainer style={style}>
       {brandIcon != null ? (
@@ -109,9 +123,7 @@ export const Header: FC<HeaderProps> = ({
       ) : null}
       {toggleSettings != null ? (
         <IconButton
-          className={
-            firstRight === "settings" || !hasBrand ? "ml-auto" : undefined
-          }
+          className={firstRight === "settings" ? "ml-auto" : undefined}
           Icon={Settings}
           label="Settings"
           type={isSettingsOpen ? "subtle" : iconButtonType}
@@ -134,11 +146,7 @@ export const Header: FC<HeaderProps> = ({
         <IconButton
           label={isVoice ? "Close" : "Collapse"}
           type={isVoice ? "error" : iconButtonType}
-          className={clsx(
-            (toggleSettings == null && !hasBrand) || firstRight === "collapse"
-              ? "ml-auto"
-              : "",
-          )}
+          className={clsx(firstRight === "collapse" ? "ml-auto" : "")}
           onClick={
             enabled
               ? () => {
@@ -147,6 +155,15 @@ export const Header: FC<HeaderProps> = ({
               : undefined
           }
           Icon={isVoice ? Close : Minimize}
+        />
+      ) : null}
+      {showClose ? (
+        <IconButton
+          label={copy.endConversationButtonLabel}
+          type={iconButtonType}
+          className={firstRight === "close" ? "ml-auto" : undefined}
+          onClick={enabled && !ended ? endConversation : undefined}
+          Icon={LogOut}
         />
       ) : null}
     </HeaderContainer>
