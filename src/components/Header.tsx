@@ -12,7 +12,6 @@ import {
 } from "../interface";
 import {
   Close,
-  LogOut,
   Settings,
   Restart,
   Volume,
@@ -46,10 +45,6 @@ interface HeaderProps {
   enabled: boolean;
   hiddenElements?: HiddenElement[];
   addedElements?: AddedElement[];
-  /** Whether the conversation has ended (disables the close button). */
-  ended?: boolean;
-  /** Requests ending the conversation (the caller asks for confirmation). */
-  endConversation?: () => void;
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -65,8 +60,6 @@ export const Header: FC<HeaderProps> = ({
   enabled,
   hiddenElements = [],
   addedElements = [],
-  ended = false,
-  endConversation,
 }) => {
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
@@ -75,7 +68,7 @@ export const Header: FC<HeaderProps> = ({
   const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
   const showBack = isSettingsOpen && toggleSettings != null;
   const showClose =
-    addedElements.includes(AddedElement.HeaderClose) && endConversation != null;
+    addedElements.includes(AddedElement.HeaderClose) && collapse != null;
   // The first right-hand control carries `ml-auto` to push the group right.
   // With a brand icon, a visible reset/back button leads the group instead.
   const firstRight: "settings" | "speaker" | "collapse" | "close" | null =
@@ -159,11 +152,17 @@ export const Header: FC<HeaderProps> = ({
       ) : null}
       {showClose ? (
         <IconButton
-          label={copy.endConversationButtonLabel}
+          label="Close"
           type={iconButtonType}
           className={firstRight === "close" ? "ml-auto" : undefined}
-          onClick={enabled && !ended ? endConversation : undefined}
-          Icon={LogOut}
+          onClick={
+            enabled
+              ? () => {
+                  collapse?.(new Event("collapse"));
+                }
+              : undefined
+          }
+          Icon={Close}
         />
       ) : null}
     </HeaderContainer>

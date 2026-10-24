@@ -689,8 +689,8 @@ Identifier of an optional UI element that can be added through
 HeaderClose: "header.close";
 ```
 
-A button in the header, right of the minimize button, that ends the
-conversation after a confirmation.
+A button in the header, right of the minimize button, that collapses the
+widget.
 
 ---
 
