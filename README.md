@@ -320,6 +320,43 @@ const touchpoint = await create({
 });
 ```
 
+### Hidden and added elements
+
+Built-in UI can be tuned with two lists of element identifiers. Use the exported
+enums, or the plain strings in untyped environments.
+
+`hiddenElements` omits default elements:
+
+| `HiddenElement`                   | String                 | Hides                                 |
+| --------------------------------- | ---------------------- | ------------------------------------- |
+| `HiddenElement.HeaderRestart`     | `"header.restart"`     | The restart button in the header.     |
+| `HiddenElement.WelcomeScreenLogo` | `"welcomescreen.logo"` | The brand logo on the welcome screen. |
+
+`addedElements` opts in to elements that are off by default:
+
+| `AddedElement`             | String           | Adds                                                                                                          |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `AddedElement.HeaderClose` | `"header.close"` | A button right of the minimize button that ends the conversation, after the same confirmation as in Settings. |
+
+```js
+import {
+  create,
+  HiddenElement,
+  AddedElement,
+} from "@amazon-connect-touchpoint/web";
+
+const touchpoint = await create({
+  config: {/* … */},
+  input: "text",
+  hiddenElements: [HiddenElement.HeaderRestart],
+  addedElements: [AddedElement.HeaderClose], // or ["header.close"]
+});
+```
+
+Unknown values are ignored. Both lists can be changed later with `update()`.
+`welcomeScreenLogo: false` is deprecated in favor of hiding
+`HiddenElement.WelcomeScreenLogo`.
+
 ### Assistant identity
 
 When participant info is shown (`showParticipantInfo: true`), the automated
@@ -560,8 +597,9 @@ Common entry points:
   `windowSize`, `theme`, `containerStyle`, `liveSync`, `brandIcon`,
   `onContactEnded`, `userMessageBubble`, `agentMessageBubble`,
   `userMessageBubbleStyle`, `agentMessageBubbleStyle`,
-  `welcomeScreen`, `welcomeScreenLogo`, `showParticipantInfo`, `assistantName`,
-  `assistantIcon`, `avatarShape`, `icons`, …).
+  `welcomeScreen`, `welcomeScreenLogo`, `hiddenElements`, `addedElements`,
+  `showParticipantInfo`, `assistantName`, `assistantIcon`, `avatarShape`,
+  `icons`, …).
 - `ConnectConfig` — Amazon Connect Customer connection details.
 - `LiveSyncConnection` / `LiveSyncContextInput` — Live Sync connection and the
   actions / scopes / destinations you advertise to the AI agent.
