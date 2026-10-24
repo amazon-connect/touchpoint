@@ -848,8 +848,8 @@ export enum HiddenElement {
  */
 export enum AddedElement {
   /**
-   * A button in the header, right of the minimize button, that ends the
-   * conversation after a confirmation.
+   * A button in the header, right of the minimize button, that collapses the
+   * widget.
    */
   HeaderClose = "header.close",
 }

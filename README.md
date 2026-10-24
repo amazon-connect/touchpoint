@@ -334,9 +334,9 @@ enums, or the plain strings in untyped environments.
 
 `addedElements` opts in to elements that are off by default:
 
-| `AddedElement`             | String           | Adds                                                                                                          |
-| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
-| `AddedElement.HeaderClose` | `"header.close"` | A button right of the minimize button that ends the conversation, after the same confirmation as in Settings. |
+| `AddedElement`             | String           | Adds                                                             |
+| -------------------------- | ---------------- | ---------------------------------------------------------------- |
+| `AddedElement.HeaderClose` | `"header.close"` | A button right of the minimize button that collapses the widget. |
 
 ```js
 import {
