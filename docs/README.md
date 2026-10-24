@@ -487,7 +487,7 @@ render the conversation as a top-anchored transcript from the first message.
 Has no effect once modalities/guides are present or the conversation has
 progressed.
 
-##### welcomeScreenLogo?
+##### ~~welcomeScreenLogo?~~
 
 ```ts
 optional welcomeScreenLogo?: boolean;
@@ -496,6 +496,40 @@ optional welcomeScreenLogo?: boolean;
 Whether to show the brand logo ([TouchpointConfiguration.brandIcon](#brandicon)) at
 the top of the welcome screen. Defaults to `true`; has no effect when no
 `brandIcon` is set or the welcome screen is disabled.
+
+###### Deprecated
+
+Use `hiddenElements: [HiddenElement.WelcomeLogo]` instead.
+
+##### hiddenElements?
+
+```ts
+optional hiddenElements?: HiddenElement[];
+```
+
+Built-in UI elements to omit, identified by [HiddenElement](#hiddenelement). Unknown
+values are ignored.
+
+###### Example
+
+```ts
+const hiddenElements: HiddenElement[] = [HiddenElement.HeaderRestart];
+```
+
+##### addedElements?
+
+```ts
+optional addedElements?: HeaderClose[];
+```
+
+Optional UI elements to add, identified by [AddedElement](#addedelement). Unknown
+values are ignored.
+
+###### Example
+
+```ts
+const addedElements: AddedElement[] = [AddedElement.HeaderClose];
+```
 
 ##### theme?
 
@@ -617,6 +651,49 @@ Copy
 
 ---
 
+### HiddenElement
+
+Identifier of a built-in UI element that can be omitted through
+[TouchpointConfiguration.hiddenElements](#hiddenelements).
+
+#### Enumeration Members
+
+##### HeaderRestart
+
+```ts
+HeaderRestart: "header.restart";
+```
+
+The restart conversation button in the header.
+
+##### WelcomeScreenLogo
+
+```ts
+WelcomeScreenLogo: "welcomescreen.logo";
+```
+
+The brand logo on the welcome screen.
+
+---
+
+### AddedElement
+
+Identifier of an optional UI element that can be added through
+[TouchpointConfiguration.addedElements](#addedelements).
+
+#### Enumeration Members
+
+##### HeaderClose
+
+```ts
+HeaderClose: "header.close";
+```
+
+A button in the header, right of the minimize button, that collapses the
+widget.
+
+---
+
 ### TouchpointVisualConfiguration
 
 ```ts
@@ -642,6 +719,8 @@ type TouchpointVisualConfiguration = Partial<
     | "chatMode"
     | "welcomeScreen"
     | "welcomeScreenLogo"
+    | "hiddenElements"
+    | "addedElements"
     | "theme"
     | "containerStyle"
     | "headerStyle"
