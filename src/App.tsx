@@ -191,7 +191,6 @@ interface Props {
   configuration: TouchpointConfiguration;
   embedded: boolean;
   onClose: ((event: Event) => void) | null;
-  enableSettings: boolean;
   enabled: boolean;
 }
 
@@ -1080,13 +1079,9 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             colorMode={colorMode}
             isSettingsOpen={isSettingsOpen}
             enabled={props.enabled}
-            toggleSettings={
-              props.enableSettings
-                ? () => {
-                    setIsSettingsOpen((prev) => !prev);
-                  }
-                : undefined
-            }
+            toggleSettings={() => {
+              setIsSettingsOpen((prev) => !prev);
+            }}
             collapse={onClose}
             reset={reset}
             hiddenElements={configuration.hiddenElements}

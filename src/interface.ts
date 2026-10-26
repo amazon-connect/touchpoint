@@ -837,6 +837,8 @@ export interface LiveSyncCustomAction {
 export enum HiddenElement {
   /** The restart conversation button in the header. */
   HeaderRestart = "header.restart",
+  /** The settings button in the header. */
+  HeaderSettings = "header.settings",
   /** The brand logo on the welcome screen. */
   WelcomeScreenLogo = "welcomescreen.logo",
 }

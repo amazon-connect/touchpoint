@@ -69,20 +69,21 @@ export const Header: FC<HeaderProps> = ({
   const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
   const showClose =
     addedElements.includes(AddedElement.HeaderClose) && collapse != null;
+  const showSettings =
+    toggleSettings != null &&
+    !hiddenElements.includes(HiddenElement.HeaderSettings);
+  const showSpeaker = speakerControls != null;
+  const showCollapse = collapse != null;
   // The first right-hand control carries `ml-auto` to push the group right.
   // With a brand icon, a visible reset button leads the group instead.
-  const firstRight: "settings" | "speaker" | "collapse" | "close" | null =
-    hasBrand && showRestart
-      ? null
-      : toggleSettings != null
-        ? "settings"
-        : speakerControls != null
-          ? "speaker"
-          : collapse != null
-            ? "collapse"
-            : showClose
-              ? "close"
-              : null;
+  const rightControls = [
+    { key: "restart", visible: hasBrand && showRestart },
+    { key: "settings", visible: showSettings },
+    { key: "speaker", visible: showSpeaker },
+    { key: "collapse", visible: showCollapse },
+    { key: "close", visible: showClose },
+  ];
+  const firstRight = rightControls.find((c) => c.visible)?.key;
   return (
     <HeaderContainer style={style}>
       {brandIcon != null ? (
@@ -93,7 +94,7 @@ export const Header: FC<HeaderProps> = ({
       {showRestart ? (
         <IconButton
           label={copy.restartConversationButtonLabel}
-          className={hasBrand ? "ml-auto" : undefined}
+          className={firstRight === "restart" ? "ml-auto" : undefined}
           type={iconButtonType}
           onClick={
             enabled
@@ -105,7 +106,7 @@ export const Header: FC<HeaderProps> = ({
           Icon={Restart}
         />
       ) : null}
-      {toggleSettings != null ? (
+      {showSettings ? (
         <IconButton
           className={firstRight === "settings" ? "ml-auto" : undefined}
           Icon={isSettingsOpen ? Undo : Settings}
