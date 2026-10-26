@@ -23,9 +23,9 @@ export interface TextButtonProps {
   className?: string;
   /**
    * Visual style variant of the button
-   * Default value is "ghost"
+   * Default value is "subtle". `"ghost"` is a deprecated alias of `"subtle"`.
    */
-  type?: "main" | "ghost" | "error" | "grouped";
+  type?: "main" | "subtle" | "ghost" | "error" | "grouped";
   /**
    * Icon component to display inside the button.
    */
@@ -50,7 +50,7 @@ export interface TextButtonProps {
 export const TextButton: FC<TextButtonProps> = ({
   onClick,
   label,
-  type = "ghost",
+  type = "subtle",
   Icon,
   className,
 }) => {
@@ -65,7 +65,7 @@ export const TextButton: FC<TextButtonProps> = ({
           "bg-primary text-secondary enabled:hover:before:bg-primary enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "main",
           "bg-primary-10 text-primary enabled:hover:before:bg-primary-5 enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-primary-20":
-            type === "ghost",
+            type === "subtle" || type === "ghost",
           "bg-error-primary text-secondary enabled:hover:before:bg-primary-5 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "error",
           "text-primary enabled:hover:before:bg-primary-5 enabled:active:before:bg-primary-10 disabled:text-primary-40 first:rounded-t-outer last:rounded-b-outer not-first:after:content-[''] not-first:after:absolute not-first:after:inset-x-5 not-first:after:top-0 not-first:after:h-px not-first:after:bg-primary-10":

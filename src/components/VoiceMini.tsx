@@ -10,7 +10,7 @@ import { initiateVoice } from "../voice";
 import { LoaderAnimation } from "./ui/Loader";
 import { Ripple } from "./Ripple";
 import { IconButton } from "./ui/IconButton";
-import { Close, Mic, MicOff, Volume, VolumeOff, Restart } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { TextButton } from "./ui/TextButton";
 import { BrandIcon } from "./ui/BrandIcon";
 import { useWidgetVoiceState } from "./FullscreenVoice";
@@ -27,6 +27,7 @@ const VoiceMiniLoader: FC<{
   brandIcon?: BrandIconSource;
   dragHandleProps?: DragHandleProps;
 }> = ({ brandIcon, dragHandleProps }) => {
+  const { Close, Mic, Volume } = useIcons();
   return (
     <VoiceMiniControls className="relative" dragHandleProps={dragHandleProps}>
       {brandIcon != null ? <BrandIcon icon={brandIcon} square={true} /> : null}
@@ -79,6 +80,7 @@ export const VoiceMini: FC<{
   brandIcon,
   dragHandleProps,
 }) => {
+  const { Close, Mic, MicOff, Restart, Volume, VolumeOff } = useIcons();
   const onCloseHandler = (): void => {
     onClose?.(new Event("close"));
   };
@@ -167,7 +169,7 @@ export const VoiceMini: FC<{
       <VoiceMiniPanel onClose={onClose != null ? onCloseHandler : undefined}>
         <ErrorMessage message="I couldn’t connect" />
         <TextButton
-          type="ghost"
+          type="subtle"
           label="Retry"
           Icon={Restart}
           onClick={() => {

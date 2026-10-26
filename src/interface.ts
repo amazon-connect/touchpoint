@@ -7,6 +7,7 @@ import type {
   ConnectConversationHandler,
 } from "./connect";
 import type { CustomStyle } from "./utils/customStyle";
+import type { IconOverrides } from "./utils/useIcons";
 
 export type {
   AuthenticationStatus,
@@ -601,6 +602,21 @@ export interface TouchpointConfiguration {
    * Copy
    */
   copy?: Partial<Copy>;
+  /**
+   * Replaces built-in icons. Keys are the names of the icons exported as
+   * `Icons` (e.g. `Close`, `Send`); values are React components that accept
+   * {@link IconProps | `size` and `className`}. Icons left out keep their
+   * default. Use {@link createIcon} to build one from SVG content.
+   * @example
+   * ```typescript
+   * const icons: IconOverrides = {
+   *   Send: ({ size, className }) => <MyIcon width={size} className={className} />,
+   *   Close: createIcon(<path d="M5 5L19 19M19 5L5 19" stroke="currentColor" strokeWidth={2} />),
+   * };
+   * ```
+   * @category Theming
+   */
+  icons?: IconOverrides;
 }
 
 /**
@@ -830,6 +846,7 @@ export type TouchpointVisualConfiguration = Partial<
     | "headerStyle"
     | "showVoiceTranscript"
     | "copy"
+    | "icons"
   >
 >;
 

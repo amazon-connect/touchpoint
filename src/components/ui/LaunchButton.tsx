@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { clsx } from "clsx";
 import { type FC, type ComponentType } from "react";
-import { Touchpoint } from "./Icons";
+import { useIcons } from "../../utils/useIcons";
 
 export interface LaunchButtonProps {
   label: string;
@@ -13,6 +13,7 @@ export interface LaunchButtonProps {
 }
 
 export const LaunchButton: FC<LaunchButtonProps> = (props) => {
+  const { Touchpoint } = useIcons();
   const { Custom } = props;
   if (Custom != null) {
     return <Custom className={props.className} onClick={props.onClick} />;

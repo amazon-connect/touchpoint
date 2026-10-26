@@ -13,6 +13,7 @@ import {
   toCustomProperties,
 } from "./components/Theme";
 import { type CustomStyle } from "./utils/customStyle";
+import { IconsProvider, type IconOverrides } from "./utils/useIcons";
 
 export const ProviderStack: FC<{
   colorMode: ColorMode;
@@ -23,6 +24,7 @@ export const ProviderStack: FC<{
   children?: ReactNode;
   languageCode: string;
   copy?: Partial<Copy>;
+  icons?: IconOverrides;
 }> = ({
   colorMode,
   children,
@@ -31,6 +33,7 @@ export const ProviderStack: FC<{
   containerStyle,
   copy,
   languageCode,
+  icons,
 }) => {
   const themeWithOverrides: Theme = intelligentMerge(theme ?? {});
   const providedThemeFields = Object.keys(theme ?? {}) as ThemeField[];
@@ -48,12 +51,14 @@ export const ProviderStack: FC<{
                 colorScheme: colorMode,
               }}
             >
-              <div
-                className={clsx(className, "font-sans")}
-                style={containerStyle}
-              >
-                {children}
-              </div>
+              <IconsProvider icons={icons}>
+                <div
+                  className={clsx(className, "font-sans")}
+                  style={containerStyle}
+                >
+                  {children}
+                </div>
+              </IconsProvider>
             </div>
           </AppRootProvider>
         </ProvidedThemeFieldsProvider>

@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC, useState } from "react";
 
-import { Restart, Download, LogOut, Close, Warning } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { useCopy } from "../utils/useCopy";
 import { TextButton } from "./ui/TextButton";
 import { clsx } from "clsx";
@@ -34,6 +34,7 @@ export const Settings: FC<SettingsProps> = ({
   voiceMode = false,
   className,
 }) => {
+  const { Close, Download, LogOut, Warning, Restart } = useIcons();
   const copy = useCopy();
   const [confirmEnd, setConfirmEnd] = useState<boolean>(false);
 
@@ -45,7 +46,7 @@ export const Settings: FC<SettingsProps> = ({
         <TextButton
           label={copy.restartConversationButtonLabel}
           Icon={Restart}
-          type="ghost"
+          type="subtle"
           onClick={
             agentActive && !ended
               ? undefined
@@ -59,7 +60,7 @@ export const Settings: FC<SettingsProps> = ({
           <TextButton
             label={copy.downloadTranscriptButtonLabel}
             Icon={Download}
-            type="ghost"
+            type="subtle"
             onClick={() => {
               onDownloadTranscript();
             }}
@@ -68,7 +69,7 @@ export const Settings: FC<SettingsProps> = ({
         <TextButton
           label={copy.endConversationButtonLabel}
           Icon={LogOut}
-          type="ghost"
+          type="subtle"
           onClick={
             ended
               ? undefined
@@ -105,7 +106,7 @@ export const Settings: FC<SettingsProps> = ({
               <TextButton
                 label={copy.endConversationConfirm.cancel}
                 Icon={Close}
-                type="ghost"
+                type="subtle"
                 onClick={() => {
                   setConfirmEnd(false);
                 }}

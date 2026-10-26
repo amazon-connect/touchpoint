@@ -53,7 +53,7 @@ import {
   type ResolvedView,
 } from "./connect";
 import { TextButton } from "./components/ui/TextButton";
-import { Restart } from "./components/ui/Icons";
+import { useIcons } from "./utils/useIcons";
 import { useCopy } from "./utils/useCopy";
 import { useDraggable } from "./utils/useDraggable";
 
@@ -95,10 +95,11 @@ const downloadTranscript = async (handler: {
 const StartNewConversationButton: FC<{ onClick: () => void }> = ({
   onClick,
 }) => {
+  const { Restart } = useIcons();
   const copy = useCopy();
   return (
     <TextButton
-      type="ghost"
+      type="subtle"
       label={copy.startNewConversationButtonLabel}
       Icon={Restart}
       onClick={onClick}
@@ -746,6 +747,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         colorMode={colorMode}
         languageCode={configuration.languageCode}
         copy={configuration.copy}
+        icons={configuration.icons}
       >
         <LaunchButton
           className="backdrop-blur-sm"
@@ -778,6 +780,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         colorMode={colorMode}
         languageCode={configuration.languageCode}
         copy={configuration.copy}
+        icons={configuration.icons}
       >
         <div
           ref={voiceMiniDrag.ref}
@@ -1033,6 +1036,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       colorMode={colorMode}
       languageCode={configuration.languageCode}
       copy={configuration.copy}
+      icons={configuration.icons}
     >
       {windowSize === "half" ? (
         <div className="hidden md:block bg-overlay" />

@@ -3,7 +3,7 @@
 import { clsx } from "clsx";
 import { useRef, useState } from "react";
 import { type CustomModalityComponent } from "../../interface";
-import { Play } from "../ui/Icons";
+import { useIcons } from "../../utils/useIcons";
 import { useTailwindMediaQuery } from "../../utils/useTailwindMediaQuery";
 import { type VideoData } from "./shared";
 
@@ -19,6 +19,7 @@ export const DefaultVideo: CustomModalityComponent<VideoData> = ({
   data,
   className,
 }) => {
+  const { Play } = useIcons();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   // `md` and up is treated as desktop → inline playback. Below that, omit

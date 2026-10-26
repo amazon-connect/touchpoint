@@ -34,10 +34,6 @@ import {
 } from "../settings";
 import { LaunchButton } from "../../components/ui/LaunchButton";
 import { Loader } from "../../components/ui/Loader";
-import {
-  MessageButton,
-  type MessageButtonType,
-} from "../../components/ui/MessageButton";
 import { MessageStatusRow } from "../../components/ui/MessageStatusRow";
 import { TextButton, TextButtonGroup } from "../../components/ui/TextButton";
 import { BaseText, SmallText } from "../../components/ui/Typography";
@@ -121,16 +117,16 @@ const TextButtons: FC = () => (
       />
       <TextButton type="main" label="Main disabled" Icon={Icons.ArrowForward} />
     </Row>
-    <Row label="type: ghost (default)" columns>
+    <Row label="type: subtle (default)" columns>
       <TextButton
-        type="ghost"
+        type="subtle"
         onClick={noop}
-        label="Ghost default"
+        label="Subtle default"
         Icon={Icons.ArrowForward}
       />
       <TextButton
-        type="ghost"
-        label="Ghost disabled"
+        type="subtle"
+        label="Subtle disabled"
         Icon={Icons.ArrowForward}
       />
     </Row>
@@ -211,32 +207,6 @@ const IconButtons: FC = () => (
           Icon={Icons.Close}
         />
         <IconButton type={type} label={`${type} disabled`} Icon={Icons.Close} />
-      </Row>
-    ))}
-  </>
-);
-
-const MESSAGE_BUTTON_TYPES: MessageButtonType[] = [
-  "default",
-  "selected",
-  "unselected",
-];
-
-const MessageButtons: FC = () => (
-  <>
-    {MESSAGE_BUTTON_TYPES.map((type) => (
-      <Row key={type} label={`type: ${type}`}>
-        <MessageButton
-          type={type}
-          onClick={noop}
-          label={`${type} default`}
-          Icon={Icons.ThumbUp}
-        />
-        <MessageButton
-          type={type}
-          label={`${type} disabled`}
-          Icon={Icons.ThumbUp}
-        />
       </Row>
     ))}
   </>
@@ -1728,30 +1698,6 @@ const MyModality = () => html\`
     title: "Loader",
     description: "The thinking indicator, optionally with a caption.",
     Component: Loaders,
-  },
-  {
-    id: "message-buttons",
-    title: "Message buttons",
-    description: "Compact icon buttons used within the message transcript.",
-    Component: MessageButtons,
-    code: `import { html } from "@amazon-connect-touchpoint/web";
-
-const MyModality = ({ data, conversationHandler }) => html\`
-  <div style="display: flex; gap: 8px;">
-    <MessageButton
-      type=\${data.liked ? "selected" : "default"}
-      label="Like"
-      Icon=\${Icons.ThumbUp}
-      onClick=\${() => conversationHandler.sendText("Like")}
-    />
-    <MessageButton
-      type=\${data.liked ? "unselected" : "default"}
-      label="Dislike"
-      Icon=\${Icons.ThumbDown}
-      onClick=\${() => conversationHandler.sendText("Dislike")}
-    />
-  </div>
-\`;`,
   },
   {
     id: "message-status-row",
