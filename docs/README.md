@@ -281,6 +281,87 @@ const containerStyle: CustomStyle = {
 };
 ```
 
+##### icons?
+
+```ts
+optional icons?: Partial<Record<
+  | "Action"
+  | "Add"
+  | "ArrowDown"
+  | "ArrowForward"
+  | "ArrowLeft"
+  | "ArrowRight"
+  | "ArrowUp"
+  | "Assistant"
+  | "Attachment"
+  | "Bot"
+  | "Camera"
+  | "Card"
+  | "Check"
+  | "CheckDouble"
+  | "Close"
+  | "Copy"
+  | "Date"
+  | "Delete"
+  | "Download"
+  | "Edit"
+  | "Error"
+  | "Escalate"
+  | "FillForms"
+  | "FullScreen"
+  | "Guide"
+  | "Help"
+  | "InfoFilled"
+  | "Location"
+  | "LogIn"
+  | "LogOut"
+  | "Mic"
+  | "MicOff"
+  | "Minimize"
+  | "More"
+  | "Navigation"
+  | "OpenInNew"
+  | "Play"
+  | "Preview"
+  | "Redo"
+  | "Refresh"
+  | "Reorder"
+  | "Resize"
+  | "Restart"
+  | "Search"
+  | "Send"
+  | "Settings"
+  | "Share"
+  | "SignUp"
+  | "SmallTalk"
+  | "Stop"
+  | "ThumbDown"
+  | "ThumbUp"
+  | "Time"
+  | "Touchpoint"
+  | "Translate"
+  | "Undo"
+  | "User"
+  | "Videocam"
+  | "Volume"
+  | "VolumeOff"
+| "Warning", Icon>>;
+```
+
+Replaces built-in icons. Keys are the names of the icons exported as
+`Icons` (e.g. `Close`, `Send`); values are React components that accept
+IconProps \| \`size\` and \`className\`. Icons left out keep their
+default. Use [createIcon](#createicon) to build one from SVG content.
+
+###### Example
+
+```typescript
+const icons: IconOverrides = {
+  Send: ({ size, className }) => <MyIcon width={size} className={className} />,
+  Close: createIcon(<path d="M5 5L19 19M19 5L5 19" stroke="currentColor" strokeWidth={2} />),
+};
+```
+
 #### Other
 
 ##### config
@@ -666,6 +747,14 @@ HeaderRestart: "header.restart";
 
 The restart conversation button in the header.
 
+##### HeaderSettings
+
+```ts
+HeaderSettings: "header.settings";
+```
+
+The settings button in the header.
+
 ##### WelcomeScreenLogo
 
 ```ts
@@ -726,6 +815,7 @@ type TouchpointVisualConfiguration = Partial<
     | "headerStyle"
     | "showVoiceTranscript"
     | "copy"
+    | "icons"
   >
 >;
 ```
@@ -1227,6 +1317,27 @@ Only the properties in this type are supported; see
 `TouchpointConfiguration.containerStyle` and
 `TouchpointConfiguration.userMessageBubbleStyle`.
 
+---
+
+### IconName
+
+```ts
+type IconName = keyof typeof defaultIcons;
+```
+
+Name of a built-in icon, e.g. `"Close"`.
+
+---
+
+### IconOverrides
+
+```ts
+type IconOverrides = Partial<Record<IconName, Icon>>;
+```
+
+Replacement icons keyed by the name of the built-in icon they replace. Any
+icon left out keeps its default.
+
 ## Modality components
 
 ### Ripple
@@ -1442,50 +1553,6 @@ const MyIconButton = () => (
 
 ---
 
-### MessageButtonType
-
-```ts
-type MessageButtonType = "default" | "selected" | "unselected";
-```
-
-Represents the different types of message buttons available in the application.
-
-- `default`: The default message button.
-- `selected`: A message button showing the selected state.
-- `unselected`: A message button showing the unselected state.
-
----
-
-### MessageButton
-
-```ts
-const MessageButton: FC<{
-  onClick?: () => void;
-  label: string;
-  className?: string;
-  type?: MessageButtonType;
-  Icon: FC<IconProps>;
-}>;
-```
-
-A button showing only an icon (textual label is provided for accessibility)
-
-#### Example
-
-```tsx
-import { MessageButton, Icons, React } from "@amazon-connect-touchpoint/web";
-
-const MyMessageButton = () => (
-  <MessageButton
-    label="Send message"
-    onClick={() => alert("Icon button clicked!")}
-    Icon={Icons.ArrowForward}
-  />
-);
-```
-
----
-
 ### TextButton
 
 ```ts
@@ -1493,7 +1560,7 @@ const TextButton: FC<{
   onClick?: () => void;
   label: string;
   className?: string;
-  type?: "main" | "error" | "ghost" | "grouped";
+  type?: "main" | "error" | "ghost" | "subtle" | "grouped";
   Icon: FC<IconProps>;
 }>;
 ```
@@ -1624,6 +1691,50 @@ A custom modality component is a React component. It will receive the modality d
 `Data`
 
 The type of the modality being rendered by this component.
+
+## Icons
+
+### createIcon()
+
+```ts
+function createIcon(children, svgProps?): Icon;
+```
+
+Creates an Icon from SVG content. The result honors the `size` and
+`className` props like the built-in icons, is hidden from assistive
+technology, and defaults to a 24x24 `viewBox` filled with `currentColor`.
+
+#### Parameters
+
+##### children
+
+[`ReactNode`](@amazon-connect-touchpoint/namespaces/React/README.md#reactnode)
+
+the SVG content, e.g. `<path d="..." />`
+
+##### svgProps?
+
+[`SVGProps`](@amazon-connect-touchpoint/namespaces/React/README.md#svgprops)\<`SVGSVGElement`\>
+
+overrides for the `<svg>` element, e.g. a different `viewBox` or stroke-based styling
+
+#### Returns
+
+`Icon`
+
+an icon component
+
+#### Example
+
+```tsx
+import { createIcon } from "@amazon-connect-touchpoint/web";
+
+const Close = createIcon(
+  <path d="M5 5L19 19M19 5L5 19" stroke="currentColor" strokeWidth={2} />,
+);
+
+touchpoint.update({ icons: { Close } });
+```
 
 ## Live Sync
 
