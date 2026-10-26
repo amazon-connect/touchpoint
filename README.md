@@ -253,6 +253,50 @@ supported properties are kept, and anything containing `url()`,
 console warning, since the configuration may arrive as untrusted JSON on the
 `configuration` attribute of the `<connect-touchpoint>` element.
 
+#### Icons
+
+Every built-in icon can be replaced with the `icons` option. Keys are the names
+of the icons Touchpoint exports as `Icons` (e.g. `Close`, `Send`, `Mic`,
+`Restart`); values are React components. Icons you leave out keep their default,
+and the override applies everywhere Touchpoint renders that icon. It can be
+changed later with `touchpoint.update({ icons })`.
+
+The easiest way to make an icon is `createIcon`, which takes the SVG content:
+
+```jsx
+import { create, createIcon, html } from "@amazon-connect-touchpoint/web";
+
+// Create icons once, outside of any render, so their identity stays stable.
+const Send = createIcon(html`<path d="M3 20L21 12L3 4V10L15 12L3 14V20Z" />`);
+
+const touchpoint = await create({
+  config: {/* … */},
+  icons: { Send },
+});
+```
+
+`createIcon` handles the details the built-in icons rely on, so your SVG only
+needs the shapes:
+
+- **24×24 container.** The SVG is rendered with `viewBox="0 0 24 24"`, so draw
+  your paths on a 24×24 grid. Pass a second argument to change it, e.g.
+  `createIcon(children, { viewBox: "0 0 16 16" })`.
+- **`currentColor`.** Shapes are filled with `currentColor` by default, so the
+  icon picks up the text color of the button or label it sits in, including
+  hover and disabled states. Avoid hard-coded colors in your paths. For
+  stroke-based artwork, set `fill: "none"` and `stroke: "currentColor"` in the
+  second argument:
+  `createIcon(<path d="…" />, { fill: "none", stroke: "currentColor", strokeWidth: 2 })`.
+- **Sizing and `className`.** The `size` (in pixels) and `className` props are
+  applied to the `<svg>` for you. Without a `size` the icon fills its container.
+- **Accessibility.** The icon is hidden from assistive technology; the
+  accessible name always comes from the surrounding button or text.
+
+You can also pass any React component that accepts `size` and `className`
+instead, for example one that renders an icon from your own design system. It is
+then responsible for those props, and for using `currentColor` if it should
+follow the surrounding text color.
+
 ### Welcome screen
 
 For text conversations, the opening assistant message is presented as an
@@ -517,7 +561,7 @@ Common entry points:
   `onContactEnded`, `userMessageBubble`, `agentMessageBubble`,
   `userMessageBubbleStyle`, `agentMessageBubbleStyle`,
   `welcomeScreen`, `welcomeScreenLogo`, `showParticipantInfo`, `assistantName`,
-  `assistantIcon`, `avatarShape`, …).
+  `assistantIcon`, `avatarShape`, `icons`, …).
 - `ConnectConfig` — Amazon Connect Customer connection details.
 - `LiveSyncConnection` / `LiveSyncContextInput` — Live Sync connection and the
   actions / scopes / destinations you advertise to the AI agent.

@@ -1,5 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { type FC, type SVGProps } from "react";
+import { type FC } from "react";
+
+import { iconSvgProps } from "./createIcon";
 
 /**
  * Props for icon components
@@ -19,16 +21,6 @@ export interface IconProps {
  * Type definition for an icon component
  */
 export type Icon = FC<IconProps>;
-
-const iconSvgProps = (props: IconProps): SVGProps<SVGSVGElement> => ({
-  width: props.size != null ? `${props.size}px` : "100%",
-  height: props.size != null ? `${props.size}px` : "100%",
-  className: props.className,
-  // Icons are decorative: the accessible name always comes from the
-  // surrounding button or text, so keep them out of the accessibility tree.
-  "aria-hidden": true,
-  focusable: false,
-});
 
 export const Action: Icon = (props) => {
   return (

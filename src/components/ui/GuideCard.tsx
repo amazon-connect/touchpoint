@@ -4,7 +4,7 @@ import { type FC, useEffect, useRef, useState } from "react";
 
 import { type ResolvedView, loadViewRenderer } from "../../connect";
 import { useCopy } from "../../utils/useCopy";
-import { Guide, Close } from "./Icons";
+import { useIcons } from "../../utils/useIcons";
 import { IconButton } from "./IconButton";
 
 /**
@@ -72,6 +72,7 @@ export const GuideCard: FC<{
   onDescribeView?: (viewToken: string) => Promise<ResolvedView | null>;
   onOpen: (guide: OpenGuide) => void;
 }> = ({ guide, onDescribeView, onOpen }) => {
+  const { Guide } = useIcons();
   const copy = useCopy();
   const [view, setView] = useState<ResolvedView | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -202,6 +203,7 @@ export const GuideModal: FC<{
   onComplete,
   onClose,
 }) => {
+  const { Close } = useIcons();
   const copy = useCopy();
   const containerRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");

@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 
 import { type AuthenticationStatus } from "../connect";
 import { useCopy } from "../utils/useCopy";
-import { ArrowForward, Check, Error as ErrorIcon } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { TextButton } from "./ui/TextButton";
 
 // Terminal-negative statuses, shown with an error style.
@@ -43,6 +43,7 @@ export const Authentication: FC<{
   onAuthenticate: () => void;
   onCancel?: () => void;
 }> = ({ status, onAuthenticate, onCancel }) => {
+  const { ArrowForward, Check, Error: ErrorIcon } = useIcons();
   const copy = useCopy().authentication ?? DEFAULT_COPY;
   const isFailure = FAILURE_STATUSES.includes(status);
 

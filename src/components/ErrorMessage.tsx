@@ -1,10 +1,11 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC } from "react";
-import { Warning } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 
 export const ErrorMessage: FC<{
   message: string;
 }> = ({ message }) => {
+  const { Warning } = useIcons();
   return (
     <div
       role="alert"

@@ -1,7 +1,7 @@
 import { clsx } from "clsx";
 import { type FC, useRef, useState } from "react";
 import { InputMask } from "@react-input/mask";
-import { ArrowForward, Date } from "./Icons";
+import { useIcons } from "../../utils/useIcons";
 import { IconButton } from "./IconButton";
 
 /**
@@ -40,6 +40,7 @@ const options = {
  * @category Modality components
  */
 export const DateInput: FC<DateInputProps> = ({ onSubmit, className }) => {
+  const { ArrowForward, Date } = useIcons();
   const isDisabled = onSubmit == null;
 
   const [parsedInput, setParsedInput] = useState<string | null>(null);

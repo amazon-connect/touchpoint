@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 
 import { type MessageStatus } from "../../interface";
 import { useCopy } from "../../utils/useCopy";
-import { Check, CheckDouble, Error as ErrorIcon, Time } from "./Icons";
+import { useIcons } from "../../utils/useIcons";
 
 /**
  * Delivery status shown under the most recent user message, matching the
@@ -14,6 +14,7 @@ export const MessageStatusRow: FC<{
   status: MessageStatus;
   className?: string;
 }> = ({ status, className }) => {
+  const { Check, CheckDouble, Error: ErrorIcon, Time } = useIcons();
   const copy = useCopy();
   const label = copy.messageStatus[status];
   const iconClass = "w-3.5 h-3.5";

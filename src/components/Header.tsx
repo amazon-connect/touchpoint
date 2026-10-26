@@ -5,15 +5,7 @@ import { clsx } from "clsx";
 import { useCopy } from "../utils/useCopy";
 import { IconButton, type IconButtonType } from "./ui/IconButton";
 import { type BrandIconSource, type ColorMode } from "../interface";
-import {
-  Close,
-  Settings,
-  Restart,
-  Volume,
-  VolumeOff,
-  Undo,
-  Minimize,
-} from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { HeaderContainer } from "./Layout";
 import { BrandIcon } from "./ui/BrandIcon";
 import { type CustomStyle } from "../utils/customStyle";
@@ -52,6 +44,8 @@ export const Header: FC<HeaderProps> = ({
   reset,
   enabled,
 }) => {
+  const { Close, Minimize, Restart, Settings, Volume, VolumeOff, Undo } =
+    useIcons();
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();

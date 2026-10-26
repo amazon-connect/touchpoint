@@ -8,7 +8,6 @@ import cssRaw from "./index.css?inline";
 import * as Icons from "./components/ui/Icons";
 import { TextButton } from "./components/ui/TextButton";
 import { IconButton } from "./components/ui/IconButton";
-import { MessageButton } from "./components/ui/MessageButton";
 import { Ripple } from "./components/Ripple";
 import { BaseText, SmallText } from "./components/ui/Typography";
 import {
@@ -73,7 +72,6 @@ const createHtml = (
 export const html = createHtml({
   TextButton,
   IconButton,
-  MessageButton,
   BaseText,
   SmallText,
   DateInput,
@@ -95,10 +93,6 @@ export {
   type IconButtonProps,
   type IconButtonType,
 } from "./components/ui/IconButton";
-export {
-  type MessageButtonProps,
-  type MessageButtonType,
-} from "./components/ui/MessageButton";
 export { type TextButtonProps } from "./components/ui/TextButton";
 export type {
   WindowSize,
@@ -125,6 +119,9 @@ export type {
 } from "./interface";
 export { ChatClient } from "./connect";
 export { type CustomStyle } from "./utils/customStyle";
+export { createIcon } from "./components/ui/createIcon";
+export { type IconProps, type Icon } from "./components/ui/Icons";
+export { type IconName, type IconOverrides } from "./utils/useIcons";
 
 export {
   analyzePageForms,
@@ -311,6 +308,7 @@ const visualConfigurationKeys: Array<keyof TouchpointVisualConfiguration> = [
   "headerStyle",
   "showVoiceTranscript",
   "copy",
+  "icons",
 ];
 
 /**
@@ -380,7 +378,6 @@ export { Container as PreviewContainer } from "./preview";
 export {
   TextButton,
   IconButton,
-  MessageButton,
   BaseText,
   SmallText,
   DateInput,

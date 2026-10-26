@@ -24,7 +24,7 @@ import { Ripple } from "./Ripple";
 import { Loader } from "./ui/Loader";
 import { IconButton } from "./ui/IconButton";
 import { TextButton } from "./ui/TextButton";
-import { Touchpoint, Mic, MicOff, Restart } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { type VoiceHandler, type VoiceState, initiateVoice } from "../voice";
 import { VoiceModalities } from "./VoiceModalities";
 
@@ -80,6 +80,7 @@ export const VoiceIcon: FC<{
   addRipple: boolean;
   className?: string;
 }> = ({ brandIcon, colorMode, addRipple, className }) => {
+  const { Touchpoint } = useIcons();
   return (
     <div className={clsx("rounded-full w-fit", className)}>
       <div
@@ -117,6 +118,7 @@ export const FullscreenVoice: FC<Props> = ({
   modalityComponents,
   onVoiceSessionEnded,
 }) => {
+  const { Mic, MicOff, Restart, Touchpoint } = useIcons();
   const [voice, setVoice] = useWidgetVoiceState();
 
   const setSpeakers = useMemo(() => {
@@ -215,7 +217,7 @@ export const FullscreenVoice: FC<Props> = ({
         <FullscreenError />
         <div className="w-full px-3 h-20 flex items-center max-w-content mx-auto">
           <TextButton
-            type="ghost"
+            type="subtle"
             label="Retry"
             Icon={Restart}
             onClick={() => {

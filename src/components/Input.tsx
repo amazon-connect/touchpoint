@@ -15,7 +15,7 @@ import { type ConnectConversationHandler } from "../connect";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton } from "./ui/IconButton";
-import { Send, Attachment, Delete, Check, Error } from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { useTailwindMediaQuery } from "../utils/useTailwindMediaQuery";
 
 interface InputProps {
@@ -47,6 +47,7 @@ export const Input: FC<InputProps> = ({
   enabled,
   attachmentsEnabled = false,
 }) => {
+  const { Attachment, Check, Delete, Error, Send } = useIcons();
   const copy = useCopy();
 
   // Text state

@@ -1,7 +1,7 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { type FC } from "react";
 import { IconButton } from "./IconButton";
-import { Close } from "./Icons";
+import { useIcons } from "../../utils/useIcons";
 
 interface ViewMediaModalProps {
   onClose: () => void;
@@ -10,6 +10,7 @@ interface ViewMediaModalProps {
 }
 
 const ViewMediaModal: FC<ViewMediaModalProps> = ({ onClose, src, type }) => {
+  const { Close } = useIcons();
   return (
     <div className="absolute inset-0 bg-black/50 z-10" onClick={onClose}>
       {type === "picture" && (

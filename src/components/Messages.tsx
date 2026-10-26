@@ -28,16 +28,7 @@ import { useCopy } from "../utils/useCopy";
 import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
 import { TextButton, TextButtonGroup } from "./ui/TextButton";
-import {
-  Send,
-  ArrowRight,
-  ArrowDown,
-  OpenInNew,
-  User,
-  Bot,
-  Escalate,
-  Attachment,
-} from "./ui/Icons";
+import { useIcons } from "../utils/useIcons";
 import { UnsemanticIconButton } from "./ui/IconButton";
 import { MessageStatusRow } from "./ui/MessageStatusRow";
 import { MessageTimestamp } from "./ui/MessageTimestamp";
@@ -104,6 +95,7 @@ export const MessageChoices: FC<{
   responseIndex: number;
   messageIndex: number;
 }> = ({ handler, message, responseIndex, messageIndex }) => {
+  const { Send } = useIcons();
   return message.choices.length > 0 ? (
     <TextButtonGroup
       role="group"
@@ -168,6 +160,7 @@ const ParticipantAvatar: FC<{
   /** Avatar shape: fully round (default) or square (inner radius). */
   shape?: "round" | "square";
 }> = ({ role, name, iconUrl, shape = "round" }) => {
+  const { Bot, Escalate, User } = useIcons();
   const radius = shape === "square" ? "rounded-none" : "rounded-full";
   if (iconUrl != null) {
     return (
@@ -204,6 +197,7 @@ const AttachmentPill: FC<{
   name: string;
   onClick?: () => void;
 }> = ({ name, onClick }) => {
+  const { Attachment } = useIcons();
   return (
     <button
       type="button"
@@ -370,6 +364,7 @@ const consolidateSources = (
 const Sources: FC<{ sources: KnowledgeBaseResponseSource[] }> = ({
   sources,
 }) => {
+  const { ArrowDown, ArrowRight, OpenInNew } = useIcons();
   const [open, setOpen] = useState<boolean>(false);
   const consolidatedSources = useMemo(
     () => consolidateSources(sources),
