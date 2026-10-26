@@ -53,15 +53,8 @@ export const Header: FC<HeaderProps> = ({
   hiddenElements = [],
   addedElements = [],
 }) => {
-  const {
-    Close,
-    Minimize,
-    Restart,
-    Settings,
-    Volume,
-    VolumeOff,
-    Undo,
-  } = useIcons();
+  const { Close, Minimize, Restart, Settings, Volume, VolumeOff, Undo } =
+    useIcons();
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();
