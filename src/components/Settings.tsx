@@ -5,7 +5,7 @@ import { useIcons } from "../utils/useIcons";
 import { useCopy } from "../utils/useCopy";
 import { TextButton } from "./ui/TextButton";
 import { clsx } from "clsx";
-import { IconButton } from "./ui/IconButton";
+import { EndConversationConfirm } from "./EndConversationConfirm";
 
 interface SettingsProps {
   onClose: () => void;
@@ -34,7 +34,7 @@ export const Settings: FC<SettingsProps> = ({
   voiceMode = false,
   className,
 }) => {
-  const { Close, Download, LogOut, Warning, Restart } = useIcons();
+  const { Download, LogOut, Restart } = useIcons();
   const copy = useCopy();
   const [confirmEnd, setConfirmEnd] = useState<boolean>(false);
 
@@ -81,49 +81,16 @@ export const Settings: FC<SettingsProps> = ({
       </div>
 
       {confirmEnd ? (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-secondary60 p-4">
-          <div className="w-full max-w-sm rounded-outer bg-background backdrop-blur-overlay p-4 space-y-6 border border-solid border-primary-10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-primary">
-                <Warning className="size-5 flex-none" />
-                <span className="text-xl">
-                  {copy.endConversationConfirm.title}
-                </span>
-              </div>
-              <IconButton
-                type="ghost"
-                Icon={Close}
-                label={copy.endConversationConfirm.cancel}
-                onClick={() => {
-                  setConfirmEnd(false);
-                }}
-              />
-            </div>
-            <p className="text-sm text-primary">
-              {copy.endConversationConfirm.body}
-            </p>
-            <div className="space-y-2">
-              <TextButton
-                label={copy.endConversationConfirm.cancel}
-                Icon={Close}
-                type="subtle"
-                onClick={() => {
-                  setConfirmEnd(false);
-                }}
-              />
-              <TextButton
-                label={copy.endConversationConfirm.confirm}
-                Icon={LogOut}
-                type="error"
-                onClick={() => {
-                  setConfirmEnd(false);
-                  onEndConversation();
-                  onClose();
-                }}
-              />
-            </div>
-          </div>
-        </div>
+        <EndConversationConfirm
+          onCancel={() => {
+            setConfirmEnd(false);
+          }}
+          onConfirm={() => {
+            setConfirmEnd(false);
+            onEndConversation();
+            onClose();
+          }}
+        />
       ) : null}
     </div>
   );

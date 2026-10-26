@@ -4,7 +4,12 @@ import { clsx } from "clsx";
 
 import { useCopy } from "../utils/useCopy";
 import { IconButton, type IconButtonType } from "./ui/IconButton";
-import { type BrandIconSource, type ColorMode } from "../interface";
+import {
+  type BrandIconSource,
+  type ColorMode,
+  HiddenElement,
+  AddedElement,
+} from "../interface";
 import { useIcons } from "../utils/useIcons";
 import { HeaderContainer } from "./Layout";
 import { BrandIcon } from "./ui/BrandIcon";
@@ -30,6 +35,8 @@ interface HeaderProps {
   toggleSettings?: () => void;
   isSettingsOpen: boolean;
   enabled: boolean;
+  hiddenElements?: HiddenElement[];
+  addedElements?: AddedElement[];
 }
 
 export const Header: FC<HeaderProps> = ({
@@ -43,6 +50,8 @@ export const Header: FC<HeaderProps> = ({
   isSettingsOpen,
   reset,
   enabled,
+  hiddenElements = [],
+  addedElements = [],
 }) => {
   const { Close, Minimize, Restart, Settings, Volume, VolumeOff, Undo } =
     useIcons();
@@ -50,6 +59,24 @@ export const Header: FC<HeaderProps> = ({
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();
   const hasBrand = brandIcon != null;
+  const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
+  const showClose =
+    addedElements.includes(AddedElement.HeaderClose) && collapse != null;
+  const showSettings =
+    toggleSettings != null &&
+    !hiddenElements.includes(HiddenElement.HeaderSettings);
+  const showSpeaker = speakerControls != null;
+  const showCollapse = collapse != null;
+  // The first right-hand control carries `ml-auto` to push the group right.
+  // With a brand icon, a visible reset button leads the group instead.
+  const rightControls = [
+    { key: "restart", visible: hasBrand && showRestart },
+    { key: "settings", visible: showSettings },
+    { key: "speaker", visible: showSpeaker },
+    { key: "collapse", visible: showCollapse },
+    { key: "close", visible: showClose },
+  ];
+  const firstRight = rightControls.find((c) => c.visible)?.key;
   return (
     <HeaderContainer style={style}>
       {brandIcon != null ? (
@@ -57,22 +84,24 @@ export const Header: FC<HeaderProps> = ({
       ) : null}
       {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
           controls). */}
-      <IconButton
-        label={copy.restartConversationButtonLabel}
-        className={hasBrand ? "ml-auto" : undefined}
-        type={iconButtonType}
-        onClick={
-          enabled
-            ? () => {
-                reset();
-              }
-            : undefined
-        }
-        Icon={Restart}
-      />
-      {toggleSettings != null ? (
+      {showRestart ? (
         <IconButton
-          className={hasBrand ? undefined : "ml-auto"}
+          label={copy.restartConversationButtonLabel}
+          className={firstRight === "restart" ? "ml-auto" : undefined}
+          type={iconButtonType}
+          onClick={
+            enabled
+              ? () => {
+                  reset();
+                }
+              : undefined
+          }
+          Icon={Restart}
+        />
+      ) : null}
+      {showSettings ? (
+        <IconButton
+          className={firstRight === "settings" ? "ml-auto" : undefined}
           Icon={isSettingsOpen ? Undo : Settings}
           label={isSettingsOpen ? "Close settings" : "Settings"}
           type={iconButtonType}
@@ -81,6 +110,7 @@ export const Header: FC<HeaderProps> = ({
       ) : null}
       {speakerControls != null ? (
         <IconButton
+          className={firstRight === "speaker" ? "ml-auto" : undefined}
           Icon={speakerControls.enabled ? Volume : VolumeOff}
           label="Speakers"
           // Neutral in both states; the icon (Volume vs VolumeOff) conveys state.
@@ -94,7 +124,7 @@ export const Header: FC<HeaderProps> = ({
         <IconButton
           label={isVoice ? "Close" : "Collapse"}
           type={isVoice ? "error" : iconButtonType}
-          className={clsx(toggleSettings == null && !hasBrand ? "ml-auto" : "")}
+          className={clsx(firstRight === "collapse" ? "ml-auto" : "")}
           onClick={
             enabled
               ? () => {
@@ -103,6 +133,21 @@ export const Header: FC<HeaderProps> = ({
               : undefined
           }
           Icon={isVoice ? Close : Minimize}
+        />
+      ) : null}
+      {showClose ? (
+        <IconButton
+          label="Close"
+          type={iconButtonType}
+          className={firstRight === "close" ? "ml-auto" : undefined}
+          onClick={
+            enabled
+              ? () => {
+                  collapse?.(new Event("collapse"));
+                }
+              : undefined
+          }
+          Icon={Close}
         />
       ) : null}
     </HeaderContainer>
