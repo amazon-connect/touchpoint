@@ -40,12 +40,7 @@ export const createIcon = (
   svgProps?: SVGProps<SVGSVGElement>,
 ): Icon => {
   const CustomIcon: Icon = (props) => (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      {...svgProps}
-      {...iconSvgProps(props)}
-    >
+    <svg viewBox="0 0 24 24" {...svgProps} {...iconSvgProps(props)}>
       {children}
     </svg>
   );

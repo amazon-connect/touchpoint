@@ -15,6 +15,7 @@ import {
   CustomCardRow,
   CustomCardImageRow,
 } from "./components/ui/CustomCard";
+import { Banner } from "./components/ui/Banner";
 import { Carousel } from "./components/ui/Carousel";
 import { DateInput } from "./components/ui/DateInput";
 import type {
@@ -75,6 +76,7 @@ export const html = createHtml({
   BaseText,
   SmallText,
   DateInput,
+  Banner,
   Carousel,
   CustomCard,
   CustomCardRow,
@@ -89,6 +91,7 @@ export {
   type CustomCardRowProps,
 } from "./components/ui/CustomCard";
 export { type DateInputProps } from "./components/ui/DateInput";
+export { type BannerProps, type BannerType } from "./components/ui/Banner";
 export {
   type IconButtonProps,
   type IconButtonType,
@@ -375,6 +378,7 @@ export {
   BaseText,
   SmallText,
   DateInput,
+  Banner,
   Carousel,
   CustomCard,
   CustomCardRow,
