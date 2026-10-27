@@ -100,7 +100,7 @@ const StartNewConversationButton: FC<{ onClick: () => void }> = ({
   const copy = useCopy();
   return (
     <TextButton
-      type="subtle"
+      type="main"
       label={copy.startNewConversationButtonLabel}
       Icon={Restart}
       onClick={onClick}

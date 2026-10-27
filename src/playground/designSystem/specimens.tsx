@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
+import { Banner, type BannerType } from "../../components/ui/Banner";
 import { Carousel } from "../../components/ui/Carousel";
 import {
   CustomCard,
@@ -207,6 +208,18 @@ const IconButtons: FC = () => (
           Icon={Icons.Close}
         />
         <IconButton type={type} label={`${type} disabled`} Icon={Icons.Close} />
+      </Row>
+    ))}
+  </>
+);
+
+const BANNER_TYPES: BannerType[] = ["error", "warning", "success"];
+
+const Banners: FC = () => (
+  <>
+    {BANNER_TYPES.map((type) => (
+      <Row key={type} label={`type: ${type}`} columns>
+        <Banner type={type}>Lorem ipsum dolor sit amet, consectetur.</Banner>
       </Row>
     ))}
   </>
@@ -1576,6 +1589,22 @@ export const CONFIGURATION_SPECIMENS: Specimen[] = [
 
 /** Every component gallery, in navigation order. */
 export const COMPONENT_SPECIMENS: Specimen[] = [
+  {
+    id: "banner",
+    title: "Banner",
+    description:
+      "Pill-shaped message for errors, warnings and successes; each type has a default icon that `Icon` can replace.",
+    Component: Banners,
+    code: `import { html } from "@amazon-connect-touchpoint/web";
+
+const MyModality = ({ data }) => html\`
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <Banner type="error">\${data.error}</Banner>
+    <Banner type="warning">\${data.warning}</Banner>
+    <Banner type="success">\${data.success}</Banner>
+  </div>
+\`;`,
+  },
   {
     id: "cards",
     title: "Cards",

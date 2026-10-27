@@ -15,7 +15,7 @@ import { TextButton } from "./ui/TextButton";
 import { BrandIcon } from "./ui/BrandIcon";
 import { useWidgetVoiceState } from "./FullscreenVoice";
 import { VoiceModalities } from "./VoiceModalities";
-import { ErrorMessage } from "./ErrorMessage";
+import { Banner } from "./ui/Banner";
 import {
   VoiceMiniControls,
   VoiceMiniPanel,
@@ -167,7 +167,7 @@ export const VoiceMini: FC<{
   if (voice.type === "error") {
     return (
       <VoiceMiniPanel onClose={onClose != null ? onCloseHandler : undefined}>
-        <ErrorMessage message="I couldn’t connect" />
+        <Banner type="error">I couldn’t connect</Banner>
         <TextButton
           type="subtle"
           label="Retry"

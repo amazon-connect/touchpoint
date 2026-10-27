@@ -25,7 +25,6 @@ import { Authentication } from "./Authentication";
 
 import { SafeMarkdown } from "./SafeMarkdown";
 import { useCopy } from "../utils/useCopy";
-import { ErrorMessage } from "./ErrorMessage";
 import { Loader } from "./ui/Loader";
 import { TextButton, TextButtonGroup } from "./ui/TextButton";
 import { useIcons } from "../utils/useIcons";
@@ -47,6 +46,7 @@ import {
   type OpenGuide,
 } from "./ui/GuideCard";
 import { type CustomStyle } from "../utils/customStyle";
+import { Banner } from "./ui/Banner";
 
 export interface MessagesProps {
   interimMessage?: string;
@@ -673,10 +673,9 @@ export const Messages: FC<MessagesProps> = ({
           // Failure
           if (response.type === ResponseType.Failure) {
             return (
-              <ErrorMessage
-                key={responseIndex}
-                message={response.payload.text}
-              />
+              <Banner key={responseIndex} type="error">
+                {response.payload.text}
+              </Banner>
             );
           }
 
@@ -793,7 +792,9 @@ export const Messages: FC<MessagesProps> = ({
                     <Sources sources={response.payload.metadata.sources} />
                   ) : null}
                   <ErrorBoundary
-                    fallback={<ErrorMessage message="Something went wrong" />}
+                    fallback={
+                      <Banner type="error">Something went wrong</Banner>
+                    }
                   >
                     {Object.entries(response.payload.modalities ?? {}).map(
                       ([key, value]) => {

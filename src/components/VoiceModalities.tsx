@@ -13,7 +13,7 @@ import { type ConnectConversationHandler } from "../connect";
 import { SafeMarkdown } from "./SafeMarkdown";
 import { ErrorBoundary } from "react-error-boundary";
 import { UserMessage } from "./Messages";
-import { ErrorMessage } from "./ErrorMessage";
+import { Banner } from "./ui/Banner";
 
 interface ModalityEntry {
   key: string;
@@ -136,7 +136,9 @@ export const VoiceModalities: FC<{
 
   return (
     <div className={className} ref={containerRef}>
-      <ErrorBoundary fallback={<ErrorMessage message="Something went wrong" />}>
+      <ErrorBoundary
+        fallback={<Banner type="error">Something went wrong</Banner>}
+      >
         {displayElements}
       </ErrorBoundary>
     </div>
