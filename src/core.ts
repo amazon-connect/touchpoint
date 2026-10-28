@@ -127,6 +127,19 @@ export interface ConversationHandler {
   ) => void;
 
   /**
+   * Respond to a multi-select [choice](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/overview/nodes#user-choice) from the application.
+   * The choice IDs are sent joined by `", "`, and the joined value is persisted as the message's `selectedChoiceId`.
+   * @param choiceIds - The `choiceId`s of the selected choices, from the {@link ApplicationResponse}'s `.payload.messages[].choices[].choiceId` fields
+   * @param context - [Context](https://docs.nlx.ai/platform/nlx-platform-guide/build-with-nlx/flows/context-variables#what-are-context-variables) for usage later in the flow.
+   * @param metadata - links the choices to the specific message and node in the conversation.
+   */
+  sendChoices: (
+    choiceIds: string[],
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ) => void;
+
+  /**
    * Trigger the welcome flow. This should be done when the user starts interacting with the conversation.
    * @param context - [Context](https://docs.nlx.ai/platform/nlx-platform-guide/build-with-nlx/flows/context-variables#what-are-context-variables) for usage later in the flow.
    */
@@ -531,6 +544,10 @@ export interface ApplicationMessage {
    * A selection of choices to show to the user. They may choose one of them.
    */
   choices: Choice[];
+  /**
+   * Specifies whether the choices are multiselect
+   */
+  multiSelect?: boolean;
   /**
    * Metadata
    */
@@ -1207,6 +1224,7 @@ const fetchUserMessage = async ({
                 messages.push({
                   text: json.text,
                   choices: json.choices ?? [],
+                  multiSelect: json.multiSelect,
                   messageId: json.messageId,
                   metadata: json.metadata,
                 });
@@ -1238,6 +1256,7 @@ const fetchUserMessage = async ({
           (json) => ({
             text: json.text,
             choices: json.choices ?? [],
+            multiSelect: json.multiSelect,
             messageId: json.messageId,
             metadata: json.metadata,
           }),
@@ -1395,6 +1414,7 @@ export function createConversation(configuration: Config): ConversationHandler {
           messages: response.messages.map((message: any) => ({
             nodeId: message.nodeId,
             messageId: message.messageId,
+            multiSelect: message.multiSelect,
             text: message.text,
             choices: message.choices ?? [],
           })),
@@ -1727,6 +1747,15 @@ export function createConversation(configuration: Config): ConversationHandler {
     });
   };
 
+  const sendChoices = (
+    choiceIds: string[],
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ): void => {
+    // The joined IDs are both sent to the application and persisted as `selectedChoiceId`
+    sendChoice(choiceIds.join(", "), context, metadata);
+  };
+
   const unsubscribe = (subscriber: Subscriber): void => {
     subscribers = subscribers.filter((fn) => fn !== subscriber);
   };
@@ -1815,6 +1844,7 @@ export function createConversation(configuration: Config): ConversationHandler {
       sendFlow(welcomeIntent, context);
     },
     sendChoice,
+    sendChoices,
     submitFeedback: async (feedbackUrl, feedback): Promise<void> => {
       const res = await fetch(feedbackUrl, {
         method: "POST",
