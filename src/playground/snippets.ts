@@ -75,6 +75,7 @@ export const buildCreateSnippet = ({
     isVoice && settings.voiceEndpoint !== ""
       ? `    voiceEndpoint: ${q(settings.voiceEndpoint)},`
       : null,
+    isVoice && settings.screenShare === "on" ? "    screenShare: true," : null,
     isText && settings.authEndpoint !== ""
       ? `    authenticationEndpoint: ${q(settings.authEndpoint)},`
       : null,

@@ -27,6 +27,7 @@ import { TextButton } from "./ui/TextButton";
 import { useIcons } from "../utils/useIcons";
 import { type VoiceHandler, type VoiceState, initiateVoice } from "../voice";
 import { VoiceModalities } from "./VoiceModalities";
+import { type ScreenShareControl, toScreenShareControl } from "./ScreenShare";
 
 interface Props {
   colorMode: ColorMode;
@@ -40,6 +41,8 @@ interface Props {
   modalityComponents: Record<string, CustomModalityComponent<unknown>>;
   /** Called when the voice session ends (call disconnected / agent hung up). */
   onVoiceSessionEnded?: () => void;
+  /** Reports the screen share control of the live session (`null` when there is none). */
+  onScreenShareChange?: (control: ScreenShareControl | null) => void;
 }
 
 export type WidgetVoiceState =
@@ -117,6 +120,7 @@ export const FullscreenVoice: FC<Props> = ({
   context,
   modalityComponents,
   onVoiceSessionEnded,
+  onScreenShareChange,
 }) => {
   const { Mic, MicOff, Restart, Touchpoint } = useIcons();
   const [voice, setVoice] = useWidgetVoiceState();
@@ -175,6 +179,18 @@ export const FullscreenVoice: FC<Props> = ({
       onVoiceSessionEnded?.();
     }
   }, [terminated, onVoiceSessionEnded]);
+
+  // Surface screen sharing (offered by the agent during the call) to the app.
+  useEffect(() => {
+    onScreenShareChange?.(
+      voice != null && voice !== "loading" && voice.type === "success"
+        ? toScreenShareControl(voice.handler, voice.state)
+        : null,
+    );
+    return () => {
+      onScreenShareChange?.(null);
+    };
+  }, [voice, onScreenShareChange]);
 
   const retry = async (): Promise<void> => {
     try {

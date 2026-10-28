@@ -46,6 +46,11 @@ export interface ConnectChatConfig {
    */
   voiceDetails?: () => Promise<WebRtcConnectionData>;
   /**
+   * Whether the WebRTC contact may carry a screen share (the agent starts it).
+   * Requested from the StartWebRTCContact proxy.
+   */
+  screenShare?: boolean;
+  /**
    * Whether to open an Amazon Connect Chat session. Defaults to `true`; set `false` for
    * voice-only inputs (`voice`/`voiceMini`), which use a WebRTC contact instead of chat.
    */
@@ -197,7 +202,10 @@ export interface WebRtcConnectionData {
  */
 export const fetchWebRtcConnectionData = async (
   endpoint: string,
-  params: DetailsRequestParams,
+  params: DetailsRequestParams & {
+    /** Allow the customer and agent to send a screen share on this contact. */
+    screenShare?: boolean;
+  },
 ): Promise<WebRtcConnectionData> => {
   // Include both naming conventions so the same call works against a standard
   // StartWebRTCContact-shaped proxy (InstanceId / ParticipantDetails.DisplayName) and the
@@ -213,6 +221,15 @@ export const fetchWebRtcConnectionData = async (
     },
     Attributes: params.contactAttributes,
   };
+  if (params.screenShare === true) {
+    // `screenShare` is the flag shorthand used by the iOS sample backend;
+    // `AllowedCapabilities` is the StartWebRTCContact-shaped equivalent.
+    body.screenShare = true;
+    body.AllowedCapabilities = {
+      Customer: { ScreenShare: "SEND" },
+      Agent: { ScreenShare: "SEND" },
+    };
+  }
 
   // Send as a CORS "simple request" (text/plain, no custom headers) so the browser skips
   // the OPTIONS preflight. The proxy Lambda parses the JSON body regardless of content
@@ -1449,6 +1466,8 @@ export const createConnectChatConversation = (
       viewName?: string;
     }) => void;
     startWebRtcContact: () => Promise<WebRtcConnectionData>;
+    /** Whether the Connect config allows screen sharing over WebRTC. */
+    screenShareEnabled: boolean;
     sendStep: (params: {
       stepId: string;
       scriptId: string;
@@ -1728,6 +1747,8 @@ export const createConnectChatConversation = (
         message,
       });
     },
+
+    screenShareEnabled: config.screenShare === true,
 
     // Resolves the WebRTC connection data (Chime Meeting + Attendee) used to open a voice
     // session, via the configured StartWebRTCContact proxy.

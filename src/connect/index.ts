@@ -43,6 +43,15 @@ export interface ConnectConfig extends DetailsRequestParams {
    * and `voiceMini` inputs.
    */
   voiceEndpoint?: string;
+  /**
+   * Let an Amazon Connect agent see the customer's screen during a `voice` or
+   * `voiceMini` call. The agent starts the share from their workspace; the customer
+   * is then asked to confirm and pick what to share. Requires `voiceEndpoint`, whose
+   * StartWebRTCContact proxy must allow `ScreenShare: "SEND"` (sent as
+   * `AllowedCapabilities`, and as `screenShare: true`). Has no effect with the
+   * `text` input.
+   */
+  screenShare?: boolean;
   /** AWS region (e.g. "us-east-1"). Defaults to "us-west-2". */
   region?: string;
   /**
@@ -131,6 +140,7 @@ export const buildConnectHandler = (
             contactFlowId: config.contactFlowId,
             participantDisplayName: config.participantDisplayName,
             contactAttributes: config.contactAttributes,
+            screenShare: config.screenShare,
           })
       : undefined;
 
@@ -146,6 +156,7 @@ export const buildConnectHandler = (
   return createConnectChatConversation({
     details,
     ...(voiceDetails != null ? { voiceDetails } : {}),
+    ...(config.screenShare != null ? { screenShare: config.screenShare } : {}),
     chatEnabled: options?.chatEnabled ?? true,
     region: config.region,
     ...(config.instanceId != null ? { instanceId: config.instanceId } : {}),

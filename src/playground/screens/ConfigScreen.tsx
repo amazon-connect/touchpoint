@@ -155,6 +155,23 @@ export const ConfigScreen: FC<{
           </Field>
         )}
 
+        {/* Screen share — voice modes only. */}
+        {isVoiceMode(inputMode) && (
+          <Field
+            label="Screen share"
+            tip="Let an Amazon Connect agent see the customer's screen. Sends AllowedCapabilities (ScreenShare: SEND) to your StartWebRTCContact endpoint; The agent also needs screen sharing enabled in their security profile."
+          >
+            <Segmented
+              label="Screen share"
+              value={settings.screenShare}
+              options={ON_OFF}
+              onChange={(value: Toggle) => {
+                onChange({ screenShare: value });
+              }}
+            />
+          </Field>
+        )}
+
         {/* Immersive welcome screen — chat only. */}
         {isChat && (
           <Field
