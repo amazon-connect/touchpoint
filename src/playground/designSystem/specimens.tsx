@@ -796,7 +796,7 @@ const ColorSwatchButton: FC<{
     }
     className={clsx(
       "relative cursor-pointer rounded-[8px] border border-solid border-primary-20",
-      isOpen && "outline-2 outline-offset-2 outline-accent",
+      isOpen && "outline-2 outline-solid outline-offset-2 outline-accent",
       size === "swatch" ? "h-10 w-full" : "size-7 shrink-0",
       className,
     )}
@@ -969,7 +969,7 @@ const Switch: FC<{
       onClick={() => {
         onChange(isOn ? "off" : "on");
       }}
-      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <span className="text-sm text-primary transition-colors group-hover:text-primary">
         {label}
@@ -1660,7 +1660,7 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           chatMode
           colorMode={colorMode}
           uploadedFiles={{}}
-          lastApplicationResponseIndex={3}
+          lastApplicationResponseIndex={responses.length - 1}
           modalityComponents={defaultModalities}
           enabled
           className="flex-grow"

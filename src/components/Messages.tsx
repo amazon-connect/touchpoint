@@ -253,7 +253,7 @@ export const UserMessage: FC<{
       <div
         className={clsx(
           "flex text-base",
-          alignRight ? "justify-end pl-10" : "justify-start",
+          alignRight ? "justify-end pl-12" : "justify-start",
         )}
       >
         <div

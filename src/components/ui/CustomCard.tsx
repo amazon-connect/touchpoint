@@ -67,7 +67,7 @@ export const CustomCard: FC<CustomCardProps> = ({
     "relative block shrink-0 rounded-inner bg-secondary-40 overflow-hidden",
     "before:content-[''] before:absolute before:inset-0 before:bg-transparent",
     "w-80 space-y-px",
-    "focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus",
+    "focus:outline focus:outline-solid focus:outline-2 focus:outline-offset-1 focus:outline-focus",
     "border border-solid",
     selected ? "border-accent" : "border-primary-10",
     onClick != null || href != null ? "hover:before:bg-primary-5" : "",
