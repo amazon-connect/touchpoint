@@ -253,12 +253,12 @@ export const UserMessage: FC<{
       <div
         className={clsx(
           "flex text-base",
-          alignRight ? "justify-end pl-10" : "justify-start",
+          alignRight ? "justify-end pl-12" : "justify-start",
         )}
       >
         <div
           className={clsx(
-            "text-primary-60 rounded-inner whitespace-pre-wrap",
+            "text-primary-90 rounded-inner whitespace-pre-wrap",
             bubble ? "bg-primary-10 px-3 py-2" : "",
           )}
           style={bubble ? bubbleStyle : undefined}
@@ -553,8 +553,8 @@ export const Messages: FC<MessagesProps> = ({
         // `ConversationAnnouncer` mounted above every mode (see `Announcements.tsx`).
       >
         {responses.map((response, responseIndex) => {
-          // When showParticipantInfo is enabled, every message is laid out left-
-          // aligned with the sender's avatar in a fixed gutter and the name + message
+          // When showParticipantInfo is enabled, every non-user message is laid out
+          // left-aligned with the sender's avatar in a fixed gutter and the name + message
           // in the column beside it (matching the design). The avatar and name appear
           // only on the first message of a same-sender sequence.
           const senderKey = senderKeyOf(response);
@@ -600,6 +600,29 @@ export const Messages: FC<MessagesProps> = ({
               node
             );
 
+          // User messages stay right-aligned; with participant info shown they are
+          // preceded by the user's name and avatar.
+          const wrapUser = (node: ReactNode): ReactNode =>
+            showParticipantInfo ? (
+              <div className="space-y-1">
+                <div className="flex items-center justify-end gap-2 text-primary-60 text-base">
+                  <ParticipantAvatar
+                    role="you"
+                    name={copy.participants.you}
+                    shape={avatarShape}
+                  />
+                  <span>{copy.participants.you}</span>
+                </div>
+                {node}
+              </div>
+            ) : (
+              node
+            );
+
+          // Only the first message of a run of user messages gets the header.
+          const wrapFirstUser = (node: ReactNode): ReactNode =>
+            isFirstInSequence ? wrapUser(node) : node;
+
           // User response
           if (response.type === ResponseType.User) {
             const attachmentFile = (response as { attachmentFile?: File })
@@ -607,13 +630,8 @@ export const Messages: FC<MessagesProps> = ({
             if (attachmentFile != null) {
               return (
                 <div key={responseIndex} className={continuationClass}>
-                  {wrap(
-                    <div
-                      className={clsx(
-                        "flex",
-                        showParticipantInfo ? "" : "justify-end",
-                      )}
-                    >
+                  {wrapFirstUser(
+                    <div className="flex justify-end">
                       <AttachmentPill name={attachmentFile.name} />
                     </div>,
                   )}
@@ -623,12 +641,12 @@ export const Messages: FC<MessagesProps> = ({
             if (response.payload.type === "text") {
               return (
                 <div key={responseIndex} className={continuationClass}>
-                  {wrap(
+                  {wrapFirstUser(
                     <UserMessage
                       text={response.payload.text}
                       bubble={userMessageBubble}
                       bubbleStyle={userMessageBubbleStyle}
-                      align={showParticipantInfo ? "left" : "right"}
+                      align="right"
                       timestamp={
                         userMessageTimestamp ? response.receivedAt : undefined
                       }
@@ -649,11 +667,11 @@ export const Messages: FC<MessagesProps> = ({
             ) {
               return (
                 <div key={responseIndex} className={continuationClass}>
-                  {wrap(
+                  {wrapFirstUser(
                     <UserMessage
                       bubble={userMessageBubble}
                       bubbleStyle={userMessageBubbleStyle}
-                      align={showParticipantInfo ? "left" : "right"}
+                      align="right"
                       text={response.payload.utterance}
                       timestamp={
                         userMessageTimestamp ? response.receivedAt : undefined
@@ -832,12 +850,15 @@ export const Messages: FC<MessagesProps> = ({
                     return null;
                   }
                   return (
-                    <UserMessage
-                      key={messageIndex}
-                      text={selectedChoice.choiceText}
-                      bubble={userMessageBubble}
-                      bubbleStyle={userMessageBubbleStyle}
-                    />
+                    <Fragment key={messageIndex}>
+                      {wrapUser(
+                        <UserMessage
+                          text={selectedChoice.choiceText}
+                          bubble={userMessageBubble}
+                          bubbleStyle={userMessageBubbleStyle}
+                        />,
+                      )}
+                    </Fragment>
                   );
                 }
                 return null;

@@ -108,6 +108,12 @@ export const buildCreateSnippet = ({
     isText
       ? `  agentMessageBubble: ${settings.agentMessageBubble === "on"},`
       : null,
+    isText && settings.userMessageTimestamp === "on"
+      ? "  userMessageTimestamp: true,"
+      : null,
+    isText && settings.agentMessageTimestamp === "on"
+      ? "  agentMessageTimestamp: true,"
+      : null,
     ...(isText
       ? styleLines("userMessageBubbleStyle", settings.userMessageBubbleStyle)
       : []),
@@ -207,6 +213,13 @@ export const buildTranscriptSnippet = (settings: Settings): string => {
         : null,
       settings.agentMessageBubble === "on"
         ? "  agentMessageBubble: true,"
+        : null,
+      // Timestamps are off by default in the library.
+      settings.userMessageTimestamp === "on"
+        ? "  userMessageTimestamp: true,"
+        : null,
+      settings.agentMessageTimestamp === "on"
+        ? "  agentMessageTimestamp: true,"
         : null,
       ...styleLines("userMessageBubbleStyle", settings.userMessageBubbleStyle),
       ...styleLines(

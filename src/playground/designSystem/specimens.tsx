@@ -796,7 +796,7 @@ const ColorSwatchButton: FC<{
     }
     className={clsx(
       "relative cursor-pointer rounded-[8px] border border-solid border-primary-20",
-      isOpen && "outline-2 outline-offset-2 outline-accent",
+      isOpen && "outline-2 outline-solid outline-offset-2 outline-accent",
       size === "swatch" ? "h-10 w-full" : "size-7 shrink-0",
       className,
     )}
@@ -969,7 +969,7 @@ const Switch: FC<{
       onClick={() => {
         onChange(isOn ? "off" : "on");
       }}
-      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="group flex w-full cursor-pointer items-center justify-between gap-3 rounded-[6px] border-none bg-transparent p-0 text-left focus:outline-none focus-visible:outline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <span className="text-sm text-primary transition-colors group-hover:text-primary">
         {label}
@@ -1315,8 +1315,16 @@ const GeneralConfiguration: FC<SpecimenProps> = () => {
  * them by key keeps the controls below identical for the user and the agent.
  */
 const BUBBLE_FIELDS = {
-  user: { bubble: "userMessageBubble", style: "userMessageBubbleStyle" },
-  agent: { bubble: "agentMessageBubble", style: "agentMessageBubbleStyle" },
+  user: {
+    bubble: "userMessageBubble",
+    style: "userMessageBubbleStyle",
+    timestamp: "userMessageTimestamp",
+  },
+  agent: {
+    bubble: "agentMessageBubble",
+    style: "agentMessageBubbleStyle",
+    timestamp: "agentMessageTimestamp",
+  },
 } as const satisfies Record<string, Record<string, keyof Settings>>;
 
 /**
@@ -1414,6 +1422,13 @@ const BubbleControls: FC<{
           )}
         </ControlGroupNested>
       )}
+      <Switch
+        label="Timestamp"
+        value={settings[fields.timestamp]}
+        onChange={(value) => {
+          settingsStore.set(fields.timestamp, value);
+        }}
+      />
     </ControlGroup>
   );
 };
@@ -1508,7 +1523,16 @@ const HeaderControls: FC<{
 
 const brandIconExample: BrandIconSource = () => (
   <svg viewBox="0 0 400 100" className="h-full block">
-    <circle cx={200} cy={50} r={25} fill="red" />
+    <circle cx={30} cy={50} r={25} className="fill-accent" />
+    <text
+      x={75}
+      y={50}
+      dominantBaseline="central"
+      fontSize={40}
+      className="fill-primary"
+    >
+      MyBrand
+    </text>
   </svg>
 );
 
@@ -1623,6 +1647,8 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           responses={responses}
           userMessageBubble={settings.userMessageBubble === "on"}
           agentMessageBubble={settings.agentMessageBubble === "on"}
+          userMessageTimestamp={settings.userMessageTimestamp === "on"}
+          agentMessageTimestamp={settings.agentMessageTimestamp === "on"}
           userMessageBubbleStyle={settings.userMessageBubbleStyle}
           agentMessageBubbleStyle={settings.agentMessageBubbleStyle}
           showParticipantInfo={settings.avatars === "on"}
@@ -1634,7 +1660,7 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           chatMode
           colorMode={colorMode}
           uploadedFiles={{}}
-          lastApplicationResponseIndex={3}
+          lastApplicationResponseIndex={responses.length - 1}
           modalityComponents={defaultModalities}
           enabled
           className="flex-grow"

@@ -60,7 +60,7 @@ export const TextButton: FC<TextButtonProps> = ({
       disabled={onClick == null}
       className={clsx(
         type === "grouped" ? null : "rounded-outer",
-        "relative z-10 w-full px-5 py-4 transition-colors flex justify-between items-center focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-focus overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
+        "relative z-10 w-full px-5 py-4 transition-colors flex justify-between items-center focus:outline focus:outline-solid focus:outline-2 focus:outline-offset-1 focus:outline-focus overflow-hidden before:content-[''] before:absolute before:transition-colors before:-z-10 before:inset-0 before:bg-transparent",
         {
           "bg-primary text-secondary enabled:hover:before:bg-primary enabled:active:before:bg-secondary-10 disabled:bg-primary-5 disabled:text-secondary-40":
             type === "main",

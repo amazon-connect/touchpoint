@@ -1,5 +1,5 @@
 /* eslint-disable jsdoc/require-jsdoc */
-import { type SetStateAction, type Dispatch, type FC } from "react";
+import { type SetStateAction, type Dispatch, type FC, useState } from "react";
 import { clsx } from "clsx";
 
 import { useCopy } from "../utils/useCopy";
@@ -14,6 +14,7 @@ import { useIcons } from "../utils/useIcons";
 import { HeaderContainer } from "./Layout";
 import { BrandIcon } from "./ui/BrandIcon";
 import { type CustomStyle } from "../utils/customStyle";
+import { EndConversationConfirm } from "./EndConversationConfirm";
 
 interface HeaderProps {
   colorMode: ColorMode;
@@ -32,6 +33,10 @@ interface HeaderProps {
   /** When undefined, no close/collapse button is rendered. */
   collapse?: (event: Event) => void;
   reset: () => void;
+  /** End the current conversation (asked to confirm first by the close button). */
+  onEndConversation?: () => void;
+  /** Whether the conversation has ended (disables the close button's end step). */
+  ended?: boolean;
   toggleSettings?: () => void;
   isSettingsOpen: boolean;
   enabled: boolean;
@@ -49,6 +54,8 @@ export const Header: FC<HeaderProps> = ({
   toggleSettings,
   isSettingsOpen,
   reset,
+  onEndConversation,
+  ended = false,
   enabled,
   hiddenElements = [],
   addedElements = [],
@@ -58,6 +65,7 @@ export const Header: FC<HeaderProps> = ({
   // All navigation controls live inside the panel now.
   const iconButtonType: IconButtonType = "ghost";
   const copy = useCopy();
+  const [confirmEnd, setConfirmEnd] = useState<boolean>(false);
   const hasBrand = brandIcon != null;
   const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
   const showClose =
@@ -78,78 +86,96 @@ export const Header: FC<HeaderProps> = ({
   ];
   const firstRight = rightControls.find((c) => c.visible)?.key;
   return (
-    <HeaderContainer style={style}>
-      {brandIcon != null ? (
-        <BrandIcon icon={brandIcon} square={isBrandIconSquare ?? true} />
-      ) : null}
-      {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
+    <>
+      <HeaderContainer style={style}>
+        {brandIcon != null ? (
+          <BrandIcon icon={brandIcon} square={isBrandIconSquare ?? true} />
+        ) : null}
+        {/* Reset lives in the top-left (or, with a brand icon, leads the right-hand
           controls). */}
-      {showRestart ? (
-        <IconButton
-          label={copy.restartConversationButtonLabel}
-          className={firstRight === "restart" ? "ml-auto" : undefined}
-          type={iconButtonType}
-          onClick={
-            enabled
-              ? () => {
-                  reset();
-                }
-              : undefined
-          }
-          Icon={Restart}
-        />
-      ) : null}
-      {showSettings ? (
-        <IconButton
-          className={firstRight === "settings" ? "ml-auto" : undefined}
-          Icon={isSettingsOpen ? Undo : Settings}
-          label={isSettingsOpen ? "Close settings" : "Settings"}
-          type={iconButtonType}
-          onClick={enabled ? toggleSettings : undefined}
-        />
-      ) : null}
-      {speakerControls != null ? (
-        <IconButton
-          className={firstRight === "speaker" ? "ml-auto" : undefined}
-          Icon={speakerControls.enabled ? Volume : VolumeOff}
-          label="Speakers"
-          // Neutral in both states; the icon (Volume vs VolumeOff) conveys state.
-          type={iconButtonType}
-          onClick={() => {
-            speakerControls.setEnabled((prev) => !prev);
+        {showRestart ? (
+          <IconButton
+            label={copy.restartConversationButtonLabel}
+            className={firstRight === "restart" ? "ml-auto" : undefined}
+            type={iconButtonType}
+            onClick={
+              enabled
+                ? () => {
+                    reset();
+                  }
+                : undefined
+            }
+            Icon={Restart}
+          />
+        ) : null}
+        {showSettings ? (
+          <IconButton
+            className={firstRight === "settings" ? "ml-auto" : undefined}
+            Icon={isSettingsOpen ? Undo : Settings}
+            label={isSettingsOpen ? "Close settings" : "Settings"}
+            type={iconButtonType}
+            onClick={enabled ? toggleSettings : undefined}
+          />
+        ) : null}
+        {speakerControls != null ? (
+          <IconButton
+            className={firstRight === "speaker" ? "ml-auto" : undefined}
+            Icon={speakerControls.enabled ? Volume : VolumeOff}
+            label="Speakers"
+            // Neutral in both states; the icon (Volume vs VolumeOff) conveys state.
+            type={iconButtonType}
+            onClick={() => {
+              speakerControls.setEnabled((prev) => !prev);
+            }}
+          />
+        ) : null}
+        {collapse != null ? (
+          <IconButton
+            label={isVoice ? "Close" : "Collapse"}
+            type={isVoice ? "error" : iconButtonType}
+            className={clsx(firstRight === "collapse" ? "ml-auto" : "")}
+            onClick={
+              enabled
+                ? () => {
+                    collapse(new Event("collapse"));
+                  }
+                : undefined
+            }
+            Icon={isVoice ? Close : Minimize}
+          />
+        ) : null}
+        {showClose ? (
+          <IconButton
+            label="Close"
+            type={iconButtonType}
+            className={firstRight === "close" ? "ml-auto" : undefined}
+            onClick={
+              enabled
+                ? () => {
+                    if (onEndConversation != null && !ended) {
+                      setConfirmEnd(true);
+                    } else {
+                      collapse?.(new Event("collapse"));
+                    }
+                  }
+                : undefined
+            }
+            Icon={Close}
+          />
+        ) : null}
+      </HeaderContainer>
+      {confirmEnd ? (
+        <EndConversationConfirm
+          onCancel={() => {
+            setConfirmEnd(false);
+          }}
+          onConfirm={() => {
+            setConfirmEnd(false);
+            onEndConversation?.();
+            collapse?.(new Event("collapse"));
           }}
         />
       ) : null}
-      {collapse != null ? (
-        <IconButton
-          label={isVoice ? "Close" : "Collapse"}
-          type={isVoice ? "error" : iconButtonType}
-          className={clsx(firstRight === "collapse" ? "ml-auto" : "")}
-          onClick={
-            enabled
-              ? () => {
-                  collapse(new Event("collapse"));
-                }
-              : undefined
-          }
-          Icon={isVoice ? Close : Minimize}
-        />
-      ) : null}
-      {showClose ? (
-        <IconButton
-          label="Close"
-          type={iconButtonType}
-          className={firstRight === "close" ? "ml-auto" : undefined}
-          onClick={
-            enabled
-              ? () => {
-                  collapse?.(new Event("collapse"));
-                }
-              : undefined
-          }
-          Icon={Close}
-        />
-      ) : null}
-    </HeaderContainer>
+    </>
   );
 };

@@ -1097,6 +1097,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             }}
             collapse={onClose}
             reset={reset}
+            onEndConversation={connectActions.endConversation}
+            ended={conversationEnded}
             hiddenElements={configuration.hiddenElements}
             addedElements={configuration.addedElements}
           />

@@ -25,6 +25,10 @@ export const MockText: FC<{
   userMessageBubble?: boolean;
   /** Whether assistant messages are wrapped in a bubble. Defaults to `true`. */
   agentMessageBubble?: boolean;
+  /** Whether user messages show a timestamp. Defaults to `false`. */
+  userMessageTimestamp?: boolean;
+  /** Whether assistant messages show a timestamp. Defaults to `false`. */
+  agentMessageTimestamp?: boolean;
   /** Inline style for the user message bubble. */
   userMessageBubbleStyle?: CustomStyle;
   /** Inline style for the assistant message bubble. */
@@ -100,6 +104,8 @@ export const MockText: FC<{
               responses={responses}
               userMessageBubble={props.userMessageBubble ?? true}
               agentMessageBubble={props.agentMessageBubble ?? true}
+              userMessageTimestamp={props.userMessageTimestamp ?? false}
+              agentMessageTimestamp={props.agentMessageTimestamp ?? false}
               userMessageBubbleStyle={props.userMessageBubbleStyle}
               agentMessageBubbleStyle={props.agentMessageBubbleStyle}
               showParticipantInfo={props.showParticipantInfo ?? false}

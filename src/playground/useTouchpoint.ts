@@ -99,8 +99,8 @@ export const useTouchpoint = (params: UseTouchpointParams): Touchpoint => {
       // system's transcript example.
       userMessageBubble: settings.userMessageBubble === "on",
       agentMessageBubble: settings.agentMessageBubble === "on",
-      userMessageTimestamp: true,
-      agentMessageTimestamp: true,
+      userMessageTimestamp: settings.userMessageTimestamp === "on",
+      agentMessageTimestamp: settings.agentMessageTimestamp === "on",
       ...(settings.userMessageBubbleStyle != null
         ? { userMessageBubbleStyle: settings.userMessageBubbleStyle }
         : {}),
