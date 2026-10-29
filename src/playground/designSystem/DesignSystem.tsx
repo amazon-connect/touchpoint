@@ -152,6 +152,8 @@ export const DesignSystem: FC = () => {
             windowSize={mock.windowSize}
             userMessageBubble={settings.userMessageBubble === "on"}
             agentMessageBubble={settings.agentMessageBubble === "on"}
+            userMessageTimestamp={settings.userMessageTimestamp === "on"}
+            agentMessageTimestamp={settings.agentMessageTimestamp === "on"}
             userMessageBubbleStyle={settings.userMessageBubbleStyle}
             agentMessageBubbleStyle={settings.agentMessageBubbleStyle}
             showParticipantInfo={settings.avatars === "on"}

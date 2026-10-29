@@ -1315,8 +1315,16 @@ const GeneralConfiguration: FC<SpecimenProps> = () => {
  * them by key keeps the controls below identical for the user and the agent.
  */
 const BUBBLE_FIELDS = {
-  user: { bubble: "userMessageBubble", style: "userMessageBubbleStyle" },
-  agent: { bubble: "agentMessageBubble", style: "agentMessageBubbleStyle" },
+  user: {
+    bubble: "userMessageBubble",
+    style: "userMessageBubbleStyle",
+    timestamp: "userMessageTimestamp",
+  },
+  agent: {
+    bubble: "agentMessageBubble",
+    style: "agentMessageBubbleStyle",
+    timestamp: "agentMessageTimestamp",
+  },
 } as const satisfies Record<string, Record<string, keyof Settings>>;
 
 /**
@@ -1414,6 +1422,13 @@ const BubbleControls: FC<{
           )}
         </ControlGroupNested>
       )}
+      <Switch
+        label="Timestamp"
+        value={settings[fields.timestamp]}
+        onChange={(value) => {
+          settingsStore.set(fields.timestamp, value);
+        }}
+      />
     </ControlGroup>
   );
 };
@@ -1508,7 +1523,16 @@ const HeaderControls: FC<{
 
 const brandIconExample: BrandIconSource = () => (
   <svg viewBox="0 0 400 100" className="h-full block">
-    <circle cx={200} cy={50} r={25} fill="red" />
+    <circle cx={30} cy={50} r={25} className="fill-accent" />
+    <text
+      x={75}
+      y={50}
+      dominantBaseline="central"
+      fontSize={40}
+      className="fill-primary"
+    >
+      MyBrand
+    </text>
   </svg>
 );
 
@@ -1623,6 +1647,8 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           responses={responses}
           userMessageBubble={settings.userMessageBubble === "on"}
           agentMessageBubble={settings.agentMessageBubble === "on"}
+          userMessageTimestamp={settings.userMessageTimestamp === "on"}
+          agentMessageTimestamp={settings.agentMessageTimestamp === "on"}
           userMessageBubbleStyle={settings.userMessageBubbleStyle}
           agentMessageBubbleStyle={settings.agentMessageBubbleStyle}
           showParticipantInfo={settings.avatars === "on"}

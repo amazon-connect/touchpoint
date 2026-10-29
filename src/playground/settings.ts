@@ -79,6 +79,10 @@ export type Settings = Record<TextFieldKey, string> & {
   userMessageBubble: Toggle;
   /** Whether assistant/agent messages are wrapped in a bubble. */
   agentMessageBubble: Toggle;
+  /** Whether user messages show a timestamp. */
+  userMessageTimestamp: Toggle;
+  /** Whether assistant/agent messages show a timestamp. */
+  agentMessageTimestamp: Toggle;
   /**
    * Inline style for the user message bubble, passed straight to Touchpoint.
    * `undefined` leaves the bubble with the library's own styling.
@@ -127,6 +131,8 @@ export const DEFAULT_SETTINGS: Settings = {
   backgroundDepthLayer: "on",
   userMessageBubble: "on",
   agentMessageBubble: "off",
+  userMessageTimestamp: "on",
+  agentMessageTimestamp: "on",
 };
 
 const pick = <T extends string>(
@@ -187,6 +193,16 @@ export const settingsFromParams = (params: URLSearchParams): Settings => {
     params.get("agentMessageBubble"),
     ["on", "off"],
     DEFAULT_SETTINGS.agentMessageBubble,
+  );
+  settings.userMessageTimestamp = pick(
+    params.get("userMessageTimestamp"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.userMessageTimestamp,
+  );
+  settings.agentMessageTimestamp = pick(
+    params.get("agentMessageTimestamp"),
+    ["on", "off"],
+    DEFAULT_SETTINGS.agentMessageTimestamp,
   );
   return settings;
 };
@@ -257,6 +273,16 @@ export const writeSettingsToUrl = (settings: Settings): void => {
     settings.agentMessageBubble,
     DEFAULT_SETTINGS.agentMessageBubble,
   );
+  setOrDelete(
+    "userMessageTimestamp",
+    settings.userMessageTimestamp,
+    DEFAULT_SETTINGS.userMessageTimestamp,
+  );
+  setOrDelete(
+    "agentMessageTimestamp",
+    settings.agentMessageTimestamp,
+    DEFAULT_SETTINGS.agentMessageTimestamp,
+  );
   history.replaceState(null, "", url);
 };
 
@@ -271,6 +297,8 @@ const transcriptCustomizations = (
   Settings,
   | "userMessageBubble"
   | "agentMessageBubble"
+  | "userMessageTimestamp"
+  | "agentMessageTimestamp"
   | "userMessageBubbleStyle"
   | "agentMessageBubbleStyle"
   | "headerStyle"
@@ -281,6 +309,8 @@ const transcriptCustomizations = (
 > => ({
   userMessageBubble: settings.userMessageBubble,
   agentMessageBubble: settings.agentMessageBubble,
+  userMessageTimestamp: settings.userMessageTimestamp,
+  agentMessageTimestamp: settings.agentMessageTimestamp,
   userMessageBubbleStyle: settings.userMessageBubbleStyle,
   agentMessageBubbleStyle: settings.agentMessageBubbleStyle,
   headerStyle: settings.headerStyle,
