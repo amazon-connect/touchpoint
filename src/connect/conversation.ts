@@ -55,6 +55,8 @@ export interface ConnectChatConfig {
    * voice-only inputs (`voice`/`voiceMini`), which use a WebRTC contact instead of chat.
    */
   chatEnabled?: boolean;
+  /** Whether file attachments are allowed. Attachments are disabled unless this is `true`. */
+  attachmentsEnabled?: boolean;
   /** AWS region (e.g., "us-east-1"). Defaults to "us-west-2". */
   region?: string;
   /**

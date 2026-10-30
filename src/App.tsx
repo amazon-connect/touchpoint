@@ -865,7 +865,9 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         <Input
           enabled={props.enabled && !authPending}
           handler={handler}
-          attachmentsEnabled={agentActive}
+          attachmentsEnabled={
+            configuration.config?.attachmentsEnabled === true && agentActive
+          }
           uploadUrl={
             lastApplicationResponse?.response.payload.metadata?.uploadUrls?.[0]
           }
