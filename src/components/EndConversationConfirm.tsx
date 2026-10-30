@@ -21,7 +21,7 @@ export const EndConversationConfirm: FC<EndConversationConfirmProps> = ({
   const { Close, LogOut, Warning } = useIcons();
   const copy = useCopy();
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-secondary60 p-4">
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-secondary60 p-4">
       <div className="w-full max-w-sm rounded-outer bg-background backdrop-blur-overlay p-4 space-y-6 border border-solid border-primary-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary">
