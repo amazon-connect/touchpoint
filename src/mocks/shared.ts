@@ -10,6 +10,7 @@ export const mockConversationHandler: ConversationHandler = {
   sendText: () => {},
   sendSlots: () => {},
   sendChoice: () => {},
+  sendChoices: () => {},
   sendWelcomeFlow: () => {},
   sendWelcomeIntent: () => {},
   sendFlow: () => {},

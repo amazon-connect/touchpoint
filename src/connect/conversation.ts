@@ -1403,6 +1403,40 @@ export const createConnectChatConversation = (
       ?.choiceText;
   };
 
+  /**
+   * Returns a copy of `current` with the originating message marked as answered, so Touchpoint
+   * collapses the other choices. Pure: `current` and its objects are never mutated, and anything
+   * that did not change keeps its reference.
+   */
+  const withSelection = (
+    current: Response[],
+    selection: { selectedChoiceId: string } | { selectedChoiceIds: string[] },
+    metadata?: ChoiceRequestMetadata,
+  ): Response[] => {
+    const responseIndex = metadata?.responseIndex ?? -1;
+    const messageIndex = metadata?.messageIndex ?? -1;
+
+    if (responseIndex < 0 || messageIndex < 0) {
+      return current;
+    }
+
+    return current.map((response, index) =>
+      index === responseIndex && response.type === ResponseType.Application
+        ? {
+            ...response,
+            payload: {
+              ...response.payload,
+              messages: response.payload.messages.map((message, msgIndex) =>
+                msgIndex === messageIndex
+                  ? { ...message, ...selection }
+                  : message,
+              ),
+            },
+          }
+        : response,
+    );
+  };
+
   const sendChoice = (
     choiceId: string,
     context?: Context,
@@ -1410,27 +1444,11 @@ export const createConnectChatConversation = (
   ): void => {
     const action = findChoiceText(choiceId, metadata);
 
-    const responseIndex = metadata?.responseIndex ?? -1;
-    const messageIndex = metadata?.messageIndex ?? -1;
-
-    // Mark the originating message as answered so Touchpoint collapses the other choices.
-    if (responseIndex > -1 && messageIndex > -1) {
-      responses = responses.map((response, index) =>
-        index === responseIndex && response.type === ResponseType.Application
-          ? {
-              ...response,
-              payload: {
-                ...response.payload,
-                messages: response.payload.messages.map((message, msgIndex) =>
-                  msgIndex === messageIndex
-                    ? { ...message, selectedChoiceId: choiceId }
-                    : message,
-                ),
-              },
-            }
-          : response,
-      );
-    }
+    responses = withSelection(
+      responses,
+      { selectedChoiceId: choiceId },
+      metadata,
+    );
 
     setInterimMessage(escalated ? undefined : copy.thinking);
 
@@ -1441,6 +1459,37 @@ export const createConnectChatConversation = (
     });
 
     sendModalityRequest({ structured: { choiceId }, context, action });
+  };
+
+  const sendChoices = (
+    choiceIds: string[],
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ): void => {
+    // The envelope's `action` reads as the picks' text, in the order picked.
+    const texts = choiceIds.flatMap(
+      (choiceId) => findChoiceText(choiceId, metadata) ?? [],
+    );
+    const action = texts.length > 0 ? texts.join(", ") : undefined;
+
+    responses = withSelection(
+      responses,
+      { selectedChoiceIds: choiceIds },
+      metadata,
+    );
+
+    setInterimMessage(escalated ? undefined : copy.thinking);
+
+    // Nothing picked records nothing in the transcript.
+    if (choiceIds.length > 0) {
+      appendResponse({
+        type: ResponseType.User,
+        receivedAt: Date.now(),
+        payload: { type: "choice", choiceIds },
+      });
+    }
+
+    sendModalityRequest({ structured: { choiceIds }, context, action });
   };
 
   const subscribe = (subscriber: Subscriber): (() => void) => {
@@ -1493,6 +1542,7 @@ export const createConnectChatConversation = (
   } = {
     sendText,
     sendChoice,
+    sendChoices,
 
     sendSlots: (slots: SlotsRecordOrArray, context?: Context): void => {
       const normalizedSlots = normalizeSlots(slots);
