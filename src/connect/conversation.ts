@@ -13,11 +13,12 @@ import {
   type EventHandlers,
   type VoicePlusContext,
   type LanguageCode,
+  type MessageStatus,
+  ParticipantRole,
   ResponseType,
 } from "../core";
 import "amazon-connect-chatjs";
 import { openLiveSyncSocket } from "./liveSync";
-import type { MessageStatus } from "../interface";
 
 /**
  * Base class for custom chat clients, re-exported from amazon-connect-chatjs
@@ -381,7 +382,7 @@ const copy = {
  * optionally show the participant's avatar and name.
  */
 interface ParticipantInfo {
-  participantRole: "bot" | "agent";
+  participantRole: ParticipantRole;
   participantName?: string;
 }
 
@@ -719,14 +720,13 @@ export const createConnectChatConversation = (
   const setUserStatus = (token: string, status: MessageStatus): void => {
     let changed = false;
     responses = responses.map((response) => {
-      const tagged = response as Response & {
-        status?: MessageStatus;
-        statusToken?: string;
-      };
-      if (response.type !== ResponseType.User || tagged.statusToken !== token) {
+      if (
+        response.type !== ResponseType.User ||
+        response.statusToken !== token
+      ) {
         return response;
       }
-      const current = tagged.status;
+      const current = response.status;
       if (status === "failed") {
         // Only a still-sending message can fail.
         if (current != null && current !== "sending") return response;
@@ -734,7 +734,7 @@ export const createConnectChatConversation = (
         return response;
       }
       changed = true;
-      return { ...response, status } as Response;
+      return { ...response, status };
     });
     if (changed) notify();
   };
@@ -927,7 +927,10 @@ export const createConnectChatConversation = (
 
       // Who sent this inbound message, for optional avatar/name display.
       const participant: ParticipantInfo = {
-        participantRole: participantRole === "AGENT" ? "agent" : "bot",
+        participantRole:
+          participantRole === "AGENT"
+            ? ParticipantRole.Agent
+            : ParticipantRole.Application,
         participantName:
           typeof data.DisplayName === "string" &&
           data.DisplayName !== "" &&
@@ -1367,13 +1370,13 @@ export const createConnectChatConversation = (
     setInterimMessage(escalated ? undefined : copy.thinking);
 
     const statusToken = newStatusToken();
-    const newResponse = {
+    const newResponse: Response = {
       type: ResponseType.User,
       receivedAt: Date.now(),
       payload: { type: "text", text, context },
       status: "sending",
       statusToken,
-    } as Response;
+    };
 
     appendResponse(newResponse);
 

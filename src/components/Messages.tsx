@@ -12,6 +12,7 @@ import {
   type Response,
   type ApplicationMessage,
   type KnowledgeBaseResponseSource,
+  ParticipantRole,
   ResponseType,
 } from "../core";
 import { clsx } from "clsx";
@@ -221,10 +222,7 @@ const senderKeyOf = (
   if (response == null) return null;
   if (response.type === ResponseType.User) return "you";
   if (response.type === ResponseType.Application) {
-    return (
-      (response as { participantRole?: "bot" | "agent" }).participantRole ??
-      "bot"
-    );
+    return response.participantRole === ParticipantRole.Agent ? "agent" : "bot";
   }
   return null;
 };
@@ -449,6 +447,8 @@ export const Messages: FC<MessagesProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  console.log(responses);
+
   // The guide currently opened into its full-view modal, if any.
   const [activeGuide, setActiveGuide] = useState<OpenGuide | null>(null);
 
@@ -508,15 +508,11 @@ export const Messages: FC<MessagesProps> = ({
         if (notice.agentJoined === true) agentActive = true;
         else if (notice.agentLeft === true) agentActive = false;
       } else if (response.type === ResponseType.Application) {
-        const participant = response as {
-          participantRole?: "bot" | "agent";
-          participantName?: string;
-        };
         if (
-          participant.participantRole === "agent" &&
-          participant.participantName != null
+          response.participantRole === ParticipantRole.Agent &&
+          response.participantName != null
         ) {
-          agentName = participant.participantName;
+          agentName = response.participantName;
         }
       }
     });
@@ -558,22 +554,27 @@ export const Messages: FC<MessagesProps> = ({
           // in the column beside it (matching the design). The avatar and name appear
           // only on the first message of a same-sender sequence.
           const senderKey = senderKeyOf(response);
+          const participantNameOf = (r: Response | undefined) =>
+            r?.type === ResponseType.Application
+              ? r.participantName
+              : undefined;
+          const previousResponse = responses[responseIndex - 1];
           const isFirstInSequence =
             senderKey != null &&
-            senderKey !== senderKeyOf(responses[responseIndex - 1]);
+            (senderKey !== senderKeyOf(previousResponse) ||
+              participantNameOf(response) !== participantNameOf(previousResponse));
           const participantName =
             senderKey === "you"
               ? copy.participants.you
               : senderKey === "agent"
-                ? ((response as { participantName?: string }).participantName ??
-                  copy.participants.agent)
+                ? ((response.type === ResponseType.Application
+                    ? response.participantName
+                    : undefined) ?? copy.participants.agent)
                 : (assistantName ?? copy.participants.bot);
           // Tighten the gap between consecutive messages from the same sender
           // (e.g. a message followed by its attachment pill) — half of space-y-8.
           const continuationClass =
-            showParticipantInfo && senderKey != null && !isFirstInSequence
-              ? "-mt-4"
-              : "";
+            senderKey != null && !isFirstInSequence ? "-mt-6" : "";
           const wrap = (node: ReactNode): ReactNode =>
             showParticipantInfo && senderKey != null ? (
               <div className="flex gap-2">
@@ -652,8 +653,7 @@ export const Messages: FC<MessagesProps> = ({
                       }
                       status={
                         responseIndex === lastUserResponseIndex
-                          ? (response as Response & { status?: MessageStatus })
-                              .status
+                          ? response.status
                           : undefined
                       }
                     />,
@@ -743,12 +743,22 @@ export const Messages: FC<MessagesProps> = ({
           const isLast =
             lastApplicationResponseIndex != null &&
             responseIndex === lastApplicationResponseIndex;
+          // Apply the tightened spacing to continuation messages too, unless an
+          // escalation notice sits directly above this message.
+          const wrapContinuation = (node: ReactNode): ReactNode =>
+            continuationClass !== "" &&
+            firstIndexAfterEscalation !== responseIndex ? (
+              <div className={continuationClass}>{node}</div>
+            ) : (
+              node
+            );
           return (
             <Fragment key={responseIndex}>
               {firstIndexAfterEscalation === responseIndex ? (
                 <Notice text={copy.escalationNotice} />
               ) : null}
-              {wrap(
+              {wrapContinuation(
+                wrap(
                 <div
                   className={clsx(
                     "space-y-2",
@@ -839,6 +849,7 @@ export const Messages: FC<MessagesProps> = ({
                     <MessageTimestamp time={response.receivedAt} block />
                   ) : null}
                 </div>,
+                ),
               )}
               {/* Render the selected choice text as a user message */}
               {response.payload.messages.map((message, messageIndex) => {

@@ -1,4 +1,6 @@
 import type { ApplicationMessage, Context } from "./core";
+
+export type { MessageStatus } from "./core";
 import { type ComponentType } from "react";
 import type { InteractiveElementInfo } from "./liveSync/analyzePageForms";
 import type {
@@ -1019,14 +1021,6 @@ export interface TouchpointInstance {
    */
   sendStep: (params: SendStepParams) => Promise<void>;
 }
-
-/**
- * Delivery status of an outbound user message, derived from Amazon Connect
- * message receipts (`sendMessage` acknowledgement, delivered and read receipts).
- * @category Basics
- */
-export type MessageStatus =
-  "sending" | "sent" | "delivered" | "read" | "failed";
 
 /**
  * Copy configuration
