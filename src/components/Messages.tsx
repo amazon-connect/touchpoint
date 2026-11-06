@@ -447,8 +447,6 @@ export const Messages: FC<MessagesProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  console.log(responses);
-
   // The guide currently opened into its full-view modal, if any.
   const [activeGuide, setActiveGuide] = useState<OpenGuide | null>(null);
 
