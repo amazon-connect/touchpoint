@@ -541,7 +541,7 @@ export const Messages: FC<MessagesProps> = ({
       <div
         key="messages"
         className={clsx(
-          "absolute inset-0 p-2 md:p-3 overflow-y-auto no-scrollbar space-y-8",
+          "absolute inset-0 p-2 md:p-3 overflow-y-auto no-scrollbar space-y-6",
           !chatMode && isWaiting ? "opacity-0" : "opacity-100",
         )}
         ref={containerRef}
@@ -562,7 +562,8 @@ export const Messages: FC<MessagesProps> = ({
           const isFirstInSequence =
             senderKey != null &&
             (senderKey !== senderKeyOf(previousResponse) ||
-              participantNameOf(response) !== participantNameOf(previousResponse));
+              participantNameOf(response) !==
+                participantNameOf(previousResponse));
           const participantName =
             senderKey === "you"
               ? copy.participants.you
@@ -574,7 +575,7 @@ export const Messages: FC<MessagesProps> = ({
           // Tighten the gap between consecutive messages from the same sender
           // (e.g. a message followed by its attachment pill) — half of space-y-8.
           const continuationClass =
-            senderKey != null && !isFirstInSequence ? "-mt-6" : "";
+            senderKey != null && !isFirstInSequence ? "-mt-4" : "";
           const wrap = (node: ReactNode): ReactNode =>
             showParticipantInfo && senderKey != null ? (
               <div className="flex gap-2">
@@ -759,96 +760,96 @@ export const Messages: FC<MessagesProps> = ({
               ) : null}
               {wrapContinuation(
                 wrap(
-                <div
-                  className={clsx(
-                    "space-y-2",
-                    !chatMode && isLast ? "min-h-full" : "",
-                  )}
-                  ref={isLast ? lastApplicationMessageRef : undefined}
-                >
-                  {response.payload.messages.map((message, messageIndex) => {
-                    return (
-                      <div key={messageIndex} className="text-base">
-                        <SafeMarkdown
-                          className={clsx(
-                            "space-y-6 markdown",
-                            agentMessageBubble
-                              ? "px-3 py-2 w-fit bg-secondary-40 mr-10 rounded-inner"
-                              : "",
-                          )}
-                          style={
-                            agentMessageBubble
-                              ? agentMessageBubbleStyle
-                              : undefined
-                          }
-                          contents={message.text}
-                        />
-                      </div>
-                    );
-                  })}
-                  {(() => {
-                    const guide = (response as { guide?: GuideReference })
-                      .guide;
-                    return guide != null ? (
-                      <GuideCard
-                        guide={guide}
-                        onDescribeView={onDescribeView}
-                        onOpen={setActiveGuide}
-                      />
-                    ) : null;
-                  })()}
-                  {(
-                    (
-                      response as {
-                        attachments?: Array<{ id: string; name: string }>;
-                      }
-                    ).attachments ?? []
-                  ).map((attachment) => (
-                    <AttachmentPill
-                      key={attachment.id}
-                      name={attachment.name}
-                      onClick={
-                        onDownloadAttachment != null
-                          ? () => {
-                              onDownloadAttachment(attachment.id);
-                            }
-                          : undefined
-                      }
-                    />
-                  ))}
-                  {response.payload.metadata?.sources != null ? (
-                    <Sources sources={response.payload.metadata.sources} />
-                  ) : null}
-                  <ErrorBoundary
-                    fallback={
-                      <Banner type="error">Something went wrong</Banner>
-                    }
-                  >
-                    {Object.entries(response.payload.modalities ?? {}).map(
-                      ([key, value]) => {
-                        const Component = modalityComponents[key];
-                        if (Component == null) {
-                          // eslint-disable-next-line no-console
-                          console.warn(
-                            `Custom component implementation missing for the ${key} modality.`,
-                          );
-                          return null;
-                        }
-                        return (
-                          <Component
-                            key={key}
-                            data={value}
-                            conversationHandler={handler}
-                            enabled={enabled}
-                          />
-                        );
-                      },
+                  <div
+                    className={clsx(
+                      "space-y-2",
+                      !chatMode && isLast ? "min-h-full" : "",
                     )}
-                  </ErrorBoundary>
-                  {showTimestamp ? (
-                    <MessageTimestamp time={response.receivedAt} block />
-                  ) : null}
-                </div>,
+                    ref={isLast ? lastApplicationMessageRef : undefined}
+                  >
+                    {response.payload.messages.map((message, messageIndex) => {
+                      return (
+                        <div key={messageIndex} className="text-base">
+                          <SafeMarkdown
+                            className={clsx(
+                              "space-y-6 markdown",
+                              agentMessageBubble
+                                ? "px-3 py-2 w-fit bg-secondary-40 mr-10 rounded-inner"
+                                : "",
+                            )}
+                            style={
+                              agentMessageBubble
+                                ? agentMessageBubbleStyle
+                                : undefined
+                            }
+                            contents={message.text}
+                          />
+                        </div>
+                      );
+                    })}
+                    {(() => {
+                      const guide = (response as { guide?: GuideReference })
+                        .guide;
+                      return guide != null ? (
+                        <GuideCard
+                          guide={guide}
+                          onDescribeView={onDescribeView}
+                          onOpen={setActiveGuide}
+                        />
+                      ) : null;
+                    })()}
+                    {(
+                      (
+                        response as {
+                          attachments?: Array<{ id: string; name: string }>;
+                        }
+                      ).attachments ?? []
+                    ).map((attachment) => (
+                      <AttachmentPill
+                        key={attachment.id}
+                        name={attachment.name}
+                        onClick={
+                          onDownloadAttachment != null
+                            ? () => {
+                                onDownloadAttachment(attachment.id);
+                              }
+                            : undefined
+                        }
+                      />
+                    ))}
+                    {response.payload.metadata?.sources != null ? (
+                      <Sources sources={response.payload.metadata.sources} />
+                    ) : null}
+                    <ErrorBoundary
+                      fallback={
+                        <Banner type="error">Something went wrong</Banner>
+                      }
+                    >
+                      {Object.entries(response.payload.modalities ?? {}).map(
+                        ([key, value]) => {
+                          const Component = modalityComponents[key];
+                          if (Component == null) {
+                            // eslint-disable-next-line no-console
+                            console.warn(
+                              `Custom component implementation missing for the ${key} modality.`,
+                            );
+                            return null;
+                          }
+                          return (
+                            <Component
+                              key={key}
+                              data={value}
+                              conversationHandler={handler}
+                              enabled={enabled}
+                            />
+                          );
+                        },
+                      )}
+                    </ErrorBoundary>
+                    {showTimestamp ? (
+                      <MessageTimestamp time={response.receivedAt} block />
+                    ) : null}
+                  </div>,
                 ),
               )}
               {/* Render the selected choice text as a user message */}
