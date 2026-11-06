@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { findLastIndex } from "ramda";
 import { type FC, type ReactNode, useEffect, useRef, useState } from "react";
 import { Banner, type BannerType } from "../../components/ui/Banner";
 import { Carousel } from "../../components/ui/Carousel";
@@ -19,7 +20,7 @@ import {
   type MessageStatus,
 } from "../../interface";
 import { BackgroundDecoration } from "../../components/BackgroundDecoration";
-import { Messages } from "../../components/Messages";
+import { MessageChoices, Messages } from "../../components/Messages";
 import { defaultModalities } from "../../components/defaultModalities";
 import { DefaultCard } from "../../components/defaultModalities/DefaultCard";
 import { DefaultCarousel } from "../../components/defaultModalities/DefaultCarousel";
@@ -30,6 +31,7 @@ import {
   type ScreenShareControl,
 } from "../../components/ScreenShare";
 import { mockConversationHandler, responses } from "../../mocks/shared";
+import { ResponseType } from "../../core";
 import {
   type BubbleStyle,
   DEFAULT_BUBBLE_STYLE,
@@ -1550,6 +1552,26 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
   const settings = useSettings();
   // One color popup at a time, across every group of controls.
   const [openColor, setOpenColor] = useState<string | null>(null);
+  // Like `App`: the last message of the final assistant response that offers choices.
+  const lastResponseIndex = responses.length - 1;
+  const lastResponse = responses[lastResponseIndex];
+  const lastMessages =
+    lastResponse?.type === ResponseType.Application
+      ? lastResponse.payload.messages
+      : [];
+  const choiceMessageIndex = findLastIndex(
+    (message) => message.choices.length > 0,
+    lastMessages,
+  );
+  const choiceMessageContent = lastMessages[choiceMessageIndex];
+  const choiceMessage =
+    choiceMessageContent != null
+      ? {
+          message: choiceMessageContent,
+          messageIndex: choiceMessageIndex,
+          responseIndex: lastResponseIndex,
+        }
+      : undefined;
   return (
     <div className="flex flex-col items-start gap-6">
       <div className="flex w-full items-center justify-between gap-3">
@@ -1666,11 +1688,20 @@ const TranscriptExample: FC<SpecimenProps> = ({ colorMode }) => {
           className="flex-grow"
         />
         <InputContainer windowSize="half">
-          <Input
-            enabled
-            handler={mockConversationHandler}
-            onFileUpload={() => {}}
-          />
+          {choiceMessage != null ? (
+            <MessageChoices
+              {...choiceMessage}
+              handler={mockConversationHandler}
+            />
+          ) : null}
+          {choiceMessage?.message.selectedChoiceId != null ||
+          choiceMessage?.message.selectedChoiceIds != null ? null : (
+            <Input
+              enabled
+              handler={mockConversationHandler}
+              onFileUpload={() => {}}
+            />
+          )}
         </InputContainer>
       </div>
     </div>

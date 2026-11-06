@@ -212,7 +212,7 @@ export const responses: Response[] = [
             { choiceId: "resorts", choiceText: "Family resorts" },
             { choiceId: "guesthouses", choiceText: "Family-run guesthouses" },
           ],
-          selectedChoiceId: "resorts",
+          multiSelect: true,
         },
       ],
       conversationId: "84746211-c932-4e96-a9a7-7c374bd7a218",

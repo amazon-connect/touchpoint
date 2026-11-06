@@ -26,7 +26,12 @@ import { Authentication } from "./Authentication";
 import { SafeMarkdown } from "./SafeMarkdown";
 import { useCopy } from "../utils/useCopy";
 import { Loader } from "./ui/Loader";
-import { TextButton, TextButtonGroup } from "./ui/TextButton";
+import {
+  TextButton,
+  TextButtonGroup,
+  groupedTextButtonClassName,
+  textButtonBaseClassName,
+} from "./ui/TextButton";
 import { useIcons } from "../utils/useIcons";
 import { UnsemanticIconButton } from "./ui/IconButton";
 import { MessageStatusRow } from "./ui/MessageStatusRow";
@@ -89,6 +94,101 @@ export interface MessagesProps {
   enabled: boolean;
 }
 
+/** A checkbox-style choice row, used when a message is `multiSelect`. */
+const CheckChoice: FC<{
+  label: string;
+  checked: boolean;
+  /** Undefined once the answer is submitted, which disables the row. */
+  onToggle?: () => void;
+}> = ({ label, checked, onToggle }) => {
+  const { Check } = useIcons();
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      disabled={onToggle == null}
+      onClick={onToggle}
+      className={clsx(
+        textButtonBaseClassName,
+        groupedTextButtonClassName,
+        "flex items-center gap-3 text-left",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={clsx(
+          "flex-none flex items-center justify-center size-5 rounded-[6px] border border-solid",
+          checked
+            ? "bg-primary border-primary text-secondary"
+            : "bg-transparent border-primary-40",
+          onToggle == null ? "opacity-60" : "",
+        )}
+      >
+        {checked ? <Check size={14} /> : null}
+      </span>
+      <span className="grow">{label}</span>
+    </button>
+  );
+};
+
+const MultiSelectChoices: FC<{
+  handler: ConnectConversationHandler;
+  message: ApplicationMessage;
+  responseIndex: number;
+  messageIndex: number;
+}> = ({ handler, message, responseIndex, messageIndex }) => {
+  const { Send } = useIcons();
+  const [picked, setPicked] = useState<string[]>([]);
+  const submitted = message.selectedChoiceIds != null;
+  const checkedIds = message.selectedChoiceIds ?? picked;
+  // Once answered, only the picked choices remain, disabled like the single-select buttons.
+  const visibleChoices = submitted
+    ? message.choices.filter((choice) => checkedIds.includes(choice.choiceId))
+    : message.choices;
+  if (visibleChoices.length === 0) {
+    return null;
+  }
+  return (
+    <div className="space-y-2">
+      <TextButtonGroup
+        role="group"
+        aria-label="Response options"
+        className="max-h-[40vh] overflow-auto no-scrollbar"
+      >
+        {visibleChoices.map((choice) => (
+          <CheckChoice
+            key={choice.choiceId}
+            label={choice.choiceText}
+            checked={checkedIds.includes(choice.choiceId)}
+            onToggle={
+              submitted
+                ? undefined
+                : () => {
+                    setPicked((current) =>
+                      current.includes(choice.choiceId)
+                        ? current.filter((id) => id !== choice.choiceId)
+                        : [...current, choice.choiceId],
+                    );
+                  }
+            }
+          />
+        ))}
+      </TextButtonGroup>
+      {submitted ? null : (
+        <TextButton
+          type="main"
+          Icon={Send}
+          label="Submit"
+          onClick={() => {
+            handler.sendChoices(picked, {}, { responseIndex, messageIndex });
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
 export const MessageChoices: FC<{
   handler: ConnectConversationHandler;
   message: ApplicationMessage;
@@ -96,6 +196,16 @@ export const MessageChoices: FC<{
   messageIndex: number;
 }> = ({ handler, message, responseIndex, messageIndex }) => {
   const { Send } = useIcons();
+  if (message.multiSelect === true && message.choices.length > 0) {
+    return (
+      <MultiSelectChoices
+        handler={handler}
+        message={message}
+        responseIndex={responseIndex}
+        messageIndex={messageIndex}
+      />
+    );
+  }
   return message.choices.length > 0 ? (
     <TextButtonGroup
       role="group"
@@ -842,6 +952,25 @@ export const Messages: FC<MessagesProps> = ({
               )}
               {/* Render the selected choice text as a user message */}
               {response.payload.messages.map((message, messageIndex) => {
+                if (message.selectedChoiceIds != null) {
+                  const texts = message.selectedChoiceIds.flatMap(
+                    (choiceId) =>
+                      message.choices.find(
+                        (choice) => choice.choiceId === choiceId,
+                      )?.choiceText ?? [],
+                  );
+                  return texts.length > 0 ? (
+                    <Fragment key={messageIndex}>
+                      {wrapUser(
+                        <UserMessage
+                          text={texts.join(", ")}
+                          bubble={userMessageBubble}
+                          bubbleStyle={userMessageBubbleStyle}
+                        />,
+                      )}
+                    </Fragment>
+                  ) : null;
+                }
                 if (message.selectedChoiceId != null) {
                   const selectedChoice = message.choices.find(
                     (choice) => choice.choiceId === message.selectedChoiceId,
