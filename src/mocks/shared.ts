@@ -1,4 +1,9 @@
-import { ResponseType, type Response, type ConversationHandler } from "../core";
+import {
+  ParticipantRole,
+  ResponseType,
+  type Response,
+  type ConversationHandler,
+} from "../core";
 
 import { type Theme } from "../interface";
 
@@ -123,6 +128,14 @@ export const responses: Response[] = [
     },
   },
   {
+    type: ResponseType.User,
+    receivedAt: 1774542181426,
+    payload: {
+      type: "text",
+      text: "Also this and that",
+    },
+  },
+  {
     type: ResponseType.Application,
     receivedAt: 1774542182586,
     payload: {
@@ -227,5 +240,115 @@ export const responses: Response[] = [
         incomprehension: false,
       },
     },
+  },
+  {
+    type: ResponseType.Application,
+    receivedAt: 1793886889357,
+    payload: {
+      conversationId: "178939c2-02af-4b09-a568-96c5c0c2e996",
+      messages: [
+        {
+          text: "Hi there!",
+          choices: [],
+        },
+      ],
+      metadata: {
+        uploadUrls: [],
+      },
+    },
+    participantRole: ParticipantRole.Application,
+    participantName: "BOT",
+  },
+  {
+    type: ResponseType.Application,
+    receivedAt: 1793886889517,
+    payload: {
+      conversationId: "178939c2-02af-4b09-a568-96c5c0c2e996",
+      messages: [
+        {
+          text: "Welcome to the Touchpoint Playground.",
+          choices: [],
+        },
+      ],
+      metadata: {
+        uploadUrls: [],
+      },
+    },
+    participantRole: ParticipantRole.Application,
+    participantName: "BOT",
+  },
+  {
+    type: ResponseType.Application,
+    receivedAt: 1793886889620,
+    payload: {
+      conversationId: "178939c2-02af-4b09-a568-96c5c0c2e996",
+      messages: [
+        {
+          text: "To get started, say take me to the text field example, then say your name and email and I'll help you fill it in.",
+          choices: [],
+        },
+      ],
+      metadata: {
+        uploadUrls: [],
+      },
+    },
+    participantRole: ParticipantRole.Application,
+    participantName: "BOT",
+  },
+  {
+    type: ResponseType.User,
+    receivedAt: 1793886893209,
+    payload: {
+      type: "text",
+      text: "hello",
+    },
+    status: "sent",
+    statusToken: "msg-1",
+  },
+  {
+    type: ResponseType.User,
+    receivedAt: 1793886894249,
+    payload: {
+      type: "text",
+      text: "and hello",
+    },
+    status: "sent",
+    statusToken: "msg-2",
+  },
+  {
+    type: ResponseType.Application,
+    receivedAt: 1793886894501,
+    payload: {
+      conversationId: "178939c2-02af-4b09-a568-96c5c0c2e996",
+      messages: [
+        {
+          text: "Hello! Welcome to our airlines reservations. How can I help you today?",
+          choices: [],
+        },
+      ],
+      metadata: {
+        uploadUrls: [],
+      },
+    },
+    participantRole: ParticipantRole.Application,
+    participantName: "BOT",
+  },
+  {
+    type: ResponseType.Application,
+    receivedAt: 1793886895469,
+    payload: {
+      conversationId: "178939c2-02af-4b09-a568-96c5c0c2e996",
+      messages: [
+        {
+          text: "Hello again! What can I assist you with today?",
+          choices: [],
+        },
+      ],
+      metadata: {
+        uploadUrls: [],
+      },
+    },
+    participantRole: ParticipantRole.Application,
+    participantName: "BOT",
   },
 ];

@@ -397,7 +397,37 @@ export interface ApplicationResponse {
    * The payload of the response
    */
   payload: ApplicationResponsePayload;
+  /**
+   * Who sent the response. Defaults to {@link ParticipantRole.Application} when not set.
+   */
+  participantRole?: ParticipantRole;
+  /**
+   * Display name of the sender, if known.
+   */
+  participantName?: string;
 }
+
+/**
+ * The kind of participant an application response is attributed to.
+ */
+export enum ParticipantRole {
+  /**
+   * The application (bot)
+   */
+  Application = "bot",
+  /**
+   * A human agent
+   */
+  Agent = "agent",
+}
+
+/**
+ * Delivery status of an outbound user message, derived from Amazon Connect
+ * message receipts (`sendMessage` acknowledgement, delivered and read receipts).
+ * @category Basics
+ */
+export type MessageStatus =
+  "sending" | "sent" | "delivered" | "read" | "failed";
 
 /**
  * The payload of the application response
@@ -620,6 +650,14 @@ export interface UserResponse {
    * The payload of the response
    */
   payload: UserResponsePayload;
+  /**
+   * Delivery status of the message. Only user messages carry a status.
+   */
+  status?: MessageStatus;
+  /**
+   * Correlates the message with its delivery receipts.
+   */
+  statusToken?: string;
 }
 
 /**
