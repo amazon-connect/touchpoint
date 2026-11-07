@@ -125,6 +125,19 @@ export interface ConversationHandler {
     context?: Context,
     metadata?: ChoiceRequestMetadata,
   ) => void;
+  /**
+   * Respond to a [multi-select choice](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/overview/nodes#user-choice) from the application with the choices picked (one or more).
+   * The choice ids are sent to the application as one answer (`choiceIds`). An empty list is a valid answer (nothing picked): it is sent as `choiceIds: []`, and the application resolves it.
+   * Setting `metadata` ensures that local state's `selectedChoiceIds` on the corresponding {@link ApplicationResponse} is set, and adds the answer to the transcript.
+   * @param choiceIds - The `choiceId`s picked, in the order picked, from the {@link ApplicationResponse}'s `.payload.messages[].choices[]` field
+   * @param context - [Context](https://docs.nlx.ai/platform/nlx-platform-guide/build-with-nlx/flows/context-variables#what-are-context-variables) for usage later in the flow.
+   * @param metadata - links the choices to the specific message and node in the conversation.
+   */
+  sendChoices: (
+    choiceIds: string[],
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ) => void;
 
   /**
    * Trigger the welcome flow. This should be done when the user starts interacting with the conversation.
@@ -528,9 +541,13 @@ export interface ApplicationMessage {
    */
   text: string;
   /**
-   * A selection of choices to show to the user. They may choose one of them.
+   * A selection of choices to show to the user. They may choose one of them, or several when the message is `multiSelect`.
    */
   choices: Choice[];
+  /**
+   * Whether the end user may pick more than one of the choices.
+   */
+  multiSelect?: boolean;
   /**
    * Metadata
    */
@@ -540,6 +557,12 @@ export interface ApplicationMessage {
    * This field is set locally and does not come from the application.
    */
   selectedChoiceId?: string;
+  /**
+   * After a multi-select choice has been answered with {@link ConversationHandler.sendChoices}, this
+   * will be updated locally to the selected choice ids, in the order picked.
+   * This field is set locally and does not come from the application.
+   */
+  selectedChoiceIds?: string[];
 }
 
 /**
@@ -631,6 +654,16 @@ export type UserResponsePayload =
        * [Context](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/advanced/context-variables) for usage later in the flow.
        */
       context?: Context;
+    }
+  | {
+      /**
+       * Set when `sendChoices` is called.
+       */
+      type: "choice";
+      /**
+       * The `choiceIds` passed to `sendChoices`, in the order picked.
+       */
+      choiceIds: string[];
     }
   | ({
       /**
@@ -807,6 +840,10 @@ export interface StructuredRequest {
    */
   choiceId?: string;
   /**
+   * The answer to a multi-select choice: the `choiceId`s picked, in the order picked.
+   */
+  choiceIds?: string[];
+  /**
    * Required if you want to change a choice that's already been sent.
    * The `nodeId` can be found in the corresponding {@link ApplicationMessage}.
    */
@@ -918,13 +955,13 @@ export interface VoiceCredentials {
 export interface ChoiceRequestMetadata {
   /**
    * The index of the {@link Response} associated with this choice.
-   * Setting this ensures that local state's `selectedChoiceId` on the corresponding {@link ApplicationResponse} is set.
+   * Setting this ensures that local state's `selectedChoiceId` (or `selectedChoiceIds`, for {@link ConversationHandler.sendChoices}) on the corresponding {@link ApplicationResponse} is set.
    * It is not sent to the application.
    */
   responseIndex?: number;
   /**
    * The index of the {@link ApplicationMessage} associated with this choice.
-   * Setting this ensures that local state's `selectedChoiceId` on the corresponding {@link ApplicationResponse} is set.
+   * Setting this ensures that local state's `selectedChoiceId` (or `selectedChoiceIds`, for {@link ConversationHandler.sendChoices}) on the corresponding {@link ApplicationResponse} is set.
    * It is not sent to the application.
    */
   messageIndex?: number;
@@ -1207,6 +1244,7 @@ const fetchUserMessage = async ({
                 messages.push({
                   text: json.text,
                   choices: json.choices ?? [],
+                  multiSelect: json.multiSelect,
                   messageId: json.messageId,
                   metadata: json.metadata,
                 });
@@ -1238,6 +1276,7 @@ const fetchUserMessage = async ({
           (json) => ({
             text: json.text,
             choices: json.choices ?? [],
+            multiSelect: json.multiSelect,
             messageId: json.messageId,
             metadata: json.metadata,
           }),
@@ -1397,6 +1436,7 @@ export function createConversation(configuration: Config): ConversationHandler {
             messageId: message.messageId,
             text: message.text,
             choices: message.choices ?? [],
+            multiSelect: message.multiSelect,
           })),
         },
       };
@@ -1666,27 +1706,21 @@ export function createConversation(configuration: Config): ConversationHandler {
     });
   };
 
-  const sendChoice = (
-    choiceId: string,
-    context?: Context,
+  /**
+   * Record the selection locally on the message the metadata points at, if any.
+   */
+  const withSelection = (
+    responses: Response[],
+    selection:
+      | Pick<ApplicationMessage, "selectedChoiceId">
+      | Pick<ApplicationMessage, "selectedChoiceIds">,
     metadata?: ChoiceRequestMetadata,
-  ): void => {
-    let newResponses: Response[] = [...state.responses];
-
-    const choiceResponse: Response = {
-      type: ResponseType.User,
-      receivedAt: new Date().getTime(),
-      payload: {
-        type: "choice",
-        choiceId,
-      },
-    };
-
+  ): Response[] => {
     const responseIndex = metadata?.responseIndex ?? -1;
     const messageIndex = metadata?.messageIndex ?? -1;
 
     if (responseIndex > -1 && messageIndex > -1) {
-      newResponses = adjust(
+      return adjust(
         responseIndex,
         (response) =>
           response.type === ResponseType.Application
@@ -1696,17 +1730,40 @@ export function createConversation(configuration: Config): ConversationHandler {
                   ...response.payload,
                   messages: adjust(
                     messageIndex,
-                    (message) => ({ ...message, selectedChoiceId: choiceId }),
+                    (message) => ({ ...message, ...selection }),
                     response.payload.messages,
                   ),
                 },
               }
             : response,
-        newResponses,
+        responses,
       );
     }
+    return responses;
+  };
 
-    newResponses = [...newResponses, choiceResponse];
+  const sendChoice = (
+    choiceId: string,
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ): void => {
+    const choiceResponse: Response = {
+      type: ResponseType.User,
+      receivedAt: new Date().getTime(),
+      payload: {
+        type: "choice",
+        choiceId,
+      },
+    };
+
+    const newResponses = [
+      ...withSelection(
+        state.responses,
+        { selectedChoiceId: choiceId },
+        metadata,
+      ),
+      choiceResponse,
+    ];
 
     setState(
       {
@@ -1722,6 +1779,50 @@ export function createConversation(configuration: Config): ConversationHandler {
           nodeId: metadata?.nodeId,
           intentId: metadata?.flowId ?? metadata?.intentId,
           choiceId,
+        },
+      },
+    });
+  };
+
+  const sendChoices = (
+    choiceIds: string[],
+    context?: Context,
+    metadata?: ChoiceRequestMetadata,
+  ): void => {
+    // Nothing picked records nothing in the transcript.
+    const choiceResponse: Response | undefined =
+      choiceIds.length > 0
+        ? {
+            type: ResponseType.User,
+            receivedAt: new Date().getTime(),
+            payload: {
+              type: "choice",
+              choiceIds,
+            },
+          }
+        : undefined;
+
+    setState(
+      {
+        responses: [
+          ...withSelection(
+            state.responses,
+            { selectedChoiceIds: choiceIds },
+            metadata,
+          ),
+          ...(choiceResponse != null ? [choiceResponse] : []),
+        ],
+      },
+      choiceResponse,
+    );
+
+    void sendToApplication({
+      context,
+      request: {
+        structured: {
+          nodeId: metadata?.nodeId,
+          intentId: metadata?.flowId ?? metadata?.intentId,
+          choiceIds,
         },
       },
     });
@@ -1815,6 +1916,7 @@ export function createConversation(configuration: Config): ConversationHandler {
       sendFlow(welcomeIntent, context);
     },
     sendChoice,
+    sendChoices,
     submitFeedback: async (feedbackUrl, feedback): Promise<void> => {
       const res = await fetch(feedbackUrl, {
         method: "POST",

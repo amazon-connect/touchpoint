@@ -904,7 +904,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
       const showChoicesInline =
         hasFirstMessage &&
         choiceMessage != null &&
-        choiceMessage.message.selectedChoiceId == null;
+        choiceMessage.message.selectedChoiceId == null &&
+        choiceMessage.message.selectedChoiceIds == null;
       const showLoader = !hasFirstMessage && interimMessage != null;
       const showWelcomeLogo = welcomeLogoActive && hasFirstMessage;
       return (
@@ -983,7 +984,8 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               {choiceMessage != null ? (
                 <MessageChoices {...choiceMessage} handler={handler} />
               ) : null}
-              {choiceMessage?.message.selectedChoiceId != null
+              {choiceMessage?.message.selectedChoiceId != null ||
+              choiceMessage?.message.selectedChoiceIds != null
                 ? null
                 : inputBlock}
             </>
