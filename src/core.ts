@@ -1794,18 +1794,16 @@ export function createConversation(configuration: Config): ConversationHandler {
       },
     };
 
-    const newResponses = [
-      ...withSelection(
-        state.responses,
-        { selectedChoiceId: choiceId },
-        metadata,
-      ),
-      choiceResponse,
-    ];
-
     setState(
       {
-        responses: newResponses,
+        responses: [
+          ...withSelection(
+            state.responses,
+            { selectedChoiceId: choiceId },
+            metadata,
+          ),
+          choiceResponse,
+        ],
       },
       choiceResponse,
     );
@@ -1827,18 +1825,14 @@ export function createConversation(configuration: Config): ConversationHandler {
     context?: Context,
     metadata?: ChoiceRequestMetadata,
   ): void => {
-    // Nothing picked records nothing in the transcript.
-    const choiceResponse: Response | undefined =
-      choiceIds.length > 0
-        ? {
-            type: ResponseType.User,
-            receivedAt: new Date().getTime(),
-            payload: {
-              type: "choice",
-              choiceIds,
-            },
-          }
-        : undefined;
+    const choiceResponse: Response = {
+      type: ResponseType.User,
+      receivedAt: new Date().getTime(),
+      payload: {
+        type: "choice",
+        choiceIds,
+      },
+    };
 
     setState(
       {
@@ -1848,7 +1842,7 @@ export function createConversation(configuration: Config): ConversationHandler {
             { selectedChoiceIds: choiceIds },
             metadata,
           ),
-          ...(choiceResponse != null ? [choiceResponse] : []),
+          choiceResponse,
         ],
       },
       choiceResponse,
