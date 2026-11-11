@@ -688,6 +688,7 @@ export type UserResponsePayload =
        * Correlates to a `choiceId` in the {@link ApplicationResponse}'s `.payload.messages[].choices[].choiceId` fields
        */
       choiceId: string;
+      choiceIds?: never;
       /**
        * [Context](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/advanced/context-variables) for usage later in the flow.
        */
@@ -702,6 +703,11 @@ export type UserResponsePayload =
        * The `choiceIds` passed to `sendChoices`, in the order picked.
        */
       choiceIds: string[];
+      choiceId?: never;
+      /**
+       * [Context](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/advanced/context-variables) for usage later in the flow.
+       */
+      context?: Context;
     }
   | ({
       /**
@@ -1794,18 +1800,16 @@ export function createConversation(configuration: Config): ConversationHandler {
       },
     };
 
-    const newResponses = [
-      ...withSelection(
-        state.responses,
-        { selectedChoiceId: choiceId },
-        metadata,
-      ),
-      choiceResponse,
-    ];
-
     setState(
       {
-        responses: newResponses,
+        responses: [
+          ...withSelection(
+            state.responses,
+            { selectedChoiceId: choiceId },
+            metadata,
+          ),
+          choiceResponse,
+        ],
       },
       choiceResponse,
     );
@@ -1827,18 +1831,15 @@ export function createConversation(configuration: Config): ConversationHandler {
     context?: Context,
     metadata?: ChoiceRequestMetadata,
   ): void => {
-    // Nothing picked records nothing in the transcript.
-    const choiceResponse: Response | undefined =
-      choiceIds.length > 0
-        ? {
-            type: ResponseType.User,
-            receivedAt: new Date().getTime(),
-            payload: {
-              type: "choice",
-              choiceIds,
-            },
-          }
-        : undefined;
+    const choiceResponse: Response = {
+      type: ResponseType.User,
+      receivedAt: new Date().getTime(),
+      payload: {
+        type: "choice",
+        choiceIds,
+        context,
+      },
+    };
 
     setState(
       {
@@ -1848,7 +1849,7 @@ export function createConversation(configuration: Config): ConversationHandler {
             { selectedChoiceIds: choiceIds },
             metadata,
           ),
-          ...(choiceResponse != null ? [choiceResponse] : []),
+          choiceResponse,
         ],
       },
       choiceResponse,
