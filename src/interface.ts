@@ -853,7 +853,8 @@ export enum HiddenElement {
 export enum AddedElement {
   /**
    * A button in the header, right of the minimize button, that collapses the
-   * widget.
+   * widget. Ignored in fullscreen voice mode, where the header already shows a
+   * close button.
    */
   HeaderClose = "header.close",
 }

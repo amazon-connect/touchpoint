@@ -68,8 +68,12 @@ export const Header: FC<HeaderProps> = ({
   const [confirmEnd, setConfirmEnd] = useState<boolean>(false);
   const hasBrand = brandIcon != null;
   const showRestart = !hiddenElements.includes(HiddenElement.HeaderRestart);
+  // Voice mode already renders a Close button in place of collapse, so the
+  // added close would show up as a duplicate next to it.
   const showClose =
-    addedElements.includes(AddedElement.HeaderClose) && collapse != null;
+    addedElements.includes(AddedElement.HeaderClose) &&
+    collapse != null &&
+    !isVoice;
   const showSettings =
     toggleSettings != null &&
     !hiddenElements.includes(HiddenElement.HeaderSettings);
