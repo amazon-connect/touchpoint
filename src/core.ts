@@ -688,6 +688,7 @@ export type UserResponsePayload =
        * Correlates to a `choiceId` in the {@link ApplicationResponse}'s `.payload.messages[].choices[].choiceId` fields
        */
       choiceId: string;
+      choiceIds?: never;
       /**
        * [Context](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/advanced/context-variables) for usage later in the flow.
        */
@@ -702,6 +703,11 @@ export type UserResponsePayload =
        * The `choiceIds` passed to `sendChoices`, in the order picked.
        */
       choiceIds: string[];
+      choiceId?: never;
+      /**
+       * [Context](https://docs.nlx.ai/platform/nlx-platform-guide/flows-and-building-blocks/advanced/context-variables) for usage later in the flow.
+       */
+      context?: Context;
     }
   | ({
       /**
@@ -1831,6 +1837,7 @@ export function createConversation(configuration: Config): ConversationHandler {
       payload: {
         type: "choice",
         choiceIds,
+        context,
       },
     };
 
