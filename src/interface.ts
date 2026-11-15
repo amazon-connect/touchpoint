@@ -513,10 +513,15 @@ export interface TouchpointConfiguration {
    * connecting/thinking state centered where the message will appear, until the
    * customer sends or selects something. Defaults to `true`. Set to `false` to
    * render the conversation as a top-anchored transcript from the first message.
-   * The composer is available immediately in that layout; sends wait for the
-   * participant connection, and optionally `config.initialResponseTimeoutMs`.
    * Has no effect once modalities/guides are present or the conversation has
    * progressed.
+   *
+   * The composer follows the layout. The welcome screen shows it once the
+   * opening message arrives. The top-anchored transcript — including the one a
+   * progressed conversation falls back to — shows it while the chat is still
+   * connecting, so the customer can compose straight away: the message stays in
+   * the transcript as Sending until the participant connection, and an opening
+   * assistant turn when `config.initialResponseTimeoutMs` is set, are ready.
    */
   welcomeScreen?: boolean;
   /**

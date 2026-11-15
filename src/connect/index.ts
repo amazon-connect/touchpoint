@@ -139,7 +139,8 @@ export const buildConnectHandler = (
   liveSync?: LiveSyncConnection,
   options?: {
     /**
-     *
+     * Whether to open a chat session. `false` for voice-only inputs, which use
+     * a WebRTC contact instead. Defaults to `true`.
      */
     chatEnabled?: boolean;
   },

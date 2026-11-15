@@ -66,10 +66,19 @@
       const status = document.querySelector("#status");
       let current;
 
+      const endChat = (chat) => {
+        chat.conversationHandler.endConversation();
+        chat.teardown();
+      };
+
       cancel.addEventListener("click", () => {
         if (!current) return;
         current.canceled = true;
-        void current.prefetched.cancel();
+        // `cancel()` only ends a chat Touchpoint has not taken yet. Once it
+        // has, the chat owns the contact, so end it through the conversation —
+        // otherwise the contact stays open in Connect.
+        if (current.chat) endChat(current.chat);
+        else void current.prefetched.cancel();
         status.textContent = "Startup canceled.";
         cancel.disabled = true;
       });
@@ -93,6 +102,7 @@
         const attempt = {
           prefetched: prefetchChatDetails(config),
           canceled: false,
+          chat: undefined,
         };
         current = attempt;
         launch.disabled = true;
@@ -106,8 +116,9 @@
             welcomeScreen: false,
             config: { ...config, details: attempt.prefetched.details },
           });
+          attempt.chat = chat;
           if (attempt.canceled) {
-            chat.teardown();
+            endChat(chat);
             return;
           }
           status.textContent = "Chat is open. Use its controls to close it.";

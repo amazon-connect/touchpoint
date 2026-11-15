@@ -123,10 +123,8 @@ export type {
 export { HiddenElement, AddedElement } from "./interface";
 export {
   ChatClient,
-  ParticipantServiceClient,
   prefetchChatDetails,
   type InitialConnection,
-  type ParticipantServiceClientOptions,
   type PrefetchedChat,
 } from "./connect";
 export { type CustomStyle } from "./utils/customStyle";

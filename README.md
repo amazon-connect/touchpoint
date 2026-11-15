@@ -105,13 +105,22 @@ acknowledgement updating its status. Typing indicators and participant events do
 not release the message.
 
 If the greeting was sent before the socket subscribed, Touchpoint recovers it
-from the transcript after connecting. Overlapping live and recovered messages
-are deduplicated by message ID and content.
+from the transcript after connecting. It recovers the transcript for a
+prefetched chat too, whose contact starts before Touchpoint loads, with or
+without `initialResponseTimeoutMs`. Messages are reconciled by message ID: a
+recovered and a live copy of one message render as one, and a changed
+redelivery, such as a streaming update, replaces that message rather than
+adding a second one.
 
 The deadline starts on the first queued send. A timeout keeps the message in the
 transcript as not sent and explains that the assistant is still connecting.
 Messages that time out, fail, or belong to an ended/restarted conversation are
-never retried automatically. A late greeting allows the customer to send again.
+never retried automatically. After the deadline passes the chat stays usable:
+the customer can send again, without waiting for a greeting that may never
+come. A dropped socket fails the sends that were waiting on it, and reconnecting
+lets the next send wait afresh.
+
+Attachments are held behind the same readiness as text.
 
 Leave `initialResponseTimeoutMs` unset for flows that expect the customer to
 speak first. Their sends wait only for the participant connection.
@@ -183,10 +192,15 @@ launchButton.addEventListener("click", async () => {
   closeButton.onclick = () => prefetched.cancel(); // if the UI never opens
   try {
     const { create } = await import("@amazon-connect-touchpoint/web");
-    await create({
+    const touchpoint = await create({
       config: { ...config, details: prefetched.details },
       welcomeScreen: false,
     });
+    // The chat now owns the contact, so end it through the conversation.
+    closeButton.onclick = () => {
+      touchpoint.conversationHandler.endConversation();
+      touchpoint.teardown();
+    };
   } catch (error) {
     await prefetched.cancel();
     showStartError(error);
@@ -196,9 +210,11 @@ launchButton.addEventListener("click", async () => {
 
 The first conversation uses the prefetched chat; a new conversation after it
 ends starts a fresh one. `cancel()` ends a prefetched chat Touchpoint has not
-taken and prevents it from being used afterward. A failed prefetch is surfaced
-without automatically starting another contact: the backend may already have
-created one before the failure reached the browser.
+taken and prevents it from being used afterward. Once Touchpoint has taken it,
+`cancel()` does nothing: end that contact with `endConversation()`, which ends
+it whether or not the chat has finished connecting. A failed prefetch is
+surfaced without automatically starting another contact: the backend may
+already have created one before the failure reached the browser.
 
 For a runnable host integration, see
 [`examples/chat-startup.html`](./examples/chat-startup.html). Run `npm run dev`

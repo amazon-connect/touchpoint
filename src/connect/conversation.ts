@@ -25,7 +25,11 @@ import {
 } from "./initialResponseGate";
 import { InitialConnectionChatClient } from "./initialConnection";
 import { ParticipantServiceClient } from "./participantClient";
-import type { ChatDetails, DetailsRequestParams } from "./startChat";
+import {
+  participantEndpointForRegion,
+  type ChatDetails,
+  type DetailsRequestParams,
+} from "./startChat";
 
 export {
   fetchChatDetails,
@@ -434,6 +438,12 @@ export const createConnectChatConversation = (
   let requestOverride: RequestOverride | undefined;
   let chatSession: Record<string, any> | null = null;
   let connected: boolean = false;
+  // The details of the contact this session is bound to, once StartChatContact
+  // has returned them, and whether that contact still has to be ended. A
+  // contact exists from that moment, well before ChatJS opens its socket, so
+  // teardown has to be able to end one that never connected.
+  let sessionDetails: ChatDetails | undefined;
+  let contactOpen = false;
   let connectionState: ChatConnectionState | undefined;
   const reportConnectionState = (state: ChatConnectionState): void => {
     if (state === connectionState) return;
@@ -562,8 +572,22 @@ export const createConnectChatConversation = (
     });
   };
 
+  // Set while an inbound message whose ID is already in the transcript is being
+  // rendered: its bubble is replaced rather than a second one appended. Read and
+  // cleared by `appendResponse`, which every inbound branch goes through.
+  let replaceTarget: Response | undefined;
+  let lastAppended: Response | undefined;
+
   const appendResponse = (response: Response): void => {
-    responses = [...responses, response];
+    const previous = replaceTarget;
+    replaceTarget = undefined;
+    lastAppended = response;
+    responses =
+      previous != null
+        ? responses.map((existing) =>
+            existing === previous ? response : existing,
+          )
+        : [...responses, response];
     notify(response);
     // Only inbound application turns open the gate. Customer echoes, typing,
     // participant events and interim text are not proof the assistant is ready.
@@ -603,14 +627,15 @@ export const createConnectChatConversation = (
   };
 
   // The ConnectParticipant service endpoint (same host ChatJS uses), e.g.
-  // https://participant.connect.<region>.api.aws
+  // https://participant.connect.<region>.api.aws. `buildConnectHandler` always
+  // supplies one; the fallback covers a handler created directly.
   const participantEndpoint = (): string => {
     const configured = (config.globalConfig as { endpoint?: unknown })
       ?.endpoint;
     const base =
       typeof configured === "string" && configured !== ""
         ? configured
-        : `https://participant.connect.${config.region ?? "us-west-2"}.api.aws`;
+        : participantEndpointForRegion(config.region ?? "us-west-2");
     return base.replace(/\/$/, "");
   };
 
@@ -731,6 +756,49 @@ export const createConnectChatConversation = (
     notify();
   };
 
+  // Ends a contact whose ChatJS session is not connected, by calling
+  // DisconnectParticipant with the connection token StartChatContact returned —
+  // or a fresh one — the way a canceled prefetch does. Never rejects: the
+  // contact also ends on its own once its chat duration elapses.
+  const disconnectContact = async (details: ChatDetails): Promise<void> => {
+    try {
+      const client =
+        config.customChatClient ??
+        new ParticipantServiceClient(participantEndpoint());
+      let token = details.initialConnection?.connectionToken;
+      if (token == null) {
+        const connection = await client.createParticipantConnection(
+          details.participantToken ?? null,
+          ["CONNECTION_CREDENTIALS"],
+          null,
+        );
+        token = connection.data.ConnectionCredentials?.ConnectionToken;
+      }
+      await client.disconnectParticipant(token ?? null);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("[touchpoint] Ending the chat contact failed", err);
+    }
+  };
+
+  // Ends this session's contact exactly once, however far its connection got:
+  // through ChatJS when the socket is open, and through the Participant Service
+  // otherwise. Without the second path, ending, resetting or destroying while
+  // the chat is still connecting would leave the contact open in Connect.
+  const endContact = (): void => {
+    if (!contactOpen) return;
+    contactOpen = false;
+    if (chatSession != null && connected) {
+      try {
+        (chatSession as any).disconnectParticipant();
+      } catch (_e) {
+        /* best effort */
+      }
+      return;
+    }
+    if (sessionDetails != null) void disconnectContact(sessionDetails);
+  };
+
   let resolvedContactId: string | undefined;
 
   // Live Sync outbound HTTP. Same NLU host as the receive socket, minus the `ws.` prefix.
@@ -812,7 +880,16 @@ export const createConnectChatConversation = (
       ? config.details()
       : Promise.resolve(config.details));
 
-    if (isStale()) return;
+    if (isStale()) {
+      // The conversation was ended, reset or destroyed while StartChatContact
+      // was in flight. The contact exists now, so end it rather than leaving it
+      // open — and leave the live session's own state alone.
+      void disconnectContact(details);
+      return;
+    }
+    // From here the contact is this session's to end.
+    sessionDetails = details;
+    contactOpen = true;
     setInterimMessage(
       initialResponse.isReady ? copy.thinking : copy.connecting,
     );
@@ -844,11 +921,7 @@ export const createConnectChatConversation = (
       initialConnection != null
         ? new InitialConnectionChatClient(
             config.customChatClient ??
-              new ParticipantServiceClient(
-                typeof config.globalConfig?.endpoint === "string"
-                  ? config.globalConfig.endpoint
-                  : `https://participant.connect.${config.region ?? "us-west-2"}.amazonaws.com`,
-              ),
+              new ParticipantServiceClient(participantEndpoint()),
             initialConnection,
           )
         : config.customChatClient;
@@ -863,27 +936,48 @@ export const createConnectChatConversation = (
 
     // Snapshot this session's generation; if `reset` bumps it, every listener below
     // becomes a no-op so a stale session can't mutate the new conversation.
-    const receivedMessages = new Map<string, string>();
+    // A transcript recovery and the live socket deliver the same item in
+    // different shapes — the stored copy has no `Attachments` where the live
+    // payload has an empty array, and each carries fields the other omits — so
+    // the message ID, not the payload, decides whether it has been rendered.
+    // What each ID rendered is kept so a changed redelivery (a streaming
+    // update) replaces that bubble instead of appending a second one.
+    const renderedPayloads = new Map<string, string>();
+    const renderedResponses = new Map<string, Response>();
     const handleMessage = (event: any): void => {
       if (isStale()) return;
       const data = event.data;
       if (data == null) return;
 
-      const participantRole = data.ParticipantRole;
-      if (participantRole === "CUSTOMER") return;
+      if (data.ParticipantRole === "CUSTOMER") return;
 
-      if (typeof data.Id === "string" && data.Id !== "") {
-        // A transcript recovery and the live socket can deliver the same item.
-        // Preserve changed content (for example a streaming update) with that ID.
-        const content = JSON.stringify([
+      const id =
+        typeof data.Id === "string" && data.Id !== "" ? data.Id : undefined;
+      if (id != null) {
+        const payload = JSON.stringify([
           data.ContentType,
           data.Content,
           data.Attachments,
         ]);
-        if (receivedMessages.get(data.Id) === content) return;
-        receivedMessages.set(data.Id, content);
+        if (renderedPayloads.get(id) === payload) return;
+        renderedPayloads.set(id, payload);
+        replaceTarget = renderedResponses.get(id);
       }
+      lastAppended = undefined;
+      try {
+        renderMessage(data);
+      } finally {
+        // A branch that renders nothing (an authentication or typing event)
+        // must not leave the replacement armed for the next append.
+        replaceTarget = undefined;
+        if (id != null && lastAppended != null) {
+          renderedResponses.set(id, lastAppended);
+        }
+      }
+    };
 
+    const renderMessage = (data: any): void => {
+      const participantRole = data.ParticipantRole;
       const contentType: string = data.ContentType ?? "";
 
       // Note: ChatJS's messageReceipts feature (enabled by default) sends the
@@ -1011,12 +1105,23 @@ export const createConnectChatConversation = (
     };
     chatSession.onMessage(handleMessage);
 
-    if (!initialResponse.isReady) {
-      // ChatJS fetches the transcript when the socket connects for subscribers
-      // of this public hook. connect() itself can resolve before subscription,
-      // so fetching history there would leave a gap before live delivery.
+    // A contact can send its opening turn before this session subscribes to the
+    // socket: a greeting-first flow is waited on by the gate, and a prefetched
+    // chat was started before Touchpoint loaded. Both recover it from the
+    // transcript. ChatJS fetches the transcript when the socket connects for
+    // subscribers of this public hook. connect() itself can resolve before
+    // subscription, so fetching history there would leave a gap before live
+    // delivery. An ordinary customer-first startup subscribes to neither and so
+    // issues no transcript request: it starts the contact itself and connects
+    // immediately, and a transcript it cannot have missed anything from is a
+    // request on every chat for nothing. Recovered and live copies of the same
+    // message are reconciled by ID in `handleMessage`.
+    if (!initialResponse.isReady || initialConnection != null) {
       chatSession.onTranscriptUpdated?.((event: any) => {
-        if (isStale() || initialResponse.isReady) return;
+        // Deliberately not stopped once the gate opens: a transcript carries
+        // turns after the greeting too, and dropping the rest of the batch
+        // would lose them.
+        if (isStale()) return;
         for (const item of event.data?.transcript ?? []) {
           if (item.Type === "MESSAGE" || item.Type === "ATTACHMENT") {
             handleMessage({ data: item });
@@ -1029,6 +1134,10 @@ export const createConnectChatConversation = (
       if (isStale()) return;
       connected = true;
       reportConnectionState("connected");
+      // A socket drop before the opening turn failed the sends that were
+      // waiting; now that it is back, let the next send wait afresh instead of
+      // rejecting with the old socket's error.
+      initialResponse.rearm();
     });
 
     chatSession.onConnectionBroken(() => {
@@ -1084,6 +1193,8 @@ export const createConnectChatConversation = (
     chatSession.onEnded(() => {
       if (isStale()) return;
       connected = false;
+      // The contact is over, so a later teardown has nothing left to end.
+      contactOpen = false;
       reportConnectionState("disconnected");
       if (!ended) {
         ended = true;
@@ -1762,16 +1873,12 @@ export const createConnectChatConversation = (
       authPopup = null;
       setInterimMessage(undefined);
       notify();
-      // Disconnect old session and start a fresh Connect Chat session
-      if (chatSession != null && connected) {
-        try {
-          (chatSession as any).disconnectParticipant();
-        } catch (_e) {
-          /* best effort */
-        }
-      }
+      // End the old contact — whether or not its socket ever opened — and start
+      // a fresh Connect Chat session.
+      endContact();
       connected = false;
       chatSession = null;
+      sessionDetails = undefined;
       resolvedContactId = undefined;
       // Replay Live Sync context after a refresh. Collocated Live Sync rebinds to the
       // fresh contact and replays context when it reconnects (see `openLiveSync`, driven
@@ -1791,9 +1898,7 @@ export const createConnectChatConversation = (
       sessionGeneration += 1;
       stopOutbound();
       subscribers = [];
-      if (chatSession != null && connected) {
-        (chatSession as any).disconnectParticipant();
-      }
+      endContact();
     },
 
     // Ends the conversation by disconnecting the participant. This fires ChatJS's
@@ -1810,20 +1915,17 @@ export const createConnectChatConversation = (
           conversationEnded: true,
         } as Response);
       }
-      if (chatSession != null && connected) {
-        try {
-          (chatSession as any).disconnectParticipant();
-        } catch (_e) {
-          /* best effort */
-        }
-      }
+      endContact();
     },
 
     // Uploads a file attachment via ChatJS (atomic: upload + post). Resolves once the
     // upload succeeds — at which point the customer's own attachment is appended to the
     // transcript — and rejects if it fails, so the caller can show upload status.
+    // Held behind the same readiness as a text message: an attachment posted
+    // before a greeting-first flow's opening turn is as out of order as text.
     sendAttachment: async (file: File): Promise<void> => {
-      await connectionReady;
+      const gate = initialResponse;
+      await Promise.all([connectionReady, gate.wait()]);
       await (chatSession as any)?.sendAttachment?.({ attachment: file });
       appendResponse({
         type: ResponseType.User,
@@ -1863,7 +1965,13 @@ export const createConnectChatConversation = (
     // via ChatJS's DescribeView (participant-auth; no IAM). The Template/InputSchema come
     // back as stringified JSON, so parse them for the renderer.
     describeView: async (viewToken: string): Promise<ResolvedView | null> => {
-      await connectionReady;
+      try {
+        await connectionReady;
+      } catch {
+        // A failed connection is already reported in the transcript, and the
+        // renderer treats an unresolved view as absent rather than throwing.
+        return null;
+      }
       if (chatSession == null || viewToken == null) return null;
       try {
         const result = await (chatSession as any).describeView({ viewToken });

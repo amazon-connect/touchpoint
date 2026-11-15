@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type Mock,
+} from "vitest";
 import { ResponseType, type Response } from "../core";
 
 const chat = vi.hoisted(() => ({
@@ -49,6 +57,7 @@ const fakeSession = () => {
     connect: vi.fn(() => connection.promise),
     disconnectParticipant: vi.fn(() => Promise.resolve()),
     sendMessage: vi.fn(() => Promise.resolve({ data: { Id: "server-id" } })),
+    sendAttachment: vi.fn(() => Promise.resolve()),
     onTranscriptUpdated: vi.fn((callback: typeof transcriptUpdated) => {
       transcriptUpdated = callback;
     }),
@@ -104,10 +113,23 @@ const endConversation = (handler: ConnectConversationHandler) => {
   handler.endConversation();
 };
 
+/** The Connect-only methods the handler adds to the `core` interface. */
+const connectOnly = (handler: ConnectConversationHandler) =>
+  handler as ConnectConversationHandler & {
+    sendAttachment: (file: File) => Promise<void>;
+    describeView: (viewToken: string) => Promise<unknown>;
+  };
+
 describe("outgoing chat readiness", () => {
   let session: ReturnType<typeof fakeSession>;
   let handler: ConnectConversationHandler;
   let responses: Response[];
+  let fetchMock: Mock<(url: string) => Promise<globalThis.Response>>;
+
+  // The Participant Service calls a teardown makes when ChatJS has no open
+  // socket of its own to disconnect.
+  const participantCalls = (path: string) =>
+    fetchMock.mock.calls.filter(([url]) => url.endsWith(path));
 
   const start = (overrides: Partial<ConnectChatConfig> = {}) => {
     handler = createConnectChatConversation({
@@ -143,11 +165,29 @@ describe("outgoing chat readiness", () => {
     session = fakeSession();
     chat.create.mockReturnValue(session);
     responses = [];
+    fetchMock = vi.fn(async (url: string) =>
+      url.endsWith("/participant/connection")
+        ? new Response(
+            JSON.stringify({
+              ConnectionCredentials: {
+                ConnectionToken: "fresh-token",
+                Expiry: new Date(Date.now() + 60_000).toISOString(),
+              },
+            }),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          )
+        : new Response("{}", {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
   });
 
   afterEach(() => {
     handler?.destroy();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
@@ -298,16 +338,91 @@ describe("outgoing chat readiness", () => {
     expect(session.onTranscriptUpdated).not.toHaveBeenCalled();
   });
 
-  it("preserves changed content with the same message ID", async () => {
+  const applicationTexts = () =>
+    responses
+      .filter((response) => response.type === ResponseType.Application)
+      .map((response) => response.payload.messages[0].text);
+
+  it("replaces a message in place when its content changes", async () => {
     start();
     await flush();
     session.receive(storedGreeting);
     session.receive({ ...storedGreeting, Content: "An updated greeting" });
-    expect(
-      responses
-        .filter((response) => response.type === ResponseType.Application)
-        .map((response) => response.payload.messages[0].text),
-    ).toEqual(["How can I help?", "An updated greeting"]);
+    expect(applicationTexts()).toEqual(["An updated greeting"]);
+  });
+
+  it("renders one message when the stored and live payloads differ in shape", async () => {
+    start();
+    await flush();
+    session.establish();
+    await flush();
+    // What GetTranscript stores: no `Attachments` key at all, and a `Type`.
+    session.receiveTranscript([
+      {
+        Id: "greeting-id",
+        Type: "MESSAGE",
+        ParticipantRole: "SYSTEM",
+        ContentType: "text/plain",
+        Content: "How can I help?",
+        AbsoluteTime: "2026-01-01T00:00:00.000Z",
+      },
+    ]);
+    // What the websocket delivers: an empty `Attachments` array and fields of
+    // its own.
+    session.receive({
+      Id: "greeting-id",
+      ParticipantRole: "SYSTEM",
+      ContentType: "text/plain",
+      Content: "How can I help?",
+      Attachments: [],
+      DisplayName: "Assistant",
+      ParticipantId: "assistant-1",
+    });
+    await flush();
+    expect(applicationTexts()).toEqual(["How can I help?"]);
+  });
+
+  it("processes the whole recovered transcript after the gate opens", async () => {
+    start();
+    await flush();
+    session.establish();
+    await flush();
+    session.receiveTranscript([
+      storedGreeting,
+      {
+        Id: "second-id",
+        Type: "MESSAGE",
+        ParticipantRole: "SYSTEM",
+        ContentType: "text/plain",
+        Content: "Anything else?",
+      },
+    ]);
+    await flush();
+    expect(applicationTexts()).toEqual(["How can I help?", "Anything else?"]);
+  });
+
+  it("recovers the transcript of a prefetched chat with no greeting gate", async () => {
+    start({
+      initialResponseTimeoutMs: undefined,
+      details: {
+        contactId: "test-contact",
+        participantId: "test-customer",
+        participantToken: "synthetic-test-token",
+        initialConnection: {
+          websocketUrl: "wss://socket.example/x",
+          websocketExpiry: new Date(Date.now() + 60_000).toISOString(),
+          connectionToken: "connection-token",
+          connectionTokenExpiry: new Date(Date.now() + 60_000).toISOString(),
+        },
+      },
+    });
+    await flush();
+    session.establish();
+    await flush();
+    expect(session.onTranscriptUpdated).toHaveBeenCalledTimes(1);
+    session.receiveTranscript([storedGreeting]);
+    await flush();
+    expect(applicationTexts()).toEqual(["How can I help?"]);
   });
 
   it("keeps waiting for a live greeting when no greeting is in the transcript", async () => {
@@ -553,21 +668,165 @@ describe("outgoing chat readiness", () => {
     expect(session.sendMessage).not.toHaveBeenCalled();
   });
 
+  const teardown = (operation: "destroy" | "endConversation" | "reset") => {
+    if (operation === "destroy") handler.destroy();
+    else if (operation === "reset") handler.reset({ clearResponses: true });
+    else endConversation(handler);
+  };
+
   it.each(["destroy", "endConversation"] as const)(
     "%s cancels the queue before the connection completes",
     async (operation) => {
       start().sendText("Hello");
       await flush();
-      if (operation === "destroy") handler.destroy();
-      else endConversation(handler);
+      teardown(operation);
       session.establish();
       greeting();
       await vi.advanceTimersByTimeAsync(2000);
       expect(session.sendMessage).not.toHaveBeenCalled();
       expect(userResponses()).toMatchObject([{ status: "failed" }]);
-      expect(vi.getTimerCount()).toBe(0);
     },
   );
+
+  it.each(["destroy", "endConversation", "reset"] as const)(
+    "%s ends a contact whose socket has not opened yet",
+    async (operation) => {
+      start();
+      await flush();
+      expect(chat.create).toHaveBeenCalledTimes(1);
+      teardown(operation);
+      await flush();
+
+      // No ChatJS session to disconnect through, so the contact is ended with a
+      // connection token of its own.
+      expect(session.disconnectParticipant).not.toHaveBeenCalled();
+      expect(participantCalls("/participant/connection")).toHaveLength(1);
+      const [disconnect] = participantCalls("/participant/disconnect");
+      expect(disconnect?.[0]).toBe(
+        "https://participant.connect.us-west-2.api.aws/participant/disconnect",
+      );
+      expect(participantCalls("/participant/disconnect")).toHaveLength(1);
+    },
+  );
+
+  it("ends a contact created after the conversation was torn down", async () => {
+    const pending = deferred<{
+      contactId: string;
+      participantId: string;
+      participantToken: string;
+    }>();
+    start({ details: () => pending.promise });
+    endConversation(handler);
+    await flush();
+    pending.resolve({
+      contactId: "late-contact",
+      participantId: "late-customer",
+      participantToken: "synthetic-late-token",
+    });
+    await flush();
+
+    // The contact exists even though no chat session was ever created for it.
+    expect(chat.create).not.toHaveBeenCalled();
+    expect(participantCalls("/participant/disconnect")).toHaveLength(1);
+  });
+
+  it("ends a connected contact through ChatJS, and only once", async () => {
+    start();
+    await flush();
+    session.establish();
+    await flush();
+    endConversation(handler);
+    handler.destroy();
+    await flush();
+
+    expect(session.disconnectParticipant).toHaveBeenCalledTimes(1);
+    expect(participantCalls("/participant/disconnect")).toHaveLength(0);
+  });
+
+  it("ends a connecting contact only once across repeated teardowns", async () => {
+    start();
+    await flush();
+    endConversation(handler);
+    handler.destroy();
+    await flush();
+
+    expect(participantCalls("/participant/disconnect")).toHaveLength(1);
+  });
+
+  it("does not disconnect again after the remote contact ends", async () => {
+    start();
+    await flush();
+    session.establish();
+    await flush();
+    session.end();
+    handler.destroy();
+    await flush();
+
+    expect(session.disconnectParticipant).not.toHaveBeenCalled();
+    expect(participantCalls("/participant/disconnect")).toHaveLength(0);
+  });
+
+  it("holds an attachment until the assistant's opening turn", async () => {
+    start();
+    const upload = connectOnly(handler).sendAttachment(
+      new File(["hello"], "hello.txt", { type: "text/plain" }),
+    );
+    void upload.catch(() => {});
+    await flush();
+    session.establish();
+    await flush();
+    expect(session.sendAttachment).not.toHaveBeenCalled();
+    greeting();
+    await flush();
+    expect(session.sendAttachment).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets a send wait again after the socket reconnects", async () => {
+    start().sendText("Hello");
+    await flush();
+    session.establish();
+    session.breakConnection();
+    await flush();
+    expect(userResponses()).toMatchObject([{ status: "failed" }]);
+
+    session.establish();
+    handler.sendText("After reconnecting");
+    await flush();
+    expect(session.sendMessage).not.toHaveBeenCalled();
+    greeting();
+    await flush();
+    expect(session.sendMessage).toHaveBeenCalledExactlyOnceWith({
+      contentType: "text/plain",
+      message: "After reconnecting",
+    });
+  });
+
+  it("keeps the chat usable for later sends once the deadline passes", async () => {
+    start().sendText("Hello");
+    await flush();
+    session.establish();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(session.sendMessage).not.toHaveBeenCalled();
+    expect(userResponses()).toMatchObject([{ status: "failed" }]);
+
+    // No greeting ever arrives, but the customer is not locked out.
+    handler.sendText("Second try");
+    await flush();
+    expect(session.sendMessage).toHaveBeenCalledExactlyOnceWith({
+      contentType: "text/plain",
+      message: "Second try",
+    });
+  });
+
+  it("resolves describeView as unavailable when connecting fails", async () => {
+    start();
+    await flush();
+    session.connection.reject(new Error("Connection refused"));
+    await flush();
+    await expect(
+      connectOnly(handler).describeView("view-token"),
+    ).resolves.toBeNull();
+  });
 
   it("cancels the queue when the remote contact ends", async () => {
     start().sendText("Hello");

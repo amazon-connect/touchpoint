@@ -145,9 +145,18 @@ describe("chat session transport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     chat.create.mockReturnValue(session());
+    // Tearing a connecting chat down ends its contact through the Participant
+    // Service; answer that request instead of letting it reach the network.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => json({})),
+    );
   });
 
-  afterEach(() => handler?.destroy());
+  afterEach(() => {
+    handler?.destroy();
+    vi.unstubAllGlobals();
+  });
 
   const created = async (details: ChatDetails, extra = {}) => {
     handler = createConnectChatConversation({
@@ -351,6 +360,35 @@ describe("prefetchChatDetails", () => {
     expect(
       fetchMock.mock.calls.some(([url]) => url.includes("/participant/")),
     ).toBe(false);
+  });
+
+  it("ends a taken prefetched chat through the conversation that owns it", async () => {
+    const disconnects = () =>
+      fetchMock.mock.calls.filter(
+        ([url]) => url === "https://participant.example/participant/disconnect",
+      );
+    chat.create.mockReturnValue(session());
+    const prefetched = prefetchChatDetails(config);
+    const handler = createConnectChatConversation({
+      details: prefetched.details,
+      globalConfig: config.globalConfig,
+    });
+    await vi.waitFor(() => expect(chat.create).toHaveBeenCalled());
+
+    // The prefetch no longer owns the contact, so canceling it ends nothing.
+    await prefetched.cancel();
+    expect(disconnects()).toHaveLength(0);
+
+    // The chat is still connecting, so the conversation ends the contact with
+    // the connection token StartChatContact returned.
+    (
+      handler as ConnectConversationHandler & { endConversation: () => void }
+    ).endConversation();
+    await vi.waitFor(() => expect(disconnects()).toHaveLength(1));
+    expect((disconnects()[0][1] as RequestInit).headers).toMatchObject({
+      "X-Amz-Bearer": "connection-token",
+    });
+    handler.destroy();
   });
 
   it("needs an endpoint or a details function", () => {

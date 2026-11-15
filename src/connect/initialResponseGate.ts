@@ -50,7 +50,7 @@ export class InitialResponseGate {
         this.reject = reject;
       });
       this.timer = setTimeout(() => {
-        this.fail(new InitialResponseTimeoutError());
+        this.expire();
       }, this.timeoutMs);
     }
     return this.pending;
@@ -76,5 +76,26 @@ export class InitialResponseGate {
     this.resolve = undefined;
     this.reject = undefined;
     this.pending = undefined;
+  }
+
+  /**
+   * Clear a failure a reconnect has resolved, so the next send starts a fresh
+   * bounded wait instead of rejecting with the old socket's error. The waits
+   * that already failed are not retried.
+   */
+  rearm(): void {
+    if (this.ready) return;
+    this.error = undefined;
+  }
+
+  /**
+   * The deadline passed: fail the sends already waiting so the customer is told
+   * they were not sent, then stop gating. A flow that never greets must not
+   * leave the chat permanently unusable.
+   */
+  private expire(): void {
+    this.fail(new InitialResponseTimeoutError());
+    this.ready = true;
+    this.error = undefined;
   }
 }

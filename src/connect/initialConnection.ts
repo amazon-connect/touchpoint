@@ -60,7 +60,10 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Answers ChatJS's first connection request with the connection
+   * StartChatContact already issued, when it is still usable. Every other
+   * request — a reconnect, or an expired initial connection — goes to the
+   * wrapped client.
    */
   createParticipantConnection(
     participantToken: string | null,
@@ -102,14 +105,14 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Ends the customer's part in the contact.
    */
   disconnectParticipant(connectionToken: string | null) {
     return this.inner.disconnectParticipant(connectionToken);
   }
 
   /**
-   *
+   * Sends a chat message.
    */
   sendMessage(
     connectionToken: string | null,
@@ -126,7 +129,7 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Sends a chat event, such as typing or a read receipt.
    */
   sendEvent(
     connectionToken: string | null,
@@ -143,7 +146,7 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Reads the stored transcript.
    */
   getTranscript(
     connectionToken: string | null,
@@ -153,7 +156,7 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Uploads a file attachment and posts it to the contact.
    */
   sendAttachment(
     connectionToken: string | null,
@@ -164,28 +167,28 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Downloads a received attachment.
    */
   downloadAttachment(connectionToken: string | null, attachmentId: string) {
     return this.inner.downloadAttachment(connectionToken, attachmentId);
   }
 
   /**
-   *
+   * Returns a short-lived download URL for a received attachment.
    */
   getAttachmentURL(connectionToken: string | null, attachmentId: string) {
     return this.inner.getAttachmentURL(connectionToken, attachmentId);
   }
 
   /**
-   *
+   * Resolves a view token into its view definition.
    */
   describeView(viewToken: string, connectionToken: string | null) {
     return this.inner.describeView(viewToken, connectionToken);
   }
 
   /**
-   *
+   * Returns the hosted identity-provider login URL for a sign-in session.
    */
   getAuthenticationUrl(
     connectionToken: string | null,
@@ -200,7 +203,7 @@ export class InitialConnectionChatClient
   }
 
   /**
-   *
+   * Cancels an in-progress sign-in session.
    */
   cancelParticipantAuthentication(
     connectionToken: string | null,
