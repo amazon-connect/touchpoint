@@ -19,6 +19,20 @@ import {
 } from "../core";
 import "amazon-connect-chatjs";
 import { openLiveSyncSocket } from "./liveSync";
+import {
+  InitialResponseGate,
+  InitialResponseTimeoutError,
+} from "./initialResponseGate";
+import { InitialConnectionChatClient } from "./initialConnection";
+import { ParticipantServiceClient } from "./participantClient";
+import type { ChatDetails, DetailsRequestParams } from "./startChat";
+
+export {
+  fetchChatDetails,
+  type ChatDetails,
+  type DetailsRequestParams,
+  type InitialConnection,
+} from "./startChat";
 
 /**
  * Base class for custom chat clients, re-exported from amazon-connect-chatjs
@@ -29,6 +43,9 @@ import { openLiveSyncSocket } from "./liveSync";
 export const ChatClient = connect.ChatSession.ChatClient;
 /** Instance type of {@link ChatClient}. */
 export type ChatClient = InstanceType<typeof connect.ChatSession.ChatClient>;
+
+/** Transport state, independent of whether the assistant has sent its first response. */
+export type ChatConnectionState = "connecting" | "connected" | "disconnected";
 
 /**
  * Configuration for the Amazon Connect Chat adapter.
@@ -82,6 +99,13 @@ export interface ConnectChatConfig {
    * `details.participantToken` is not required.
    */
   customChatClient?: ChatClient;
+  /** Opt-in deadline for waiting for an opening assistant turn before sending. */
+  initialResponseTimeoutMs?: number;
+  /**
+   * Observes the actual ChatJS connection state. This does not release the
+   * initial-response gate or indicate that the assistant is ready.
+   */
+  onConnectionStateChange?: (state: ChatConnectionState) => void;
   /**
    * Optional global config to pass to `connect.ChatSession.setGlobalConfig()`.
    * See the AmazonConnectChatJS documentation for available options.
@@ -99,85 +123,6 @@ export interface ConnectChatConfig {
     contactId?: string;
   };
 }
-
-/**
- * Chat details
- */
-export interface ChatDetails {
-  /** The contact ID */
-  contactId: string;
-  /** The participant ID */
-  participantId: string;
-  /**
-   * The participant token used for authentication. Optional when a
-   * `customChatClient` is provided.
-   */
-  participantToken?: string;
-}
-
-/**
- * Parameters to pass when calling the `startChatEndpoint`.
- */
-export interface DetailsRequestParams {
-  /** Connect instance ID */
-  instanceId?: string;
-  /** Contact flow ID to use */
-  contactFlowId?: string;
-  /** Customer display name */
-  participantDisplayName?: string;
-  /** Contact attributes passed to the contact flow */
-  contactAttributes?: Record<string, string>;
-  /**
-   * Content types the chat participant supports receiving.
-   * Defaults to text/plain, text/markdown, application/json, and interactive messages.
-   */
-  supportedMessagingContentTypes?: string[];
-}
-
-/**
- * Fetch chat details via API Gateway endpoint
- */
-export const fetchChatDetails = async (
-  endpoint: string,
-  params: DetailsRequestParams,
-): Promise<ChatDetails> => {
-  const body: Record<string, unknown> = {
-    InstanceId: params.instanceId,
-    ContactFlowId: params.contactFlowId,
-    ParticipantDetails: {
-      DisplayName: params.participantDisplayName,
-    },
-    Attributes: params.contactAttributes,
-    SupportedMessagingContentTypes: params.supportedMessagingContentTypes ?? [
-      "text/plain",
-      "text/markdown",
-      "application/json",
-      "application/vnd.amazonaws.connect.message.interactive",
-      "application/vnd.amazonaws.connect.message.interactive.response",
-    ],
-  };
-
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    throw new Error(`StartChatContact endpoint returned ${res.status}`);
-  }
-
-  const data = await res.json();
-  // The CloudFormation-deployed Lambda returns: { data: { startChatResult: { ContactId, ParticipantId, ParticipantToken } } }
-  const startChatResult = data?.data?.startChatResult;
-  return {
-    contactId: startChatResult.ContactId ?? startChatResult.contactId,
-    participantId:
-      startChatResult.ParticipantId ?? startChatResult.participantId,
-    participantToken:
-      startChatResult.ParticipantToken ?? startChatResult.participantToken,
-  };
-};
 
 /**
  * WebRTC connection data for voice, resolved from Amazon Connect's `StartWebRTCContact`
@@ -489,10 +434,25 @@ export const createConnectChatConversation = (
   let requestOverride: RequestOverride | undefined;
   let chatSession: Record<string, any> | null = null;
   let connected: boolean = false;
+  let connectionState: ChatConnectionState | undefined;
+  const reportConnectionState = (state: ChatConnectionState): void => {
+    if (state === connectionState) return;
+    connectionState = state;
+    try {
+      config.onConnectionStateChange?.(state);
+    } catch {
+      // eslint-disable-next-line no-console
+      console.warn("[touchpoint] Connection state observer failed.");
+    }
+  };
   // Identifies the current chat session. `reset` bumps it before tearing down the old
   // session so that session's late callbacks (e.g. the onEnded fired by disconnecting)
   // are ignored instead of polluting the fresh conversation's state.
   let sessionGeneration = 0;
+  let outboundStopped = false;
+  let initialResponse = new InitialResponseGate(
+    config.initialResponseTimeoutMs,
+  );
   let currentInterimMessage: string | undefined = undefined;
   // TODO: keep track of when the conversation is escalated, stop triggering a typing interim message if true
   let escalated: boolean = false;
@@ -605,6 +565,23 @@ export const createConnectChatConversation = (
   const appendResponse = (response: Response): void => {
     responses = [...responses, response];
     notify(response);
+    // Only inbound application turns open the gate. Customer echoes, typing,
+    // participant events and interim text are not proof the assistant is ready.
+    if (
+      response.type === ResponseType.Application &&
+      (response.payload.messages.some(
+        (message) =>
+          (typeof message.text === "string" && message.text.trim() !== "") ||
+          message.choices.length > 0,
+      ) ||
+        Object.keys(response.payload.modalities ?? {}).length > 0 ||
+        ("guide" in response && response.guide != null) ||
+        ("attachments" in response &&
+          Array.isArray(response.attachments) &&
+          response.attachments.length > 0))
+    ) {
+      initialResponse.open();
+    }
   };
 
   // --- Amazon Connect chat authentication ---------------------------------
@@ -708,6 +685,7 @@ export const createConnectChatConversation = (
   const newStatusToken = (): string => `msg-${(statusCounter += 1)}`;
   // Maps the Connect-assigned MessageId back to our local token, for receipts.
   const connectIdToToken = new Map<string, string>();
+  const queuedStatusTokens = new Set<string>();
   const statusRank: Record<MessageStatus, number> = {
     sending: 0,
     sent: 1,
@@ -737,6 +715,20 @@ export const createConnectChatConversation = (
       return { ...response, status };
     });
     if (changed) notify();
+  };
+
+  const stopOutbound = (): void => {
+    outboundStopped = true;
+    initialResponse.fail(new Error("The conversation has ended."));
+    responses = responses.map((response) =>
+      response.type === ResponseType.User &&
+      response.statusToken != null &&
+      queuedStatusTokens.has(response.statusToken)
+        ? { ...response, status: "failed" }
+        : response,
+    );
+    queuedStatusTokens.clear();
+    notify();
   };
 
   let resolvedContactId: string | undefined;
@@ -811,13 +803,19 @@ export const createConnectChatConversation = (
   };
 
   const initSession = async (): Promise<void> => {
+    const generation = sessionGeneration;
+    const isStale = (): boolean =>
+      generation !== sessionGeneration || outboundStopped;
     setInterimMessage(copy.connecting);
 
     const details: ChatDetails = await (typeof config.details === "function"
       ? config.details()
       : Promise.resolve(config.details));
 
-    setInterimMessage(copy.thinking);
+    if (isStale()) return;
+    setInterimMessage(
+      initialResponse.isReady ? copy.thinking : copy.connecting,
+    );
 
     resolvedContactId = details.contactId;
     // Collocated Live Sync: use this chat's contact ID when none was configured.
@@ -839,26 +837,52 @@ export const createConnectChatConversation = (
       );
     }
 
+    const { initialConnection, ...chatDetails } = details;
+    // With an initial connection, ChatJS needs a client that can answer its first
+    // connection request; everything else goes to the configured transport.
+    const chatClient =
+      initialConnection != null
+        ? new InitialConnectionChatClient(
+            config.customChatClient ??
+              new ParticipantServiceClient(
+                typeof config.globalConfig?.endpoint === "string"
+                  ? config.globalConfig.endpoint
+                  : `https://participant.connect.${config.region ?? "us-west-2"}.amazonaws.com`,
+              ),
+            initialConnection,
+          )
+        : config.customChatClient;
+
     chatSession = connect.ChatSession.create({
-      chatDetails: details,
-      ...(config.customChatClient != null
-        ? { options: { customChatClient: config.customChatClient } }
+      chatDetails,
+      ...(chatClient != null
+        ? { options: { customChatClient: chatClient } }
         : {}),
       type: connect.ChatSession.SessionTypes.CUSTOMER,
     }) as Record<string, any>;
 
     // Snapshot this session's generation; if `reset` bumps it, every listener below
     // becomes a no-op so a stale session can't mutate the new conversation.
-    const generation = sessionGeneration;
-    const isStale = (): boolean => generation !== sessionGeneration;
-
-    chatSession.onMessage((event: any) => {
+    const receivedMessages = new Map<string, string>();
+    const handleMessage = (event: any): void => {
       if (isStale()) return;
       const data = event.data;
       if (data == null) return;
 
       const participantRole = data.ParticipantRole;
       if (participantRole === "CUSTOMER") return;
+
+      if (typeof data.Id === "string" && data.Id !== "") {
+        // A transcript recovery and the live socket can deliver the same item.
+        // Preserve changed content (for example a streaming update) with that ID.
+        const content = JSON.stringify([
+          data.ContentType,
+          data.Content,
+          data.Attachments,
+        ]);
+        if (receivedMessages.get(data.Id) === content) return;
+        receivedMessages.set(data.Id, content);
+      }
 
       const contentType: string = data.ContentType ?? "";
 
@@ -984,16 +1008,34 @@ export const createConnectChatConversation = (
       ) {
         handleInteractiveMessage(data.Content, participant);
       }
-    });
+    };
+    chatSession.onMessage(handleMessage);
+
+    if (!initialResponse.isReady) {
+      // ChatJS fetches the transcript when the socket connects for subscribers
+      // of this public hook. connect() itself can resolve before subscription,
+      // so fetching history there would leave a gap before live delivery.
+      chatSession.onTranscriptUpdated?.((event: any) => {
+        if (isStale() || initialResponse.isReady) return;
+        for (const item of event.data?.transcript ?? []) {
+          if (item.Type === "MESSAGE" || item.Type === "ATTACHMENT") {
+            handleMessage({ data: item });
+          }
+        }
+      });
+    }
 
     chatSession.onConnectionEstablished(() => {
       if (isStale()) return;
       connected = true;
+      reportConnectionState("connected");
     });
 
     chatSession.onConnectionBroken(() => {
       if (isStale()) return;
       connected = false;
+      reportConnectionState("disconnected");
+      initialResponse.fail(new Error(copy.connectionLost));
       appendResponse({
         type: ResponseType.Failure,
         receivedAt: Date.now(),
@@ -1042,8 +1084,10 @@ export const createConnectChatConversation = (
     chatSession.onEnded(() => {
       if (isStale()) return;
       connected = false;
+      reportConnectionState("disconnected");
       if (!ended) {
         ended = true;
+        stopOutbound();
         setInterimMessage(undefined);
         appendResponse({
           type: ResponseType.Notice,
@@ -1247,16 +1291,28 @@ export const createConnectChatConversation = (
     if (config.chatEnabled === false) {
       return Promise.resolve();
     }
-    return initSession().catch((err) => {
-      setInterimMessage(undefined);
-      appendResponse({
-        type: ResponseType.Failure,
-        receivedAt: Date.now(),
-        payload: {
-          text: `Failed to connect: ${err instanceof Error ? err.message : "Unknown error"}`,
-        },
-      });
+    reportConnectionState("connecting");
+    const generation = sessionGeneration;
+    const gate = initialResponse;
+    const pending = initSession().catch((err: unknown) => {
+      if (generation === sessionGeneration && !outboundStopped) {
+        reportConnectionState("disconnected");
+        gate.fail(err instanceof Error ? err : new Error("Failed to connect."));
+        setInterimMessage(undefined);
+        appendResponse({
+          type: ResponseType.Failure,
+          receivedAt: Date.now(),
+          payload: {
+            text: `Failed to connect: ${err instanceof Error ? err.message : "Unknown error"}`,
+          },
+        });
+      }
+      throw err;
     });
+    // The connection starts before there is necessarily a send to await it.
+    // Retain its rejection for sends without creating an unhandled rejection.
+    void pending.catch(() => {});
+    return pending;
   };
 
   let connectionReady = openChatSession();
@@ -1272,30 +1328,58 @@ export const createConnectChatConversation = (
     },
     statusToken?: string,
   ): void => {
-    void connectionReady.then(() => {
-      const pending = chatSession?.sendMessage(params);
-      void pending
-        ?.then?.((result: any) => {
-          if (statusToken != null) {
-            const connectId = result?.data?.Id ?? result?.data?.MessageId;
-            if (connectId != null) {
-              connectIdToToken.set(String(connectId), statusToken);
-            }
-            setUserStatus(statusToken, "sent");
+    const generation = sessionGeneration;
+    const gate = initialResponse;
+    if (statusToken != null) queuedStatusTokens.add(statusToken);
+    void Promise.all([connectionReady, gate.wait()])
+      .then(() => {
+        if (statusToken != null) queuedStatusTokens.delete(statusToken);
+        if (
+          generation !== sessionGeneration ||
+          outboundStopped ||
+          chatSession == null
+        ) {
+          throw new Error("The conversation has ended.");
+        }
+        setInterimMessage(escalated ? undefined : copy.thinking);
+        return chatSession.sendMessage(params);
+      })
+      .then((result: any) => {
+        if (generation !== sessionGeneration) return;
+        if (statusToken != null) {
+          const connectId = result?.data?.Id ?? result?.data?.MessageId;
+          if (connectId != null) {
+            connectIdToToken.set(String(connectId), statusToken);
           }
-        })
-        ?.catch?.((err: unknown) => {
-          // eslint-disable-next-line no-console
-          console.error(
-            "[connect-chat-adapter] sendMessage failed",
-            err,
-            params,
-          );
-          if (statusToken != null) {
-            setUserStatus(statusToken, "failed");
+          setUserStatus(statusToken, "sent");
+        }
+      })
+      .catch((err: unknown) => {
+        if (statusToken != null) queuedStatusTokens.delete(statusToken);
+        if (generation !== sessionGeneration || outboundStopped) return;
+        // eslint-disable-next-line no-console
+        console.error("[connect-chat-adapter] sendMessage failed", err);
+        if (statusToken != null) {
+          setUserStatus(statusToken, "failed");
+        }
+        setInterimMessage(undefined);
+        if (err instanceof InitialResponseTimeoutError) {
+          // Several queued sends share one gate; display its timeout only once.
+          if (
+            !responses.some(
+              (response) =>
+                response.type === ResponseType.Failure &&
+                response.payload.text === err.message,
+            )
+          ) {
+            appendResponse({
+              type: ResponseType.Failure,
+              receivedAt: Date.now(),
+              payload: { text: err.message },
+            });
           }
-        });
-    });
+        }
+      });
   };
 
   /**
@@ -1367,7 +1451,13 @@ export const createConnectChatConversation = (
       return;
     }
 
-    setInterimMessage(escalated ? undefined : copy.thinking);
+    setInterimMessage(
+      escalated
+        ? undefined
+        : initialResponse.isReady
+          ? copy.thinking
+          : copy.connecting,
+    );
 
     const statusToken = newStatusToken();
     const newResponse: Response = {
@@ -1646,6 +1736,11 @@ export const createConnectChatConversation = (
       // (and possibly other) callbacks asynchronously, which would otherwise re-append
       // the "Conversation has ended" notice into the freshly-cleared conversation.
       sessionGeneration += 1;
+      stopOutbound();
+      initialResponse = new InitialResponseGate(
+        config.initialResponseTimeoutMs,
+      );
+      outboundStopped = false;
       if (options?.clearResponses) {
         responses = [];
       }
@@ -1693,6 +1788,8 @@ export const createConnectChatConversation = (
     },
 
     destroy: (): void => {
+      sessionGeneration += 1;
+      stopOutbound();
       subscribers = [];
       if (chatSession != null && connected) {
         (chatSession as any).disconnectParticipant();
@@ -1702,6 +1799,17 @@ export const createConnectChatConversation = (
     // Ends the conversation by disconnecting the participant. This fires ChatJS's
     // chat.ended event (onEnded), which appends the "Conversation has ended" notice.
     endConversation: (): void => {
+      stopOutbound();
+      setInterimMessage(undefined);
+      if (!ended) {
+        ended = true;
+        appendResponse({
+          type: ResponseType.Notice,
+          receivedAt: Date.now(),
+          payload: { text: copy.conversationEnded },
+          conversationEnded: true,
+        } as Response);
+      }
       if (chatSession != null && connected) {
         try {
           (chatSession as any).disconnectParticipant();

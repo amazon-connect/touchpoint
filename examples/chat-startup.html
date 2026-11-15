@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Touchpoint: start chat while loading the UI</title>
+    <style>
+      body {
+        max-width: 48rem;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        font-family: system-ui, sans-serif;
+      }
+      label {
+        display: block;
+        margin-bottom: 1rem;
+      }
+      input:not([type="checkbox"]) {
+        display: block;
+        width: 100%;
+        padding: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Start chat while loading the UI</h1>
+    <p>
+      Enter your own backend endpoint. It must accept a StartChatContact request
+      and return <code>{ data: { startChatResult: ... } }</code>.
+    </p>
+    <form id="settings">
+      <label>
+        StartChatContact endpoint
+        <input name="endpoint" type="text" placeholder="/start-chat" required />
+      </label>
+      <label>
+        AWS region
+        <input name="region" value="us-west-2" required />
+      </label>
+      <p>Leave these IDs blank if your endpoint supplies them.</p>
+      <label>
+        Connect instance ID
+        <input name="instanceId" />
+      </label>
+      <label>
+        Contact flow ID
+        <input name="contactFlowId" />
+      </label>
+      <label>
+        <input name="greeting" type="checkbox" />
+        This flow sends an opening greeting before accepting a message
+      </label>
+      <button id="launch" type="submit">Open chat</button>
+      <button id="cancel" type="button" disabled>Cancel startup</button>
+    </form>
+    <p id="status" role="status">Ready.</p>
+    <script type="module">
+      // Vite resolves these source imports while running this example.
+      // Published consumers use @amazon-connect-touchpoint/web/prefetch
+      // and dynamically import @amazon-connect-touchpoint/web instead.
+      import { prefetchChatDetails } from "../src/prefetch.ts";
+
+      const form = document.querySelector("#settings");
+      const launch = document.querySelector("#launch");
+      const cancel = document.querySelector("#cancel");
+      const status = document.querySelector("#status");
+      let current;
+
+      cancel.addEventListener("click", () => {
+        if (!current) return;
+        current.canceled = true;
+        void current.prefetched.cancel();
+        status.textContent = "Startup canceled.";
+        cancel.disabled = true;
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (current) return;
+        const values = new FormData(form);
+        const config = {
+          chatEndpoint: String(values.get("endpoint")),
+          region: String(values.get("region")),
+          instanceId: String(values.get("instanceId")) || undefined,
+          contactFlowId: String(values.get("contactFlowId")) || undefined,
+          participantDisplayName: "Customer",
+          requestInitialConnection: true,
+          ...(values.has("greeting")
+            ? { initialResponseTimeoutMs: 30000 }
+            : {}),
+        };
+        // Start the request before importing the main bundle.
+        const attempt = {
+          prefetched: prefetchChatDetails(config),
+          canceled: false,
+        };
+        current = attempt;
+        launch.disabled = true;
+        cancel.disabled = false;
+        status.textContent = "Loading chat…";
+        try {
+          const { create } = await import("../src/index.tsx");
+          if (attempt.canceled) return;
+          const chat = await create({
+            input: "text",
+            welcomeScreen: false,
+            config: { ...config, details: attempt.prefetched.details },
+          });
+          if (attempt.canceled) {
+            chat.teardown();
+            return;
+          }
+          status.textContent = "Chat is open. Use its controls to close it.";
+          form.hidden = true;
+        } catch {
+          await attempt.prefetched.cancel();
+          status.textContent = "Chat could not start. Check your endpoint.";
+        } finally {
+          current = undefined;
+          launch.disabled = false;
+          cancel.disabled = true;
+        }
+      });
+    </script>
+  </body>
+</html>

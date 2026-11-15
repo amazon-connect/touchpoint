@@ -513,6 +513,8 @@ export interface TouchpointConfiguration {
    * connecting/thinking state centered where the message will appear, until the
    * customer sends or selects something. Defaults to `true`. Set to `false` to
    * render the conversation as a top-anchored transcript from the first message.
+   * The composer is available immediately in that layout; sends wait for the
+   * participant connection, and optionally `config.initialResponseTimeoutMs`.
    * Has no effect once modalities/guides are present or the conversation has
    * progressed.
    */

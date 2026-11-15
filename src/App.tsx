@@ -52,7 +52,6 @@ import { RiveAnimation } from "./components/RiveAnimation";
 import { Main, InputContainer } from "./components/Layout";
 import {
   buildConnectHandler,
-  CONNECTING_INTERIM_MESSAGE,
   type AuthenticationStatus,
   type ConnectConversationHandler,
   type ResolvedView,
@@ -700,11 +699,6 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
     return applicationResponses;
   }, [configuration.welcomeScreen, input, conversationEnded, responses]);
 
-  // While the chat session is still being established, the customer can't send
-  // anything yet, so the input is hidden (in both the immersive and normal
-  // layouts) until the connection is ready.
-  const isConnecting = interimMessage === CONNECTING_INTERIM_MESSAGE;
-
   // When the welcome screen shows the brand logo centered, the header logo is
   // suppressed so there's a single logo; it returns once the conversation starts.
   const welcomeLogoActive =
@@ -979,7 +973,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
         <InputContainer windowSize={windowSize}>
           {conversationEnded ? (
             <StartNewConversationButton onClick={reset} />
-          ) : isConnecting ? null : (
+          ) : (
             <>
               {choiceMessage != null ? (
                 <MessageChoices {...choiceMessage} handler={handler} />

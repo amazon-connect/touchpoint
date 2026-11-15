@@ -78,6 +78,132 @@ const touchpoint = await create({
 });
 ```
 
+### Compose while a greeting-first flow connects
+
+Disable the welcome screen to show the composer immediately. For a flow that
+always sends an opening assistant turn, also set `initialResponseTimeoutMs`:
+
+```js
+const touchpoint = await create({
+  config: {
+    chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    instanceId: "REPLACE_WITH_INSTANCE_ID",
+    participantDisplayName: "Customer",
+    contactFlowId: "REPLACE_WITH_CONTACT_FLOW_ID",
+    region: "us-east-1",
+    initialResponseTimeoutMs: 30000,
+  },
+  input: "text",
+  welcomeScreen: false,
+});
+```
+
+Customers can type and press Send while connecting. The message remains in the
+transcript as Sending until both the participant connection and an opening
+assistant turn are ready. It is then dispatched once, with the normal Connect
+acknowledgement updating its status. Typing indicators and participant events do
+not release the message.
+
+If the greeting was sent before the socket subscribed, Touchpoint recovers it
+from the transcript after connecting. Overlapping live and recovered messages
+are deduplicated by message ID and content.
+
+The deadline starts on the first queued send. A timeout keeps the message in the
+transcript as not sent and explains that the assistant is still connecting.
+Messages that time out, fail, or belong to an ended/restarted conversation are
+never retried automatically. A late greeting allows the customer to send again.
+
+Leave `initialResponseTimeoutMs` unset for flows that expect the customer to
+speak first. Their sends wait only for the participant connection.
+
+### Observe connection readiness
+
+Use `config.onConnectionStateChange` to distinguish the ChatJS transport
+connection from the assistant's first response:
+
+```js
+const touchpoint = await create({
+  config: {
+    chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    onConnectionStateChange: (state) => {
+      // "connecting", "connected", or "disconnected"
+      updateConnectionStatus(state);
+    },
+  },
+});
+```
+
+`connected` follows ChatJS's connection-established event. It does not mean
+that the assistant has sent a greeting, and it does not release messages held
+by `initialResponseTimeoutMs`. Events from replaced sessions are ignored.
+
+### Connect faster with the StartChatContact connection
+
+StartChatContact can return the websocket and connection credentials along with
+the participant when it is called with
+`ConnectionTypes: ["WEBSOCKET", "CONNECTION_CREDENTIALS"]`. Touchpoint then
+skips its own `CreateParticipantConnection` request before connecting:
+
+```js
+const touchpoint = await create({
+  config: {
+    chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+    requestInitialConnection: true,
+  },
+});
+```
+
+Your endpoint must forward `ConnectionTypes` to StartChatContact and return
+`Websocket` and `ConnectionCredentials` in `data.startChatResult`. An endpoint
+that doesn't is unaffected: Touchpoint connects as usual. With a `details`
+function, return the same values as `initialConnection` instead.
+
+The initial connection is used once, for the first connection, and only while it
+has not expired. Reconnects request fresh connections. Touchpoint then talks to
+the Participant Service through its own `ParticipantServiceClient` (or your
+`customChatClient`), which retries throttling, server and network errors like
+ChatJS's bundled client.
+
+### Start the chat before Touchpoint loads
+
+If your page has its own launch button, start the contact when the customer
+clicks it, so StartChatContact overlaps loading Touchpoint. The `prefetch` entry
+is a few kilobytes and loads neither ChatJS nor the UI:
+
+```js
+import { prefetchChatDetails } from "@amazon-connect-touchpoint/web/prefetch";
+
+const config = {
+  chatEndpoint: "REPLACE_WITH_START_CHAT_ENDPOINT",
+  requestInitialConnection: true,
+};
+
+launchButton.addEventListener("click", async () => {
+  const prefetched = prefetchChatDetails(config);
+  closeButton.onclick = () => prefetched.cancel(); // if the UI never opens
+  try {
+    const { create } = await import("@amazon-connect-touchpoint/web");
+    await create({
+      config: { ...config, details: prefetched.details },
+      welcomeScreen: false,
+    });
+  } catch (error) {
+    await prefetched.cancel();
+    showStartError(error);
+  }
+});
+```
+
+The first conversation uses the prefetched chat; a new conversation after it
+ends starts a fresh one. `cancel()` ends a prefetched chat Touchpoint has not
+taken and prevents it from being used afterward. A failed prefetch is surfaced
+without automatically starting another contact: the backend may already have
+created one before the failure reached the browser.
+
+For a runnable host integration, see
+[`examples/chat-startup.html`](./examples/chat-startup.html). Run `npm run dev`
+and open `/examples/chat-startup.html` with your own StartChatContact endpoint.
+
 ### Custom chat client (advanced)
 
 By default, Touchpoint talks to the Amazon Connect Participant Service directly

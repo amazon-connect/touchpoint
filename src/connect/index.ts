@@ -2,21 +2,28 @@ import type { LiveSyncConnection } from "../interface";
 import {
   createConnectChatConversation,
   type ChatClient,
-  fetchChatDetails,
   fetchWebRtcConnectionData,
   type ChatDetails,
   type ConnectConversationHandler,
   type DetailsRequestParams,
 } from "./conversation";
+import { chatDetailsSource, participantEndpointForRegion } from "./startChat";
 
 export type {
   AuthenticationStatus,
+  ChatConnectionState,
   ChatDetails,
   ConnectConversationHandler,
   DetailsRequestParams,
+  InitialConnection,
   ResolvedView,
   WebRtcConnectionData,
 } from "./conversation";
+export {
+  ParticipantServiceClient,
+  type ParticipantServiceClientOptions,
+} from "./participantClient";
+export { prefetchChatDetails, type PrefetchedChat } from "../prefetch";
 export { CONNECTING_INTERIM_MESSAGE, ChatClient } from "./conversation";
 export { loadViewRenderer, viewRendererScriptUrl } from "./viewRenderer";
 
@@ -83,6 +90,21 @@ export interface ConnectConfig extends DetailsRequestParams {
    * browser. When provided, `details.participantToken` is optional.
    */
   customChatClient?: ChatClient;
+  /**
+   * For flows that always send an opening assistant turn, hold outgoing messages
+   * until that turn arrives. The deadline starts with the first queued send.
+   * A timeout marks queued messages as not sent; they are never retried automatically.
+   * Leave unset for customer-first flows. Must be positive and at most 2147483647.
+   * Pair with `welcomeScreen: false` to let customers compose while connecting.
+   */
+  initialResponseTimeoutMs?: number;
+  /**
+   * Observes ChatJS transport state separately from assistant readiness.
+   * Observer failures do not interrupt the connection or queued messages.
+   */
+  onConnectionStateChange?: (
+    state: import("./conversation").ChatConnectionState,
+  ) => void;
   /** @hidden */
   stage?: string;
   /**
@@ -102,12 +124,6 @@ const liveSyncHostForRegion = (region: string, stage?: string): string =>
   `ws.nlu.acxd.connect${stageSuffix(stage)}.${region}.amazonaws.com`;
 
 /**
- * Infers the Amazon Connect participant service endpoint from the region and optional stage.
- */
-const participantEndpointForRegion = (region: string, stage?: string): string =>
-  `https://participant.connect${stageSuffix(stage)}.${region}.api.aws`;
-
-/**
  * Builds the Amazon Connect Chat conversation handler from a {@link ConnectConfig},
  * optionally opening the Live Sync action socket.
  * @param config - Connect connection details
@@ -121,18 +137,14 @@ export const buildConnectHandler = (
   config: ConnectConfig,
   languageCode: string,
   liveSync?: LiveSyncConnection,
-  options?: { chatEnabled?: boolean },
+  options?: {
+    /**
+     *
+     */
+    chatEnabled?: boolean;
+  },
 ): ConnectConversationHandler => {
-  const details =
-    config.details ??
-    (() =>
-      fetchChatDetails(config.chatEndpoint ?? "", {
-        instanceId: config.instanceId,
-        contactFlowId: config.contactFlowId,
-        participantDisplayName: config.participantDisplayName,
-        contactAttributes: config.contactAttributes,
-        supportedMessagingContentTypes: config.supportedMessagingContentTypes,
-      }));
+  const details = chatDetailsSource(config);
 
   const voiceDetails =
     config.voiceEndpoint != null
@@ -171,6 +183,12 @@ export const buildConnectHandler = (
     languageCode,
     ...(config.customChatClient != null
       ? { customChatClient: config.customChatClient }
+      : {}),
+    ...(config.initialResponseTimeoutMs != null
+      ? { initialResponseTimeoutMs: config.initialResponseTimeoutMs }
+      : {}),
+    ...(config.onConnectionStateChange != null
+      ? { onConnectionStateChange: config.onConnectionStateChange }
       : {}),
     globalConfig,
     ...(liveSync != null
