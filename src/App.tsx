@@ -777,6 +777,7 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
               ? configuration.launchIcon
               : undefined
           }
+          conversationHandler={handler}
           onClick={() => {
             setIsExpanded(true);
           }}

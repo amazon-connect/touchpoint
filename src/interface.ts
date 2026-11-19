@@ -123,6 +123,10 @@ export type CustomLaunchButton = ComponentType<{
    * Click handler that expands Touchpoint, without the caller having to implement this based on Touchpoint instance methods.
    */
   onClick?: () => void;
+  /**
+   * Conversation handler instance
+   */
+  conversationHandler: ConnectConversationHandler;
 }>;
 
 /**
