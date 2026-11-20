@@ -121,7 +121,12 @@ export type {
   DetailsRequestParams,
 } from "./interface";
 export { HiddenElement, AddedElement } from "./interface";
-export { ChatClient } from "./connect";
+export {
+  ChatClient,
+  prefetchChatDetails,
+  type InitialConnection,
+  type PrefetchedChat,
+} from "./connect";
 export { type CustomStyle } from "./utils/customStyle";
 export { createIcon } from "./components/ui/createIcon";
 export { type IconProps, type Icon } from "./components/ui/Icons";

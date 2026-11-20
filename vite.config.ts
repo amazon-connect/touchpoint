@@ -86,6 +86,7 @@ export default defineConfig(({ command, mode }) => {
         entry: {
           index: resolve(__dirname, "./src/index.tsx"),
           core: resolve(__dirname, "./src/core.ts"),
+          prefetch: resolve(__dirname, "./src/prefetch.ts"),
         },
         formats: ["es"],
       },
