@@ -11,6 +11,7 @@ import {
   useCallback,
 } from "react";
 import {
+  ParticipantRole,
   ResponseType,
   type Subscriber,
   type Response,
@@ -81,6 +82,67 @@ const downloadTranscript = async (handler: {
       return `[${time}] ${name}: ${content}`;
     })
     .filter((line): line is string => line != null);
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "chat-transcript.txt";
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
+/**
+ * Builds a readable .txt transcript from the locally held responses and downloads it.
+ * Lines follow the server transcript format: `[ISO time] Name: content`.
+ * @param responses - the conversation responses
+ * @param names - sender labels; each falls back to a localized generic label
+ * @param names.user - the customer's name
+ * @param names.bot - the automated assistant's name
+ * @param names.agent - fallback name for the post-escalation agent
+ */
+const downloadTranscriptFromResponses = (
+  responses: Response[],
+  names: { user: string; bot: string; agent: string },
+): void => {
+  const choiceTexts = new Map<string, string>();
+  responses.forEach((response) => {
+    if (response.type !== ResponseType.Application) return;
+    response.payload.messages.forEach((message) => {
+      message.choices.forEach((choice) => {
+        choiceTexts.set(choice.choiceId, choice.choiceText);
+      });
+    });
+  });
+  const lines: string[] = [];
+  responses.forEach((response) => {
+    let name: string;
+    let content: string;
+    if (response.type === ResponseType.User) {
+      name = names.user;
+      const payload = response.payload;
+      if (payload.type === "text") content = payload.text;
+      else if (payload.type === "choice") {
+        content = (payload.choiceIds ?? [payload.choiceId])
+          .map((id) => choiceTexts.get(id ?? "") ?? id ?? "")
+          .join(", ");
+      } else content = "";
+    } else if (response.type === ResponseType.Application) {
+      name =
+        response.participantRole === ParticipantRole.Agent
+          ? (response.participantName ?? names.agent)
+          : names.bot;
+      content = response.payload.messages
+        .map((message) => message.text)
+        .filter((text) => text !== "")
+        .join("\n");
+    } else {
+      return;
+    }
+    if (content === "") return;
+    lines.push(
+      `[${new Date(response.receivedAt).toISOString()}] ${name}: ${content}`,
+    );
+  });
   const blob = new Blob([lines.join("\n")], { type: "text/plain" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -844,7 +906,15 @@ const App = forwardRef<AppRef, Props>((props, ref) => {
             reset();
             setIsSettingsOpen(false);
           }}
-          onDownloadTranscript={connectActions.downloadTranscript}
+          onDownloadTranscript={() => {
+            downloadTranscriptFromResponses(responses, {
+              user:
+                configuration.config?.participantDisplayName ??
+                copy.participants.you,
+              bot: configuration.assistantName ?? copy.participants.bot,
+              agent: copy.participants.agent,
+            });
+          }}
           onEndConversation={connectActions.endConversation}
           agentActive={agentActive}
           ended={conversationEnded}
