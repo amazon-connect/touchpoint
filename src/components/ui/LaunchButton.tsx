@@ -1,6 +1,10 @@
 /* eslint-disable jsdoc/require-jsdoc */
 import { clsx } from "clsx";
-import { type FC, type ComponentType } from "react";
+import { type FC } from "react";
+import type {
+  ConnectConversationHandler,
+  CustomLaunchButton,
+} from "../../interface";
 import { useIcons } from "../../utils/useIcons";
 
 export interface LaunchButtonProps {
@@ -9,14 +13,21 @@ export interface LaunchButtonProps {
   showLabel?: boolean;
   onClick?: () => void;
   iconUrl?: string;
-  Custom?: ComponentType<{ className?: string; onClick?: () => void }>;
+  Custom?: CustomLaunchButton;
+  conversationHandler?: ConnectConversationHandler;
 }
 
 export const LaunchButton: FC<LaunchButtonProps> = (props) => {
   const { Touchpoint } = useIcons();
-  const { Custom } = props;
-  if (Custom != null) {
-    return <Custom className={props.className} onClick={props.onClick} />;
+  const { Custom, conversationHandler } = props;
+  if (Custom != null && conversationHandler != null) {
+    return (
+      <Custom
+        className={props.className}
+        onClick={props.onClick}
+        conversationHandler={conversationHandler}
+      />
+    );
   }
   return (
     <button
